@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 const modules = [
   { id: 'flowboard', label: 'Flowboard', icon: LayoutDashboard, path: '/flowboard', disabled: true },
   { id: 'pms', label: 'PMS', icon: Building2, path: '/pms/planning', disabled: false },
-  { id: 'channel', label: 'Channel', icon: Network, path: '/channel', disabled: true },
+  { id: 'channel', label: 'Channel', icon: Network, path: '/channel', disabled: false },
   { id: 'rms', label: 'RMS', icon: TrendingUp, path: '/rms', disabled: true },
   { id: 'ereputation', label: 'E-Reputation', icon: Star, path: '/e-reputation', disabled: true },
   { id: 'crm', label: 'CRM', icon: Users, path: '/crm', disabled: false },
@@ -34,6 +34,7 @@ export const TopNavigation = () => {
     if (path === '/pms/planning') return location.pathname.startsWith('/pms')
     if (path === '/staff') return location.pathname.startsWith('/staff')
     if (path === '/crm') return location.pathname.startsWith('/crm')
+    if (path === '/channel') return location.pathname.startsWith('/channel')
     return location.pathname.startsWith(path)
   }
 
