@@ -219,6 +219,32 @@ Build a modern, full-featured PMS with:
   - Authenticated API calls using flowtym_token
   - All entities: Clients, Segments, Campaigns, Workflows, Conversations, Messages, AutoReplies, Alerts, Analytics
 
+### CRM Advanced Analytics (2026-03-24) - NEW
+- [x] **Advanced Analytics API** (`/api/crm/analytics/advanced`)
+  - POST: Returns complete analytics with period filter (6m, 12m, custom)
+  - Retention cohorts with 30d/60d/90d/180d rates
+  - LTV by segment, LTV trend, top clients by LTV
+  - Attrition risks with AI-powered analysis (GPT-4o)
+  - Summary KPIs (total_clients, active_clients, high_risk_clients, average_ltv, total_revenue, retention_rate_avg)
+- [x] **Attrition Analysis API** (`/api/crm/analytics/attrition`)
+  - GET: Returns risk analysis with limit parameter
+  - Risk scoring (0-100) with levels: critical, high, medium, low
+  - AI-generated analysis and recommendations for high/critical risk clients
+  - Risk factors identification (days since stay, frequency, loyalty score, LTV)
+- [x] **Retention Cohorts API** (`/api/crm/analytics/retention-cohorts`)
+  - GET: Returns cohort analysis by acquisition month
+  - Period filter: 6m or 12m
+- [x] **LTV Analytics API** (`/api/crm/analytics/ltv`)
+  - GET: Returns LTV by segment, top clients, monthly trend
+- [x] **Frontend Advanced Analytics Component**
+  - New "Analytique Avancée" tab with 📈 icon
+  - Period selector: 6 derniers mois | 12 derniers mois | Personnalisé
+  - 4 sub-tabs: Vue d'ensemble | Rétention | Valeur Client (LTV) | Prédictions Attrition
+  - KPI cards with live data
+  - Interactive charts (Line for retention/trend, Bar for segments)
+  - Attrition risk cards with AI analysis and recommendations
+  - Export PDF (triggers print) + Export Excel (downloads CSV)
+
 ### Hotel Configuration & Management (2026-03-24)
 - [x] **Hotel Management Page** (/superadmin/hotels/{hotelId})
   - 6 Tabs: Informations, Abonnement, Modules, Chambres, Équipements, Services
