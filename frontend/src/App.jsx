@@ -25,6 +25,7 @@ import { SuperAdminApp } from '@/pages/superadmin/SuperAdminApp'
 import CRMPage from '@/pages/crm/index'
 import { ChannelView } from '@/pages/channel/ChannelManager'
 import { BookingEngine } from '@/pages/booking/BookingEngine'
+import { RMS } from '@/pages/rms/RMS'
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth()
@@ -90,6 +91,9 @@ const AppRoutes = () => {
                   {/* Booking Engine Routes */}
                   <Route path="/booking" element={<BookingEngine />} />
                   <Route path="/booking/*" element={<BookingEngine />} />
+                  {/* Hoptym RMS Routes */}
+                  <Route path="/rms" element={<RMS />} />
+                  <Route path="/rms/*" element={<RMS />} />
                   {/* Settings */}
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="*" element={<Navigate to="/pms/planning" replace />} />

@@ -478,8 +478,8 @@ Build a modern, full-featured PMS with:
 - Password: test123
 
 ## Environment URLs
-- Preview: https://ota-integration-lab.preview.emergentagent.com
-- Backend API: https://ota-integration-lab.preview.emergentagent.com/api
+- Preview: https://rms-integration.preview.emergentagent.com
+- Backend API: https://rms-integration.preview.emergentagent.com/api
 
 ## Key Files
 - Backend: `/app/backend/server.py`

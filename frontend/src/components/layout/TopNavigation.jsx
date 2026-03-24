@@ -13,7 +13,7 @@ const modules = [
   { id: 'flowboard', label: 'Flowboard', icon: LayoutDashboard, path: '/flowboard', disabled: true },
   { id: 'pms', label: 'PMS', icon: Building2, path: '/pms/planning', disabled: false },
   { id: 'channel', label: 'Channel', icon: Network, path: '/channel', disabled: false },
-  { id: 'rms', label: 'RMS', icon: TrendingUp, path: '/rms', disabled: true },
+  { id: 'rms', label: 'Hoptym', icon: TrendingUp, path: '/rms', disabled: false },
   { id: 'ereputation', label: 'E-Reputation', icon: Star, path: '/e-reputation', disabled: true },
   { id: 'crm', label: 'CRM', icon: Users, path: '/crm', disabled: false },
   { id: 'booking', label: 'Booking', icon: CalendarCheck, path: '/booking', disabled: false },
@@ -36,6 +36,7 @@ export const TopNavigation = () => {
     if (path === '/crm') return location.pathname.startsWith('/crm')
     if (path === '/channel') return location.pathname.startsWith('/channel')
     if (path === '/booking') return location.pathname.startsWith('/booking')
+    if (path === '/rms') return location.pathname.startsWith('/rms')
     return location.pathname.startsWith(path)
   }
 

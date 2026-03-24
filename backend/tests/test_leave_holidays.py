@@ -15,7 +15,7 @@ import os
 from datetime import datetime, timedelta
 
 # Use the public URL for testing
-BASE_URL = os.environ.get('VITE_BACKEND_URL', 'https://ota-integration-lab.preview.emergentagent.com')
+BASE_URL = os.environ.get('VITE_BACKEND_URL', 'https://rms-integration.preview.emergentagent.com')
 
 # Test credentials
 TEST_EMAIL = "test.cp@hotel.com"
