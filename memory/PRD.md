@@ -170,8 +170,8 @@ Build a modern, full-featured PMS with:
 - Password: test123
 
 ## Environment URLs
-- Preview: https://payroll-holidays.preview.emergentagent.com
-- Backend API: https://payroll-holidays.preview.emergentagent.com/api
+- Preview: https://staff-portal-preview-2.preview.emergentagent.com
+- Backend API: https://staff-portal-preview-2.preview.emergentagent.com/api
 
 ## Key Files
 - Backend: `/app/backend/server.py`

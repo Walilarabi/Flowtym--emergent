@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { Calendar, List, Users, LogIn, LogOut, Moon, BarChart3, Clock, FileText, Receipt, UsersRound, Settings, UserPlus, PieChart } from 'lucide-react'
+import { Calendar, List, Users, LogIn, LogOut, Moon, BarChart3, Clock, FileText, Receipt, UsersRound, Settings, UserPlus, PieChart, LayoutDashboard } from 'lucide-react'
 
 const pmsSubNav = [
   { label: 'Planning', icon: Calendar, path: '/pms/planning' },
@@ -12,12 +12,13 @@ const pmsSubNav = [
 ]
 
 const staffSubNav = [
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/staff/dashboard' },
   { label: 'Planning', icon: Calendar, path: '/staff/planning' },
   { label: 'Personnel', icon: UsersRound, path: '/staff/employees' },
   { label: 'Contrats', icon: FileText, path: '/staff/contracts' },
   { label: 'Recrutement', icon: UserPlus, path: '/staff/recruitment', disabled: true },
-  { label: 'Reporting', icon: PieChart, path: '/staff/payroll' },
-  { label: 'Configuration', icon: Settings, path: '/staff/settings', disabled: true },
+  { label: 'Reporting', icon: PieChart, path: '/staff/reporting' },
+  { label: 'Configuration', icon: Settings, path: '/staff/configuration' },
 ]
 
 export const SubNavigation = () => {

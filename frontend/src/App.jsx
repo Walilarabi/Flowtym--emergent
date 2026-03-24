@@ -18,6 +18,8 @@ import { StaffPlanning } from '@/pages/staff/StaffPlanning'
 import { StaffTimeTracking } from '@/pages/staff/StaffTimeTracking'
 import { StaffContracts } from '@/pages/staff/StaffContracts'
 import { StaffPayroll } from '@/pages/staff/StaffPayroll'
+import { StaffReporting } from '@/pages/staff/StaffReporting'
+import { StaffConfiguration } from '@/pages/staff/StaffConfiguration'
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth()
@@ -61,12 +63,15 @@ const AppRoutes = () => {
                   <Route path="/pms/night-audit" element={<NightAuditPage />} />
                   <Route path="/pms/reports" element={<ReportsPage />} />
                   {/* Staff Routes */}
-                  <Route path="/staff" element={<Navigate to="/staff/planning" replace />} />
+                  <Route path="/staff" element={<Navigate to="/staff/dashboard" replace />} />
+                  <Route path="/staff/dashboard" element={<StaffDashboard />} />
                   <Route path="/staff/planning" element={<StaffPlanning />} />
                   <Route path="/staff/employees" element={<StaffEmployees />} />
                   <Route path="/staff/time-tracking" element={<StaffTimeTracking />} />
                   <Route path="/staff/contracts" element={<StaffContracts />} />
                   <Route path="/staff/payroll" element={<StaffPayroll />} />
+                  <Route path="/staff/reporting" element={<StaffReporting />} />
+                  <Route path="/staff/configuration" element={<StaffConfiguration />} />
                   {/* Settings */}
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="*" element={<Navigate to="/pms/planning" replace />} />

@@ -2693,6 +2693,476 @@ async def get_staff_planning_summary(hotel_id: str, from_date: str, to_date: str
         "reference_year": reference_year
     }
 
+# ===================== CONFIGURATION - DEPARTMENTS =====================
+
+class DepartmentCreate(BaseModel):
+    name: str
+    code: str
+    color: str = "#7c3aed"
+    positions: List[str] = []
+
+class DepartmentResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    hotel_id: str
+    name: str
+    code: str
+    color: str
+    positions: List[str]
+    is_active: bool
+    created_at: str
+
+@api_router.get("/hotels/{hotel_id}/config/departments", response_model=List[DepartmentResponse])
+async def get_departments(hotel_id: str, current_user: dict = Depends(get_current_user)):
+    """Recuperer tous les departements/services"""
+    departments = await db.departments.find({"hotel_id": hotel_id, "is_active": True}, {"_id": 0}).to_list(50)
+    if not departments:
+        # Creer les departements par defaut
+        default_depts = [
+            {"name": "Reception", "code": "REC", "color": "#7c3aed", "positions": ["Receptionniste", "Night Auditor", "Concierge"]},
+            {"name": "Hebergement", "code": "HEB", "color": "#3b82f6", "positions": ["Gouvernante", "Femme de chambre", "Valet"]},
+            {"name": "Restauration", "code": "REST", "color": "#f59e0b", "positions": ["Chef de rang", "Serveur", "Barman"]},
+            {"name": "Cuisine", "code": "CUI", "color": "#ef4444", "positions": ["Chef de cuisine", "Sous-chef", "Commis"]},
+            {"name": "Maintenance", "code": "MAINT", "color": "#22c55e", "positions": ["Technicien", "Agent polyvalent"]},
+            {"name": "Direction", "code": "DIR", "color": "#8b5cf6", "positions": ["Directeur", "Assistant direction"]},
+        ]
+        now = datetime.now(timezone.utc).isoformat()
+        for dept in default_depts:
+            await db.departments.insert_one({
+                "id": str(uuid.uuid4()),
+                "hotel_id": hotel_id,
+                **dept,
+                "is_active": True,
+                "created_at": now
+            })
+        departments = await db.departments.find({"hotel_id": hotel_id}, {"_id": 0}).to_list(50)
+    return [DepartmentResponse(**d) for d in departments]
+
+@api_router.post("/hotels/{hotel_id}/config/departments", response_model=DepartmentResponse)
+async def create_department(hotel_id: str, dept: DepartmentCreate, current_user: dict = Depends(get_current_user)):
+    dept_id = str(uuid.uuid4())
+    dept_doc = {
+        "id": dept_id,
+        "hotel_id": hotel_id,
+        **dept.model_dump(),
+        "is_active": True,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.departments.insert_one(dept_doc)
+    return DepartmentResponse(**dept_doc)
+
+@api_router.put("/hotels/{hotel_id}/config/departments/{dept_id}", response_model=DepartmentResponse)
+async def update_department(hotel_id: str, dept_id: str, dept: DepartmentCreate, current_user: dict = Depends(get_current_user)):
+    await db.departments.update_one(
+        {"id": dept_id, "hotel_id": hotel_id},
+        {"$set": dept.model_dump()}
+    )
+    updated = await db.departments.find_one({"id": dept_id}, {"_id": 0})
+    return DepartmentResponse(**updated)
+
+@api_router.delete("/hotels/{hotel_id}/config/departments/{dept_id}")
+async def delete_department(hotel_id: str, dept_id: str, current_user: dict = Depends(get_current_user)):
+    await db.departments.update_one({"id": dept_id, "hotel_id": hotel_id}, {"$set": {"is_active": False}})
+    return {"message": "Departement supprime"}
+
+# ===================== CONFIGURATION - SHIFT TEMPLATES =====================
+
+class ShiftTemplateCreate(BaseModel):
+    name: str
+    code: str
+    start_time: str
+    end_time: str
+    duration_hours: float
+    break_minutes: int = 0
+    overtime_rate: float = 0.0  # Majoration en %
+    color: str = "#3b82f6"
+
+class ShiftTemplateResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    hotel_id: str
+    name: str
+    code: str
+    start_time: str
+    end_time: str
+    duration_hours: float
+    break_minutes: int
+    overtime_rate: float
+    color: str
+    is_active: bool
+    created_at: str
+
+@api_router.get("/hotels/{hotel_id}/config/shifts", response_model=List[ShiftTemplateResponse])
+async def get_shift_templates(hotel_id: str, current_user: dict = Depends(get_current_user)):
+    shifts = await db.shift_templates.find({"hotel_id": hotel_id, "is_active": True}, {"_id": 0}).to_list(50)
+    if not shifts:
+        default_shifts = [
+            {"name": "Matin", "code": "M", "start_time": "07:00", "end_time": "15:00", "duration_hours": 8, "break_minutes": 60, "overtime_rate": 0, "color": "#f97316"},
+            {"name": "Soir", "code": "S", "start_time": "15:00", "end_time": "23:00", "duration_hours": 8, "break_minutes": 60, "overtime_rate": 10, "color": "#3b82f6"},
+            {"name": "Nuit", "code": "N", "start_time": "23:00", "end_time": "07:00", "duration_hours": 8, "break_minutes": 60, "overtime_rate": 25, "color": "#8b5cf6"},
+            {"name": "Matin long", "code": "ML", "start_time": "06:00", "end_time": "16:00", "duration_hours": 10, "break_minutes": 90, "overtime_rate": 10, "color": "#f59e0b"},
+        ]
+        now = datetime.now(timezone.utc).isoformat()
+        for s in default_shifts:
+            await db.shift_templates.insert_one({
+                "id": str(uuid.uuid4()),
+                "hotel_id": hotel_id,
+                **s,
+                "is_active": True,
+                "created_at": now
+            })
+        shifts = await db.shift_templates.find({"hotel_id": hotel_id}, {"_id": 0}).to_list(50)
+    return [ShiftTemplateResponse(**s) for s in shifts]
+
+@api_router.post("/hotels/{hotel_id}/config/shifts", response_model=ShiftTemplateResponse)
+async def create_shift_template(hotel_id: str, shift: ShiftTemplateCreate, current_user: dict = Depends(get_current_user)):
+    shift_id = str(uuid.uuid4())
+    shift_doc = {
+        "id": shift_id,
+        "hotel_id": hotel_id,
+        **shift.model_dump(),
+        "is_active": True,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.shift_templates.insert_one(shift_doc)
+    return ShiftTemplateResponse(**shift_doc)
+
+@api_router.put("/hotels/{hotel_id}/config/shifts/{shift_id}", response_model=ShiftTemplateResponse)
+async def update_shift_template(hotel_id: str, shift_id: str, shift: ShiftTemplateCreate, current_user: dict = Depends(get_current_user)):
+    await db.shift_templates.update_one({"id": shift_id, "hotel_id": hotel_id}, {"$set": shift.model_dump()})
+    updated = await db.shift_templates.find_one({"id": shift_id}, {"_id": 0})
+    return ShiftTemplateResponse(**updated)
+
+@api_router.delete("/hotels/{hotel_id}/config/shifts/{shift_id}")
+async def delete_shift_template(hotel_id: str, shift_id: str, current_user: dict = Depends(get_current_user)):
+    await db.shift_templates.update_one({"id": shift_id, "hotel_id": hotel_id}, {"$set": {"is_active": False}})
+    return {"message": "Shift supprime"}
+
+# ===================== CONFIGURATION - CONTRACT TEMPLATES =====================
+
+class ContractTemplateCreate(BaseModel):
+    name: str
+    contract_type: str  # cdi, cdd, extra, stage, apprentissage
+    description: str = ""
+    content_blocks: List[Dict] = []  # Blocks de contenu pour l'editeur
+    status: str = "draft"  # draft, active
+
+class ContractTemplateResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    hotel_id: str
+    name: str
+    contract_type: str
+    description: str
+    content_blocks: List[Dict]
+    status: str
+    created_at: str
+    updated_at: str
+
+@api_router.get("/hotels/{hotel_id}/config/contract-templates", response_model=List[ContractTemplateResponse])
+async def get_contract_templates(hotel_id: str, current_user: dict = Depends(get_current_user)):
+    templates = await db.contract_templates.find({"hotel_id": hotel_id}, {"_id": 0}).to_list(50)
+    if not templates:
+        now = datetime.now(timezone.utc).isoformat()
+        default_templates = [
+            {"name": "CDI - Plein temps", "contract_type": "cdi", "description": "Contrat CDI 35h/semaine", "status": "active"},
+            {"name": "CDD - Plein temps", "contract_type": "cdd", "description": "Contrat CDD standard", "status": "active"},
+            {"name": "CDI - Mi-temps", "contract_type": "cdi", "description": "Contrat CDI temps partiel", "status": "active"},
+            {"name": "Extra - Journee", "contract_type": "extra", "description": "Contrat extra journalier", "status": "active"},
+            {"name": "CDD - Saisonnier", "contract_type": "cdd", "description": "Contrat saisonnier HCR", "status": "draft"},
+            {"name": "Stage / Alternance", "contract_type": "stage", "description": "Convention de stage", "status": "draft"},
+        ]
+        for t in default_templates:
+            await db.contract_templates.insert_one({
+                "id": str(uuid.uuid4()),
+                "hotel_id": hotel_id,
+                **t,
+                "content_blocks": [],
+                "created_at": now,
+                "updated_at": now
+            })
+        templates = await db.contract_templates.find({"hotel_id": hotel_id}, {"_id": 0}).to_list(50)
+    return [ContractTemplateResponse(**t) for t in templates]
+
+@api_router.post("/hotels/{hotel_id}/config/contract-templates", response_model=ContractTemplateResponse)
+async def create_contract_template(hotel_id: str, template: ContractTemplateCreate, current_user: dict = Depends(get_current_user)):
+    now = datetime.now(timezone.utc).isoformat()
+    template_doc = {
+        "id": str(uuid.uuid4()),
+        "hotel_id": hotel_id,
+        **template.model_dump(),
+        "created_at": now,
+        "updated_at": now
+    }
+    await db.contract_templates.insert_one(template_doc)
+    return ContractTemplateResponse(**template_doc)
+
+@api_router.put("/hotels/{hotel_id}/config/contract-templates/{template_id}", response_model=ContractTemplateResponse)
+async def update_contract_template(hotel_id: str, template_id: str, template: ContractTemplateCreate, current_user: dict = Depends(get_current_user)):
+    now = datetime.now(timezone.utc).isoformat()
+    await db.contract_templates.update_one(
+        {"id": template_id, "hotel_id": hotel_id},
+        {"$set": {**template.model_dump(), "updated_at": now}}
+    )
+    updated = await db.contract_templates.find_one({"id": template_id}, {"_id": 0})
+    return ContractTemplateResponse(**updated)
+
+@api_router.delete("/hotels/{hotel_id}/config/contract-templates/{template_id}")
+async def delete_contract_template(hotel_id: str, template_id: str, current_user: dict = Depends(get_current_user)):
+    await db.contract_templates.delete_one({"id": template_id, "hotel_id": hotel_id})
+    return {"message": "Modele supprime"}
+
+# ===================== CONFIGURATION - ROLES & PERMISSIONS =====================
+
+class RoleCreate(BaseModel):
+    name: str
+    permissions: Dict[str, bool] = {}
+
+class RoleResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    hotel_id: str
+    name: str
+    permissions: Dict[str, bool]
+    is_system: bool
+    created_at: str
+
+DEFAULT_PERMISSIONS = [
+    "voir_planning", "modifier_planning", "voir_personnel", "modifier_personnel",
+    "generer_contrats", "exporter_donnees", "gerer_recrutement", "configuration"
+]
+
+@api_router.get("/hotels/{hotel_id}/config/roles", response_model=List[RoleResponse])
+async def get_roles(hotel_id: str, current_user: dict = Depends(get_current_user)):
+    roles = await db.roles.find({"hotel_id": hotel_id}, {"_id": 0}).to_list(50)
+    if not roles:
+        now = datetime.now(timezone.utc).isoformat()
+        default_roles = [
+            {"name": "Administrateur", "permissions": {p: True for p in DEFAULT_PERMISSIONS}, "is_system": True},
+            {"name": "DRH", "permissions": {"voir_planning": True, "modifier_planning": True, "voir_personnel": True, "modifier_personnel": True, "generer_contrats": True, "exporter_donnees": True, "gerer_recrutement": True, "configuration": False}, "is_system": True},
+            {"name": "Directeur", "permissions": {"voir_planning": True, "modifier_planning": True, "voir_personnel": True, "modifier_personnel": False, "generer_contrats": True, "exporter_donnees": True, "gerer_recrutement": True, "configuration": False}, "is_system": True},
+            {"name": "Responsable service", "permissions": {"voir_planning": True, "modifier_planning": True, "voir_personnel": True, "modifier_personnel": False, "generer_contrats": False, "exporter_donnees": False, "gerer_recrutement": False, "configuration": False}, "is_system": True},
+            {"name": "Receptionniste", "permissions": {"voir_planning": True, "modifier_planning": False, "voir_personnel": True, "modifier_personnel": False, "generer_contrats": False, "exporter_donnees": False, "gerer_recrutement": False, "configuration": False}, "is_system": True},
+            {"name": "Employe", "permissions": {"voir_planning": True, "modifier_planning": False, "voir_personnel": False, "modifier_personnel": False, "generer_contrats": False, "exporter_donnees": False, "gerer_recrutement": False, "configuration": False}, "is_system": True},
+        ]
+        for r in default_roles:
+            await db.roles.insert_one({"id": str(uuid.uuid4()), "hotel_id": hotel_id, **r, "created_at": now})
+        roles = await db.roles.find({"hotel_id": hotel_id}, {"_id": 0}).to_list(50)
+    return [RoleResponse(**r) for r in roles]
+
+@api_router.put("/hotels/{hotel_id}/config/roles/{role_id}", response_model=RoleResponse)
+async def update_role(hotel_id: str, role_id: str, role: RoleCreate, current_user: dict = Depends(get_current_user)):
+    await db.roles.update_one({"id": role_id, "hotel_id": hotel_id}, {"$set": {"name": role.name, "permissions": role.permissions}})
+    updated = await db.roles.find_one({"id": role_id}, {"_id": 0})
+    return RoleResponse(**updated)
+
+# ===================== CONFIGURATION - HR DOCUMENTS =====================
+
+class HRDocumentTypeCreate(BaseModel):
+    name: str
+    is_mandatory: bool = True
+    requires_ocr: bool = False
+
+class HRDocumentTypeResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    hotel_id: str
+    name: str
+    is_mandatory: bool
+    requires_ocr: bool
+    is_active: bool
+    created_at: str
+
+@api_router.get("/hotels/{hotel_id}/config/hr-documents", response_model=List[HRDocumentTypeResponse])
+async def get_hr_document_types(hotel_id: str, current_user: dict = Depends(get_current_user)):
+    docs = await db.hr_document_types.find({"hotel_id": hotel_id, "is_active": True}, {"_id": 0}).to_list(50)
+    if not docs:
+        now = datetime.now(timezone.utc).isoformat()
+        default_docs = [
+            {"name": "Carte Nationale d'Identite", "is_mandatory": True, "requires_ocr": True},
+            {"name": "Justificatif de domicile", "is_mandatory": True, "requires_ocr": False},
+            {"name": "Carte Vitale", "is_mandatory": True, "requires_ocr": True},
+            {"name": "RIB bancaire", "is_mandatory": True, "requires_ocr": True},
+            {"name": "Photo identite", "is_mandatory": False, "requires_ocr": False},
+            {"name": "Diplomes & certifications", "is_mandatory": False, "requires_ocr": False},
+            {"name": "Contrat de travail signe", "is_mandatory": True, "requires_ocr": False},
+            {"name": "Visite medicale", "is_mandatory": True, "requires_ocr": False},
+        ]
+        for d in default_docs:
+            await db.hr_document_types.insert_one({"id": str(uuid.uuid4()), "hotel_id": hotel_id, **d, "is_active": True, "created_at": now})
+        docs = await db.hr_document_types.find({"hotel_id": hotel_id}, {"_id": 0}).to_list(50)
+    return [HRDocumentTypeResponse(**d) for d in docs]
+
+@api_router.post("/hotels/{hotel_id}/config/hr-documents", response_model=HRDocumentTypeResponse)
+async def create_hr_document_type(hotel_id: str, doc: HRDocumentTypeCreate, current_user: dict = Depends(get_current_user)):
+    doc_id = str(uuid.uuid4())
+    doc_data = {"id": doc_id, "hotel_id": hotel_id, **doc.model_dump(), "is_active": True, "created_at": datetime.now(timezone.utc).isoformat()}
+    await db.hr_document_types.insert_one(doc_data)
+    return HRDocumentTypeResponse(**doc_data)
+
+@api_router.delete("/hotels/{hotel_id}/config/hr-documents/{doc_id}")
+async def delete_hr_document_type(hotel_id: str, doc_id: str, current_user: dict = Depends(get_current_user)):
+    await db.hr_document_types.update_one({"id": doc_id, "hotel_id": hotel_id}, {"$set": {"is_active": False}})
+    return {"message": "Document supprime"}
+
+# ===================== CONFIGURATION - STAFF SETTINGS =====================
+
+class StaffSettingsUpdate(BaseModel):
+    logo_url: Optional[str] = None
+    reporting_emails: List[str] = []
+    notifications_enabled: bool = True
+    auto_reporting_enabled: bool = False
+    docusign_enabled: bool = False
+    auto_payroll_export: bool = False
+    cp_rollover_date: str = "06-01"  # Date de bascule CP (jour-mois)
+    cp_allow_early_use: bool = True
+
+class StaffSettingsResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    hotel_id: str
+    logo_url: Optional[str]
+    reporting_emails: List[str]
+    notifications_enabled: bool
+    auto_reporting_enabled: bool
+    docusign_enabled: bool
+    auto_payroll_export: bool
+    cp_rollover_date: str
+    cp_allow_early_use: bool
+    updated_at: str
+
+@api_router.get("/hotels/{hotel_id}/config/settings", response_model=StaffSettingsResponse)
+async def get_staff_settings(hotel_id: str, current_user: dict = Depends(get_current_user)):
+    settings = await db.staff_settings.find_one({"hotel_id": hotel_id}, {"_id": 0})
+    if not settings:
+        now = datetime.now(timezone.utc).isoformat()
+        settings = {
+            "id": str(uuid.uuid4()),
+            "hotel_id": hotel_id,
+            "logo_url": None,
+            "reporting_emails": [],
+            "notifications_enabled": True,
+            "auto_reporting_enabled": False,
+            "docusign_enabled": False,
+            "auto_payroll_export": False,
+            "cp_rollover_date": "06-01",
+            "cp_allow_early_use": True,
+            "updated_at": now
+        }
+        await db.staff_settings.insert_one(settings)
+    return StaffSettingsResponse(**settings)
+
+@api_router.put("/hotels/{hotel_id}/config/settings", response_model=StaffSettingsResponse)
+async def update_staff_settings(hotel_id: str, settings: StaffSettingsUpdate, current_user: dict = Depends(get_current_user)):
+    now = datetime.now(timezone.utc).isoformat()
+    await db.staff_settings.update_one(
+        {"hotel_id": hotel_id},
+        {"$set": {**settings.model_dump(), "updated_at": now}},
+        upsert=True
+    )
+    updated = await db.staff_settings.find_one({"hotel_id": hotel_id}, {"_id": 0})
+    return StaffSettingsResponse(**updated)
+
+# ===================== REPORTING - STAFF ANALYTICS =====================
+
+@api_router.get("/hotels/{hotel_id}/reporting/staff-analytics")
+async def get_staff_analytics(hotel_id: str, month: int, year: int, current_user: dict = Depends(get_current_user)):
+    """Recuperer les analytics staff pour le reporting comptabilite"""
+    # Calculer les dates du mois
+    start_date = f"{year}-{str(month).zfill(2)}-01"
+    if month == 12:
+        end_date = f"{year + 1}-01-01"
+    else:
+        end_date = f"{year}-{str(month + 1).zfill(2)}-01"
+    
+    # Recuperer les employes actifs
+    employees = await db.staff_employees.find({"hotel_id": hotel_id, "is_active": True}, {"_id": 0}).to_list(500)
+    
+    # Recuperer tous les shifts du mois
+    shifts = await db.staff_shifts.find({
+        "hotel_id": hotel_id,
+        "date": {"$gte": start_date, "$lt": end_date}
+    }, {"_id": 0}).to_list(5000)
+    
+    # Recuperer les conges approuves
+    leaves = await db.leave_requests.find({
+        "hotel_id": hotel_id,
+        "status": "approved",
+        "date_start": {"$lte": end_date},
+        "date_end": {"$gte": start_date}
+    }, {"_id": 0}).to_list(500)
+    
+    # Calculer les stats par employe
+    employee_stats = []
+    total_hours = 0
+    total_overtime = 0
+    total_absences = 0
+    total_cp = 0
+    total_sick = 0
+    
+    for emp in employees:
+        emp_shifts = [s for s in shifts if s["employee_id"] == emp["id"]]
+        emp_leaves = [l for l in leaves if l["employee_id"] == emp["id"]]
+        
+        worked_days = len(emp_shifts)
+        hours = sum(s.get("worked_hours", 0) for s in emp_shifts)
+        overtime = sum(s.get("overtime_hours", 0) for s in emp_shifts)
+        
+        cp_days = sum(l.get("days_count", 0) for l in emp_leaves if l.get("leave_type") == "cp")
+        sick_days = sum(l.get("days_count", 0) for l in emp_leaves if l.get("leave_type") == "maladie")
+        other_absences = sum(l.get("days_count", 0) for l in emp_leaves if l.get("leave_type") not in ["cp", "maladie"])
+        
+        total_hours += hours
+        total_overtime += overtime
+        total_cp += cp_days
+        total_sick += sick_days
+        total_absences += other_absences
+        
+        employee_stats.append({
+            "employee_id": emp["id"],
+            "employee_name": f"{emp['first_name']} {emp['last_name']}",
+            "department": emp.get("department", ""),
+            "worked_days": worked_days,
+            "total_hours": round(hours, 2),
+            "overtime_hours": round(overtime, 2),
+            "absences": other_absences,
+            "cp_days": cp_days,
+            "sick_days": sick_days
+        })
+    
+    # Stats par service
+    hours_by_service = {}
+    for emp in employee_stats:
+        dept = emp["department"] or "Autre"
+        if dept not in hours_by_service:
+            hours_by_service[dept] = 0
+        hours_by_service[dept] += emp["total_hours"]
+    
+    dept_labels = {
+        "front_office": "Reception",
+        "housekeeping": "Hebergement",
+        "food_beverage": "Restauration",
+        "maintenance": "Maintenance",
+        "administration": "Direction",
+    }
+    
+    service_stats = [
+        {"service": dept_labels.get(k, k), "hours": round(v, 2)}
+        for k, v in hours_by_service.items()
+    ]
+    
+    return {
+        "period": {"month": month, "year": year},
+        "summary": {
+            "active_employees": len(employees),
+            "total_hours": round(total_hours, 2),
+            "total_overtime": round(total_overtime, 2),
+            "total_sick_days": total_sick
+        },
+        "employees": employee_stats,
+        "hours_by_service": sorted(service_stats, key=lambda x: x["hours"], reverse=True)
+    }
+
 # ===================== ROOT & HEALTH =====================
 
 @api_router.get("/")
