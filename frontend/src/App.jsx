@@ -24,6 +24,7 @@ import { StaffRecruitment } from '@/pages/staff/StaffRecruitment'
 import { SuperAdminApp } from '@/pages/superadmin/SuperAdminApp'
 import CRMPage from '@/pages/crm/index'
 import { ChannelView } from '@/pages/channel/ChannelManager'
+import { BookingEngine } from '@/pages/booking/BookingEngine'
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth()
@@ -86,6 +87,9 @@ const AppRoutes = () => {
                   {/* Channel Manager Routes */}
                   <Route path="/channel" element={<ChannelView />} />
                   <Route path="/channel/*" element={<ChannelView />} />
+                  {/* Booking Engine Routes */}
+                  <Route path="/booking" element={<BookingEngine />} />
+                  <Route path="/booking/*" element={<BookingEngine />} />
                   {/* Settings */}
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="*" element={<Navigate to="/pms/planning" replace />} />
