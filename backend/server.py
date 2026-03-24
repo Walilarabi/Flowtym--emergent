@@ -363,6 +363,52 @@ async def login(credentials: UserLogin):
         }
     }
 
+# Super Admin Registration (secured with secret key)
+class SuperAdminCreate(BaseModel):
+    email: EmailStr
+    password: str
+    first_name: str
+    last_name: str
+    secret_key: str
+
+@api_router.post("/auth/register-superadmin")
+async def register_superadmin(user: SuperAdminCreate):
+    """Register a Super Admin (requires secret key)"""
+    # Verify secret key
+    SUPERADMIN_SECRET = os.environ.get('SUPERADMIN_SECRET', 'flowtym-superadmin-2024')
+    if user.secret_key != SUPERADMIN_SECRET:
+        raise HTTPException(status_code=403, detail="Clé secrète invalide")
+    
+    # Check if email exists
+    existing = await db.users.find_one({"email": user.email})
+    if existing:
+        raise HTTPException(status_code=400, detail="Email déjà utilisé")
+    
+    user_id = str(uuid.uuid4())
+    user_doc = {
+        "id": user_id,
+        "email": user.email,
+        "password": hash_password(user.password),
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "role": "super_admin",
+        "hotel_id": None,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.users.insert_one(user_doc)
+    
+    token = create_token(user_id, user.email, "super_admin")
+    return {
+        "token": token,
+        "user": {
+            "id": user_id,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "role": "super_admin"
+        }
+    }
+
 @api_router.get("/auth/me", response_model=UserResponse)
 async def get_me(current_user: dict = Depends(get_current_user)):
     user = await db.users.find_one({"id": current_user["user_id"]}, {"_id": 0, "password": 0})
@@ -3672,6 +3718,149 @@ async def root():
 @api_router.get("/health")
 async def health():
     return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
+
+# ===================== SUPER ADMIN MODULE =====================
+# Import and configure Super Admin routes with database dependency
+
+from superadmin.routes import superadmin_router
+from superadmin.models import (
+    HotelCreate as SAHotelCreate, HotelUpdate as SAHotelUpdate, HotelResponse as SAHotelResponse,
+    SubscriptionCreate, SubscriptionUpdate, SubscriptionResponse,
+    UserInvite, SEPAMandateCreate, SEPAMandateResponse,
+    DashboardStats, ActivityLog, SUBSCRIPTION_PLANS,
+    HotelUserRole, SubscriptionPlan, PaymentFrequency, TrialType
+)
+
+# Inject database into superadmin routes
+@api_router.get("/superadmin/dashboard")
+async def sa_dashboard(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import get_dashboard_stats, verify_superadmin
+    return await get_dashboard_stats(db, credentials)
+
+@api_router.get("/superadmin/hotels")
+async def sa_list_hotels(status: Optional[str] = None, search: Optional[str] = None, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import list_hotels
+    return await list_hotels(db, status, search, credentials)
+
+@api_router.post("/superadmin/hotels")
+async def sa_create_hotel(hotel: SAHotelCreate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import create_hotel
+    return await create_hotel(hotel, db, credentials)
+
+@api_router.get("/superadmin/hotels/{hotel_id}")
+async def sa_get_hotel(hotel_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import get_hotel
+    return await get_hotel(hotel_id, db, credentials)
+
+@api_router.put("/superadmin/hotels/{hotel_id}")
+async def sa_update_hotel(hotel_id: str, hotel: SAHotelUpdate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import update_hotel
+    return await update_hotel(hotel_id, hotel, db, credentials)
+
+@api_router.patch("/superadmin/hotels/{hotel_id}/status")
+async def sa_update_hotel_status(hotel_id: str, status: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import update_hotel_status
+    return await update_hotel_status(hotel_id, status, db, credentials)
+
+@api_router.delete("/superadmin/hotels/{hotel_id}")
+async def sa_delete_hotel(hotel_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import delete_hotel
+    return await delete_hotel(hotel_id, db, credentials)
+
+@api_router.get("/superadmin/plans")
+async def sa_get_plans(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import get_subscription_plans
+    return await get_subscription_plans(credentials)
+
+@api_router.post("/superadmin/subscriptions")
+async def sa_create_subscription(sub: SubscriptionCreate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import create_subscription
+    return await create_subscription(sub, db, credentials)
+
+@api_router.get("/superadmin/subscriptions/{hotel_id}")
+async def sa_get_subscription(hotel_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import get_subscription
+    return await get_subscription(hotel_id, db, credentials)
+
+@api_router.put("/superadmin/subscriptions/{subscription_id}")
+async def sa_update_subscription(subscription_id: str, sub_update: SubscriptionUpdate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import update_subscription
+    return await update_subscription(subscription_id, sub_update, db, credentials)
+
+@api_router.patch("/superadmin/subscriptions/{subscription_id}/cancel")
+async def sa_cancel_subscription(subscription_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import cancel_subscription
+    return await cancel_subscription(subscription_id, db, credentials)
+
+@api_router.get("/superadmin/hotels/{hotel_id}/users")
+async def sa_list_hotel_users(hotel_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import list_hotel_users
+    return await list_hotel_users(hotel_id, db, credentials)
+
+@api_router.post("/superadmin/hotels/{hotel_id}/users/invite")
+async def sa_invite_user(hotel_id: str, invite: UserInvite, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import invite_user
+    return await invite_user(hotel_id, invite, db, credentials)
+
+@api_router.delete("/superadmin/users/{user_id}")
+async def sa_remove_user(user_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import remove_user
+    return await remove_user(user_id, db, credentials)
+
+@api_router.post("/superadmin/sepa-mandates")
+async def sa_create_sepa_mandate(mandate: SEPAMandateCreate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import create_sepa_mandate
+    return await create_sepa_mandate(mandate, db, credentials)
+
+@api_router.get("/superadmin/sepa-mandates/{hotel_id}")
+async def sa_get_sepa_mandates(hotel_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import get_sepa_mandates
+    return await get_sepa_mandates(hotel_id, db, credentials)
+
+@api_router.patch("/superadmin/sepa-mandates/{mandate_id}/sign")
+async def sa_sign_sepa_mandate(mandate_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import sign_sepa_mandate
+    return await sign_sepa_mandate(mandate_id, db, credentials)
+
+@api_router.get("/superadmin/hotels/{hotel_id}/contract/pdf")
+async def sa_generate_contract_pdf(hotel_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import generate_contract_pdf
+    return await generate_contract_pdf(hotel_id, db, credentials)
+
+@api_router.get("/superadmin/hotels/{hotel_id}/sepa-mandate/pdf")
+async def sa_generate_sepa_mandate_pdf(hotel_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import generate_sepa_mandate_pdf
+    return await generate_sepa_mandate_pdf(hotel_id, db, credentials)
+
+@api_router.get("/superadmin/invoices")
+async def sa_list_invoices(hotel_id: Optional[str] = None, status: Optional[str] = None, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import list_invoices
+    return await list_invoices(db, hotel_id, status, credentials)
+
+@api_router.post("/superadmin/invoices/generate")
+async def sa_generate_invoice(hotel_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import generate_invoice
+    return await generate_invoice(hotel_id, db, credentials)
+
+@api_router.get("/superadmin/invoices/{invoice_id}/pdf")
+async def sa_get_invoice_pdf(invoice_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import get_invoice_pdf
+    return await get_invoice_pdf(invoice_id, db, credentials)
+
+@api_router.get("/superadmin/logs")
+async def sa_get_activity_logs(entity_type: Optional[str] = None, limit: int = 50, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import get_activity_logs
+    return await get_activity_logs(db, entity_type, limit, credentials)
+
+@api_router.post("/superadmin/support/simulate-user")
+async def sa_simulate_user_view(hotel_id: str, role: HotelUserRole, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import simulate_user_view
+    return await simulate_user_view(hotel_id, role, db, credentials)
+
+@api_router.post("/superadmin/support/end-session")
+async def sa_end_support_session(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import end_support_session
+    return await end_support_session(db, credentials)
 
 # Include the router in the main app
 app.include_router(api_router)

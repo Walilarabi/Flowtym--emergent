@@ -21,6 +21,7 @@ import { StaffPayroll } from '@/pages/staff/StaffPayroll'
 import { StaffReporting } from '@/pages/staff/StaffReporting'
 import { StaffConfiguration } from '@/pages/staff/StaffConfiguration'
 import { StaffRecruitment } from '@/pages/staff/StaffRecruitment'
+import { SuperAdminApp } from '@/pages/superadmin/SuperAdminApp'
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth()
@@ -46,6 +47,9 @@ const ProtectedRoute = ({ children }) => {
 const AppRoutes = () => {
   return (
     <Routes>
+      {/* Super Admin Routes */}
+      <Route path="/superadmin/*" element={<SuperAdminApp />} />
+      
       <Route path="/login" element={<LoginPage />} />
       <Route
         path="/*"
