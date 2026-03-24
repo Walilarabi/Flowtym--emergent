@@ -65,7 +65,9 @@ export default function GuestList({ guests, onSelectGuest }: GuestListProps) {
                     <div className="text-xs text-slate-500">{guest.phone}</div>
                   </td>
                   <td className="py-4 px-6 text-sm text-slate-600">
-                    {new Date(guest.lastStay).toLocaleDateString('fr-FR')}
+                    {guest.lastStay && guest.lastStay !== '' 
+                      ? new Date(guest.lastStay).toLocaleDateString('fr-FR')
+                      : <span className="text-slate-400">—</span>}
                   </td>
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-2">

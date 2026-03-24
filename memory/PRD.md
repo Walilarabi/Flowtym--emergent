@@ -177,6 +177,48 @@ Build a modern, full-featured PMS with:
 - [x] **Configuration** du module
 - [x] **Interface bilingue** FR/EN
 
+### CRM Backend API (2026-03-24) - NEW
+- [x] **Clients API** (`/api/crm/clients`)
+  - LIST: GET with search, client_type, status, segment_id filters + pagination
+  - GET: Single client with stays history
+  - CREATE: POST with duplicate email validation
+  - UPDATE: PUT partial updates
+  - DELETE: Soft delete
+- [x] **Segments API** (`/api/crm/segments`)
+  - LIST: GET with dynamic client_count calculation
+  - CREATE: POST with conditions for dynamic segments
+  - UPDATE/DELETE: Standard CRUD
+- [x] **Campaigns API** (`/api/crm/campaigns`)
+  - LIST: GET with status filter
+  - CREATE/UPDATE: Standard CRUD
+  - LAUNCH: POST /{id}/launch - changes status to active, calculates target_count
+- [x] **Workflows API** (`/api/crm/workflows`)
+  - LIST: GET all workflows with execution counts
+  - CREATE: POST with trigger (type, delay_hours) and actions array
+  - UPDATE: Standard CRUD
+  - TOGGLE: POST /{id}/toggle - activate/pause workflow
+- [x] **Conversations & Messages API** (`/api/crm/conversations`, `/api/crm/messages`)
+  - LIST conversations: GET with channel, status filters
+  - GET messages: GET /{conversation_id}/messages
+  - SEND message: POST creates conversation if needed, tracks unread
+- [x] **Auto-Replies API** (`/api/crm/auto-replies`)
+  - LIST: GET all auto-reply rules
+  - CREATE: POST with trigger_keywords, channel, response_template
+  - DELETE: Standard DELETE
+- [x] **Alerts API** (`/api/crm/alerts`)
+  - LIST: GET with unread_only filter
+  - CREATE: POST with type, priority, client_id
+  - MARK READ: POST /{id}/read
+- [x] **Analytics API** (`/api/crm/analytics`)
+  - GET: Returns total_clients, active_clients, new_clients_month, retention_rate, average_nps, average_ltv, top_segments, channel_distribution
+- [x] **PMS Integration API**
+  - SYNC: POST `/api/crm/sync-from-pms` - syncs clients from reservations
+  - GET BY EMAIL: GET `/api/crm/client-by-email/{email}`
+- [x] **Frontend API Service** (`/frontend/src/pages/crm/services/crmApi.ts`)
+  - TypeScript service with full type definitions
+  - Authenticated API calls using flowtym_token
+  - All entities: Clients, Segments, Campaigns, Workflows, Conversations, Messages, AutoReplies, Alerts, Analytics
+
 ### Hotel Configuration & Management (2026-03-24)
 - [x] **Hotel Management Page** (/superadmin/hotels/{hotelId})
   - 6 Tabs: Informations, Abonnement, Modules, Chambres, Équipements, Services
