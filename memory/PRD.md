@@ -265,6 +265,37 @@ Build a modern, full-featured PMS with:
   - Authenticated API calls using flowtym_token
   - All entities: Clients, Segments, Campaigns, Workflows, Conversations, Messages, AutoReplies, Alerts, Analytics
 
+### Booking Engine Module (2026-03-24) - NEW
+- [x] **Complete Booking Engine UI** injected from user-provided code
+- [x] Self-contained component with internal navigation and styling
+- [x] Accessible via `/booking` route and "Booking" tab in navigation
+- [x] KPI dashboard, channel analysis, direct bookings metrics
+- [x] Multiple sub-sections: Overview, Channels, Direct Bookings, Website, Campaigns, etc.
+- [x] Note: Uses **MOCKED DATA** - no backend API integration
+
+### Hoptym RMS Module (2026-03-24) - NEW
+- [x] **Complete Revenue Management System UI** injected from user-provided PDF code
+- [x] Navigation link labeled "Hoptym" in TopNavigation
+- [x] Accessible via `/rms` route
+- [x] Internal navbar with "Hoptym YIELD · RMS" branding
+- [x] **3 Main Menus**:
+  - Revenue: Dashboard, Calendrier, Grille tarifaire, Analytics
+  - Intelligence: Recommandations, Concurrence, Prévisions, Événements
+  - Configuration: Stratégie, Pondération, Autopilot, Connecteurs
+- [x] **KPI Cards**: RevPAR, ADR, Occupation, Revenu Total (with % change)
+- [x] **Dashboard Features**:
+  - Weekly calendar preview with prices/occupancy
+  - AI Recommendations with impact estimates
+  - Competitor benchmark table
+  - Engine status indicator (RMS Live)
+- [x] **Strategy Selection**: 4 strategies (Conservateur, Équilibré, Agressif, Dynamique)
+- [x] **Weight Factors**: Configurable sliders for Demande, Concurrence, Événements, Saisonnalité, Historique
+- [x] **Autopilot Mode**: Toggle for automatic recommendation application
+- [x] **Connections Page**: PMS, Channel Manager, Rate Shopper connector cards
+- [x] **Recalculate Button**: Triggers engine recalculation with loading state
+- [x] Note: Uses **MOCKED DATA** - all data comes from hardcoded constants in the component
+- [x] **File Location**: `/app/frontend/src/pages/rms/RMS.jsx`
+
 ### CRM Advanced Analytics (2026-03-24) - NEW
 - [x] **Advanced Analytics API** (`/api/crm/analytics/advanced`)
   - POST: Returns complete analytics with period filter (6m, 12m, custom)
@@ -462,6 +493,8 @@ Build a modern, full-featured PMS with:
 - [ ] Leave calendar visualization
 - [ ] Super Admin: Stripe integration for real payment processing
 - [ ] Connect Channel Manager to real OTA APIs (D-EDGE, SiteMinder)
+- [ ] Connect Hoptym RMS module to backend API (currently uses mocked data)
+- [ ] Connect Booking Engine module to backend API (currently uses mocked data)
 
 ## P2 Features (Future)
 - [ ] Payment webhooks (Stripe/Adyen/PayPal production)
@@ -483,6 +516,8 @@ Build a modern, full-featured PMS with:
 
 ## Key Files
 - Backend: `/app/backend/server.py`
+- **Hoptym RMS Module**: `/app/frontend/src/pages/rms/RMS.jsx`
+- **Booking Engine Module**: `/app/frontend/src/pages/booking/BookingEngine.jsx`
 - **Super Admin Backend**: `/app/backend/superadmin/routes.py`, `/app/backend/superadmin/models.py`, `/app/backend/superadmin/pdf_generator.py`
 - Frontend Entry: `/app/frontend/src/App.jsx`
 - **Hotel Management**: `/app/frontend/src/pages/superadmin/SAHotelManagement.jsx`
@@ -506,6 +541,9 @@ Build a modern, full-featured PMS with:
 - **Document Storage**: Employee documents in wizard are stored in form state only, not persisted to backend storage. Needs integration with object storage service.
 - **Payment Webhooks**: Stripe/Adyen/PayPal endpoints are scaffolded but lack production event handling.
 - **Electronic Signature**: Contract/SEPA signature is manual (PDF download). DocuSign/HelloSign integration pending user API key.
+- **Hoptym RMS Module**: All KPIs, recommendations, competitors, calendar data are hardcoded mock constants. No backend API integration.
+- **Booking Engine Module**: All data is hardcoded in the component. No backend API integration.
+- **Payroll Email Service**: `/app/backend/payroll_reporting/email_service.py` simulates email sending, does not connect to real SMTP.
 
 ## Real Integrations (2026-03-24)
 - **AI Job Offer Generation**: Uses GPT-4o via Emergent Universal Key. Generates professional French job descriptions, requirements, and salary suggestions.
