@@ -15,6 +15,7 @@ import {
   CreditCard, MapPin, AlertCircle, Download, Copy, BarChart3, Palmtree
 } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { AddEmployeeWizard } from '@/components/staff/AddEmployeeWizard'
 
 const POSITIONS = [
   { value: 'receptionist', label: 'Receptionniste' },
@@ -241,6 +242,7 @@ export const StaffEmployees = () => {
   const [contractFilter, setContractFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [wizardOpen, setWizardOpen] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState(null)
   const [selectedEmployee, setSelectedEmployee] = useState(null)
   const [formData, setFormData] = useState({
@@ -288,14 +290,11 @@ export const StaffEmployees = () => {
   }
 
   const handleNewEmployee = () => {
-    setEditingEmployee(null)
-    setFormData({
-      first_name: '', last_name: '', email: '', phone: '', position: 'receptionist',
-      department: 'front_office', contract_type: 'cdi', hire_date: format(new Date(), 'yyyy-MM-dd'),
-      hourly_rate: 11.65, weekly_hours: 35, address: '', city: '', postal_code: '',
-      social_security_number: '', bank_iban: '', emergency_contact: '', emergency_phone: '', notes: ''
-    })
-    setSheetOpen(true)
+    setWizardOpen(true)
+  }
+
+  const handleWizardSuccess = (newEmployee) => {
+    fetchData()
   }
 
   const handleEditEmployee = (employee) => {
@@ -550,7 +549,14 @@ export const StaffEmployees = () => {
         />
       )}
 
-      {/* Add/Edit Sheet */}
+      {/* Add Employee Wizard */}
+      <AddEmployeeWizard 
+        isOpen={wizardOpen}
+        onClose={() => setWizardOpen(false)}
+        onSuccess={handleWizardSuccess}
+      />
+
+      {/* Add/Edit Sheet (for edit only) */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent className="w-[600px] sm:max-w-[600px] overflow-y-auto">
           <SheetHeader><SheetTitle>{editingEmployee ? 'Modifier le collaborateur' : 'Ajouter un collaborateur'}</SheetTitle></SheetHeader>
