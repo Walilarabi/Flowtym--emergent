@@ -569,7 +569,7 @@ export const SuperAdminApp = () => {
           <Route path="/" element={<SADashboard api={api} />} />
           <Route path="/hotels" element={<SAHotels api={api} />} />
           <Route path="/hotels/new" element={<SAHotelForm api={api} />} />
-          <Route path="/hotels/:hotelId" element={<SAHotelDetail api={api} />} />
+          <Route path="/hotels/:hotelId" element={<SAHotelManagement api={api} />} />
           <Route path="/catalog" element={<SACatalogPage api={api} />} />
           <Route path="/subscriptions" element={<SASubscriptionsLifecyclePage api={api} />} />
           <Route path="/users" element={<SAUsersPage api={api} />} />
@@ -586,6 +586,8 @@ import { SASubscriptions as SASubscriptionsPage, SAUsers as SAUsersPage, SAInvoi
 // Import new catalog and lifecycle pages
 import { SACatalog as SACatalogPage } from './SACatalog'
 import { SASubscriptionsLifecycle as SASubscriptionsLifecyclePage } from './SASubscriptionsLifecycle'
+// Import hotel management page
+import { SAHotelManagement } from './SAHotelManagement'
 
 const SALogs = ({ api }) => {
   const [logs, setLogs] = useState([])

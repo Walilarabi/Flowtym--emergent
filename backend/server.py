@@ -3977,6 +3977,118 @@ async def sa_create_subscription_from_catalog(
     from superadmin.catalog_routes import create_subscription_from_catalog
     return await create_subscription_from_catalog(hotel_id, plan_id, payment_frequency, trial_days, custom_max_users, custom_price, db, credentials)
 
+# ===================== HOTEL CONFIGURATION & SUBSCRIPTION MANAGEMENT =====================
+from superadmin.hotel_config_routes import (
+    HotelConfigUpdate, RoomType, Room, Equipment, Service,
+    SubscriptionAssignment, SubscriptionModification, TrialExtension
+)
+
+# Hotel Configuration
+@api_router.get("/superadmin/hotels/{hotel_id}/config")
+async def sa_get_hotel_config(hotel_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.hotel_config_routes import get_hotel_config
+    return await get_hotel_config(hotel_id, db, credentials)
+
+@api_router.put("/superadmin/hotels/{hotel_id}/config")
+async def sa_update_hotel_config(hotel_id: str, config: HotelConfigUpdate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.hotel_config_routes import update_hotel_config
+    return await update_hotel_config(hotel_id, config, db, credentials)
+
+# Room Types
+@api_router.get("/superadmin/hotels/{hotel_id}/room-types")
+async def sa_list_room_types(hotel_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.hotel_config_routes import list_room_types
+    return await list_room_types(hotel_id, db, credentials)
+
+@api_router.post("/superadmin/hotels/{hotel_id}/room-types")
+async def sa_create_room_type(hotel_id: str, room_type: RoomType, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.hotel_config_routes import create_room_type
+    return await create_room_type(hotel_id, room_type, db, credentials)
+
+@api_router.put("/superadmin/hotels/{hotel_id}/room-types/{type_id}")
+async def sa_update_room_type(hotel_id: str, type_id: str, room_type: RoomType, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.hotel_config_routes import update_room_type
+    return await update_room_type(hotel_id, type_id, room_type, db, credentials)
+
+@api_router.delete("/superadmin/hotels/{hotel_id}/room-types/{type_id}")
+async def sa_delete_room_type(hotel_id: str, type_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.hotel_config_routes import delete_room_type
+    return await delete_room_type(hotel_id, type_id, db, credentials)
+
+# Rooms
+@api_router.get("/superadmin/hotels/{hotel_id}/rooms")
+async def sa_list_rooms(hotel_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.hotel_config_routes import list_rooms
+    return await list_rooms(hotel_id, db, credentials)
+
+@api_router.post("/superadmin/hotels/{hotel_id}/rooms")
+async def sa_create_room(hotel_id: str, room: Room, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.hotel_config_routes import create_room
+    return await create_room(hotel_id, room, db, credentials)
+
+@api_router.post("/superadmin/hotels/{hotel_id}/rooms/bulk")
+async def sa_create_rooms_bulk(hotel_id: str, rooms: List[Room], credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.hotel_config_routes import create_rooms_bulk
+    return await create_rooms_bulk(hotel_id, rooms, db, credentials)
+
+@api_router.delete("/superadmin/hotels/{hotel_id}/rooms/{room_id}")
+async def sa_delete_room(hotel_id: str, room_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.hotel_config_routes import delete_room
+    return await delete_room(hotel_id, room_id, db, credentials)
+
+# Equipment
+@api_router.get("/superadmin/hotels/{hotel_id}/equipment")
+async def sa_list_equipment(hotel_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.hotel_config_routes import list_equipment
+    return await list_equipment(hotel_id, db, credentials)
+
+@api_router.post("/superadmin/hotels/{hotel_id}/equipment")
+async def sa_create_equipment(hotel_id: str, equipment: Equipment, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.hotel_config_routes import create_equipment
+    return await create_equipment(hotel_id, equipment, db, credentials)
+
+@api_router.delete("/superadmin/hotels/{hotel_id}/equipment/{equipment_id}")
+async def sa_delete_equipment(hotel_id: str, equipment_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.hotel_config_routes import delete_equipment
+    return await delete_equipment(hotel_id, equipment_id, db, credentials)
+
+# Services
+@api_router.get("/superadmin/hotels/{hotel_id}/services")
+async def sa_list_services(hotel_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.hotel_config_routes import list_services
+    return await list_services(hotel_id, db, credentials)
+
+@api_router.post("/superadmin/hotels/{hotel_id}/services")
+async def sa_create_service(hotel_id: str, service: Service, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.hotel_config_routes import create_service
+    return await create_service(hotel_id, service, db, credentials)
+
+@api_router.delete("/superadmin/hotels/{hotel_id}/services/{service_id}")
+async def sa_delete_service(hotel_id: str, service_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.hotel_config_routes import delete_service
+    return await delete_service(hotel_id, service_id, db, credentials)
+
+# Subscription Management per Hotel
+@api_router.post("/superadmin/hotels/{hotel_id}/subscription/assign")
+async def sa_assign_subscription(hotel_id: str, assignment: SubscriptionAssignment, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.hotel_config_routes import assign_subscription
+    return await assign_subscription(hotel_id, assignment, db, credentials)
+
+@api_router.post("/superadmin/hotels/{hotel_id}/subscription/modify")
+async def sa_modify_subscription(hotel_id: str, modification: SubscriptionModification, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.hotel_config_routes import modify_subscription
+    return await modify_subscription(hotel_id, modification, db, credentials)
+
+@api_router.post("/superadmin/hotels/{hotel_id}/subscription/extend-trial")
+async def sa_extend_trial(hotel_id: str, extension: TrialExtension, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.hotel_config_routes import extend_trial
+    return await extend_trial(hotel_id, extension, db, credentials)
+
+@api_router.get("/superadmin/hotels/{hotel_id}/subscription/modules")
+async def sa_get_hotel_modules(hotel_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.hotel_config_routes import get_hotel_modules
+    return await get_hotel_modules(hotel_id, db, credentials)
+
 # Include the router in the main app
 app.include_router(api_router)
 
