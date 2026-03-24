@@ -14,8 +14,8 @@ export default defineConfig({
     port: 3000,
     strictPort: true,
     allowedHosts: [
-      'booking-hub-303.preview.emergentagent.com',
-      'booking-hub-303.cluster-0.preview.emergentcf.cloud',
+      'ota-integration-lab.preview.emergentagent.com',
+      'ota-integration-lab.cluster-0.preview.emergentcf.cloud',
       '.emergentagent.com',
       '.emergentcf.cloud',
       'localhost',
