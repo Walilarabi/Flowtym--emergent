@@ -132,7 +132,7 @@ Build a modern, full-featured PMS with:
 - [x] **Activity Logs**: Full audit trail of admin actions
 - [x] **Support Mode**: Simulate user view by role (scaffolded)
 
-### Subscription Catalog & Lifecycle Management (NEW - 2026-03-24)
+### Subscription Catalog & Lifecycle Management (2026-03-24)
 - [x] **Dynamic Subscription Plans Catalog**
   - Create/Edit/Delete plans with full configuration
   - 10 configurable modules: PMS, Staff, Channel Manager, CRM, RMS, E-Réputation, Operations, Booking Engine, Finance, Marketing
@@ -161,6 +161,33 @@ Build a modern, full-featured PMS with:
   - Quick actions: Pause/Reactivate buttons
   - Status badges: Active (green), Trial (blue), Paused (amber), Expired (red)
   - Filters: Search, Status, Plan
+
+### Hotel Configuration & Management (2026-03-24)
+- [x] **Hotel Management Page** (/superadmin/hotels/{hotelId})
+  - 6 Tabs: Informations, Abonnement, Modules, Chambres, Équipements, Services
+  - Complete hotel info form (name, address, stars, check-in/out times, etc.)
+- [x] **Subscription Tab** - Complete subscription management for each hotel
+  - Current plan display: Plan name, Price, Max users, Expiry date
+  - **4 Quick Action Buttons**:
+    - Upgrade / Downgrade: Change plan with price preview
+    - Gérer les Modules: Toggle ON/OFF modules and features per hotel
+    - Prolonger l'essai: Extend trial period with days and reason
+    - Mettre en pause / Réactiver: Pause or reactivate subscription
+  - Available plans display for reference
+- [x] **Modules Tab** - View and configure active modules per hotel
+  - List of enabled modules with feature count
+  - Feature badges per module
+  - Configure button opens management modal
+- [x] **Chambres Tab** - Room configuration
+  - Room Types CRUD (code, name, capacity, base price, amenities)
+  - Rooms CRUD (number, floor, type, status)
+  - Visual room grid with status colors
+- [x] **Équipements Tab** - Equipment management
+  - Equipment CRUD (name, category, quantity)
+  - Categories: Room, Common area, Spa, Restaurant, Other
+- [x] **Services Tab** - Hotel services management
+  - Services CRUD (name, description, price, included flag)
+  - Categories: General, Restaurant, Spa, Activities, Transport
 
 ---
 
@@ -242,6 +269,19 @@ Build a modern, full-featured PMS with:
 - `POST /api/hotels/{id}/recruitment/candidates/{id}/interviews`
 - `GET /api/hotels/{id}/recruitment/pipeline-stats`
 
+### Super Admin Hotel Configuration
+- `GET /api/superadmin/hotels/{hotel_id}/config` - Get complete hotel config (info, rooms, equipment, services, subscription)
+- `PUT /api/superadmin/hotels/{hotel_id}/config` - Update hotel info
+- `GET/POST/PUT/DELETE /api/superadmin/hotels/{hotel_id}/room-types` - Room types CRUD
+- `GET/POST/DELETE /api/superadmin/hotels/{hotel_id}/rooms` - Rooms CRUD
+- `POST /api/superadmin/hotels/{hotel_id}/rooms/bulk` - Bulk create rooms
+- `GET/POST/DELETE /api/superadmin/hotels/{hotel_id}/equipment` - Equipment CRUD
+- `GET/POST/DELETE /api/superadmin/hotels/{hotel_id}/services` - Services CRUD
+- `POST /api/superadmin/hotels/{hotel_id}/subscription/assign` - Assign plan to hotel
+- `POST /api/superadmin/hotels/{hotel_id}/subscription/modify` - Upgrade/downgrade/add modules
+- `POST /api/superadmin/hotels/{hotel_id}/subscription/extend-trial` - Extend trial period
+- `GET /api/superadmin/hotels/{hotel_id}/subscription/modules` - Get current modules
+
 ### Super Admin Subscription Catalog
 - `GET /api/superadmin/catalog/modules` - List all 10 configurable modules
 - `GET /api/superadmin/catalog/plans` - List all subscription plans
@@ -313,6 +353,8 @@ Build a modern, full-featured PMS with:
 - Backend: `/app/backend/server.py`
 - **Super Admin Backend**: `/app/backend/superadmin/routes.py`, `/app/backend/superadmin/models.py`, `/app/backend/superadmin/pdf_generator.py`
 - Frontend Entry: `/app/frontend/src/App.jsx`
+- **Hotel Management**: `/app/frontend/src/pages/superadmin/SAHotelManagement.jsx`
+- **Hotel Config Backend**: `/app/backend/superadmin/hotel_config_routes.py`
 - **Super Admin Frontend**: `/app/frontend/src/pages/superadmin/SuperAdminApp.jsx`
 - **Subscription Catalog**: `/app/frontend/src/pages/superadmin/SACatalog.jsx`
 - **Subscription Lifecycle**: `/app/frontend/src/pages/superadmin/SASubscriptionsLifecycle.jsx`
