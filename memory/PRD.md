@@ -10,15 +10,17 @@ Build a modern, full-featured PMS with:
 - Night Audit and Accounting Reports
 - Staff Management (time tracking, payroll, contracts, scheduling)
 - Advanced Paid Leave (CP) and Public Holidays management
+- **Super Admin SaaS Back-Office** (multi-tenant, subscriptions, billing, contracts)
 - Modern UI with violet/purple accent, white/light grey backgrounds
 - Custom JWT authentication
-- Payment integrations (Stripe, Adyen, PayPal)
+- Payment integrations (SEPA direct debit, Stripe scaffolded)
 
 ## Tech Stack
 - **Backend**: FastAPI + MongoDB (Motor async driver)
 - **Frontend**: React + Vite + TailwindCSS + shadcn/ui
 - **Authentication**: Custom JWT-based auth
-- **Payments**: Stripe (scaffolded), Adyen, PayPal
+- **Payments**: SEPA Direct Debit (mandates), Stripe (scaffolded), Adyen, PayPal
+- **PDF Generation**: ReportLab (contracts, SEPA mandates, invoices)
 
 ## Design System (NEW - Implemented 2026-03-24)
 - **Primary Color**: Violet/Purple (#7c3aed)
@@ -107,6 +109,29 @@ Build a modern, full-featured PMS with:
 - [x] Filters: search, status, job offer
 - [x] Interview scheduling (endpoint ready)
 
+### Super Admin SaaS Module (Complete - 2026-03-24)
+- [x] **Multi-tenant Architecture** - Isolated hotel data
+- [x] **RBAC** - super_admin role with exclusive access
+- [x] **Dashboard KPIs**: MRR, ARR, Churn Rate, Hotels count, Users count, Expiration alerts
+- [x] **Plan Distribution Chart**: Basic, Pro, Premium, Enterprise
+- [x] **Growth Chart**: 6-month hotel acquisition trend
+- [x] **Hotels Management**: CRUD, search, status filter, suspend/activate
+- [x] **Subscription Plans**:
+  - Basic: €99/mo, 5 users, PMS only
+  - Pro: €199/mo, 15 users, PMS + Staff + CRM
+  - Premium: €349/mo, 30 users, PMS + Staff + CRM + RMS + Finance
+  - Enterprise: €599/mo, unlimited users, all modules + API
+- [x] **Payment Options**: Monthly or Annual (-5% discount)
+- [x] **Trial Periods**: 15 days free OR 50% off first month
+- [x] **PDF Generation**:
+  - SaaS Contract (12 articles, signature block)
+  - SEPA Direct Debit Mandate (RUM, IBAN, BIC)
+  - Invoices (auto-generated)
+- [x] **SEPA Mandates**: Create, sign, track status
+- [x] **User Invitations**: Per hotel with role assignment
+- [x] **Activity Logs**: Full audit trail of admin actions
+- [x] **Support Mode**: Simulate user view by role (scaffolded)
+
 ---
 
 ## API Endpoints
@@ -177,7 +202,7 @@ Build a modern, full-featured PMS with:
 - `POST /api/hotels/{id}/recruitment/job-offers`
 - `PUT /api/hotels/{id}/recruitment/job-offers/{id}`
 - `DELETE /api/hotels/{id}/recruitment/job-offers/{id}`
-- `POST /api/hotels/{id}/recruitment/job-offers/generate-ai` (**MOCK**)
+- `POST /api/hotels/{id}/recruitment/job-offers/generate-ai` (**REAL GPT-4o**)
 - `GET /api/hotels/{id}/recruitment/candidates`
 - `POST /api/hotels/{id}/recruitment/candidates`
 - `PUT /api/hotels/{id}/recruitment/candidates/{id}`
@@ -195,6 +220,7 @@ Build a modern, full-featured PMS with:
 - staff_contracts, staff_payroll
 - leave_config, leave_balances, leave_transactions, leave_requests
 - public_holidays, holidays_worked
+- **Super Admin**: sa_hotels, sa_subscriptions, sa_hotel_users, sa_sepa_mandates, sa_invoices, superadmin_logs
 
 ---
 
@@ -208,19 +234,25 @@ Build a modern, full-featured PMS with:
 - [x] Add Employee Wizard (3 steps)
 - [x] Staff Configuration (departments, shifts, roles, documents, settings)
 - [x] Staff Reporting with real PDF/Excel exports
-- [x] Staff Recrutement with MOCK AI generation
+- [x] Staff Recrutement with REAL GPT-4o AI generation
+- [x] **Super Admin SaaS Module** (multi-tenant, subscriptions, billing, PDF contracts, SEPA mandates)
 
 ## P1 Features (Upcoming)
 - [ ] Document storage integration (upload employee documents to cloud)
 - [ ] Background scheduler for automated monthly CP accrual (CRON)
 - [ ] Leave calendar visualization
+- [ ] Electronic signature integration (DocuSign/HelloSign)
+- [ ] Super Admin: Subscriptions management page (full CRUD)
+- [ ] Super Admin: Users management page per hotel
+- [ ] Super Admin: Invoices management with payment tracking
 
 ## P2 Features (Future)
 - [ ] Payment webhooks (Stripe/Adyen/PayPal production)
 - [ ] Channel Manager API sync (D-EDGE, SiteMinder)
 - [ ] Accounting export (Sage, QuickBooks, Xero)
-- [ ] Multi-hotel support
+- [ ] Multi-hotel support for regular users
 - [ ] Mobile app
+- [ ] Super Admin: Support mode with full user simulation
 
 ---
 
@@ -234,7 +266,9 @@ Build a modern, full-featured PMS with:
 
 ## Key Files
 - Backend: `/app/backend/server.py`
+- **Super Admin Backend**: `/app/backend/superadmin/routes.py`, `/app/backend/superadmin/models.py`, `/app/backend/superadmin/pdf_generator.py`
 - Frontend Entry: `/app/frontend/src/App.jsx`
+- **Super Admin Frontend**: `/app/frontend/src/pages/superadmin/SuperAdminApp.jsx`
 - Design System: `/app/frontend/src/index.css`, `/app/frontend/tailwind.config.js`
 - Navigation: `/app/frontend/src/components/layout/TopNavigation.jsx`, `/app/frontend/src/components/layout/SubNavigation.jsx`
 - Staff Planning: `/app/frontend/src/pages/staff/StaffPlanning.jsx`
@@ -249,11 +283,21 @@ Build a modern, full-featured PMS with:
 ## Mocked Features
 - **Document Storage**: Employee documents in wizard are stored in form state only, not persisted to backend storage. Needs integration with object storage service.
 - **Payment Webhooks**: Stripe/Adyen/PayPal endpoints are scaffolded but lack production event handling.
+- **Electronic Signature**: Contract/SEPA signature is manual (PDF download). DocuSign/HelloSign integration pending user API key.
 
-## Real AI Integration (2026-03-24)
-- **AI Job Offer Generation**: Uses GPT-4o via Emergent Universal Key. Generates professional French job descriptions, requirements, and salary suggestions based on job title, department, and contract type. Fallback to mock templates if AI unavailable.
+## Real Integrations (2026-03-24)
+- **AI Job Offer Generation**: Uses GPT-4o via Emergent Universal Key. Generates professional French job descriptions, requirements, and salary suggestions.
+- **PDF Generation**: ReportLab for SaaS contracts, SEPA mandates, and invoices.
 
-## Test Credentials (Updated)
+## Test Credentials
+
+### Regular User
 - Email: admin@flowtym.com
 - Password: admin123
 - Hotel ID: 4f02769a-5f63-4121-bb97-a7061563d934
+
+### Super Admin
+- Email: superadmin@flowtym.com
+- Password: super123
+- Access: /superadmin route
+- Registration requires secret key: flowtym-superadmin-2024
