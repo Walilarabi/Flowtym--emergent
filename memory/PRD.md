@@ -98,13 +98,54 @@ Build a modern, full-featured PMS with:
 - [x] Documents RH - HR document types with mandatory/OCR flags
 - [x] Parametres Staff - logo, emails, toggles, CP settings
 
-### Staff Reporting (Complete - 2026-03-24)
-- [x] KPI Cards (Collaborateurs actifs, Heures totales, Heures supp., Arrets maladie)
-- [x] Period selector with month/year navigation
-- [x] Employee details table with TOTAUX row
-- [x] Hours by service bar chart
-- [x] **REAL Functional Exports** - PDF (window.print), Excel (CSV download)
-- [x] Auto-report toggle with email configuration
+### Staff Reporting - Variables de Paie (Complete - 2026-03-24)
+- [x] **KPI Cards** (6 indicateurs):
+  - Collaborateurs actifs
+  - Heures totales
+  - Heures sup. 25% (nouvelle distinction)
+  - Heures sup. 50% (nouvelle distinction)
+  - Congés payés (jours)
+  - Maladie (jours)
+- [x] **Period selector** avec navigation mois/année
+- [x] **Tableau détail par collaborateur**:
+  - Colonnes: H. Norm., H.Sup 25%, H.Sup 50%, CP, Maladie, PDF
+  - Ligne TOTAUX avec calculs
+- [x] **Graphique heures par service** avec légende majorations
+- [x] **Actions Section**:
+  - Bouton "Générer les rapports" (créé PDFs individuels + global + Excel + CSV)
+  - Bouton "PDF Global" (téléchargement récapitulatif)
+  - Bouton "Excel" (variables de paie structurées)
+  - Bouton "CSV" (compatible logiciels de paie)
+  - Bouton "Envoyer au comptable" (EMAIL MOCKÉ)
+  - Bouton "Configuration" (modal paramétrage)
+- [x] **Indicateurs de statut**: Rapports générés (date), Dernier envoi email
+- [x] **Backend Payroll Reporting Module** (`/backend/payroll_reporting/`)
+  - `models.py`: PayrollReportConfig, EmployeePayrollData, GlobalPayrollSummary
+  - `pdf_generator.py`: Génération PDF avec ReportLab (fiches individuelles + récapitulatif)
+  - `excel_generator.py`: Génération Excel/CSV avec openpyxl (3 feuilles: Variables, Résumé, Absences)
+  - `email_service.py`: Service email MOCKÉ (simulation envoi)
+  - `routes.py`: APIs REST complètes
+- [x] **APIs Payroll Reports**:
+  - `GET/PUT /hotels/{id}/payroll-reports/config` - Configuration (emails comptable, seuils h.sup, envoi auto)
+  - `GET /hotels/{id}/payroll-reports/preview` - Prévisualisation sans génération
+  - `POST /hotels/{id}/payroll-reports/generate` - Génération des fichiers
+  - `GET /hotels/{id}/payroll-reports/reports` - Liste rapports générés
+  - `GET /hotels/{id}/payroll-reports/reports/{id}/download/{type}` - Téléchargement (global_pdf, excel, csv, employee_pdf_{id})
+  - `POST /hotels/{id}/payroll-reports/reports/{id}/send` - Envoi email (MOCK)
+  - `GET /hotels/{id}/payroll-reports/email-logs` - Historique envois
+- [x] **Configuration heures supplémentaires**:
+  - Seuil 25%: configurable (défaut 8h)
+  - Seuil 50%: au-delà du seuil 25%
+  - Heures de nuit: 21h-6h avec majoration 25%
+- [x] **Contenu PDF salarié**:
+  - Infos salarié: Nom, Prénom, Poste, Service, Type contrat, Date entrée
+  - Période: Mois, Année, Jours dans la période, Heures contractuelles
+  - Temps de travail: H. normales, H. sup 25%, H. sup 50%, H. nuit, H. fériés
+  - Absences: CP, Maladie, Non justifiées, Autres
+  - Synthèse: Total heures à payer, Écart vs contrat
+- [x] **PDF récapitulatif global**: KPIs, Absences totales, Par service, Détail tous salariés
+- [x] **Modal Configuration**: Emails comptable, Seuil H.Sup, Jour envoi auto, Templates email
+- [x] **Modal Envoi Email**: Warning MODE MOCK, Destinataires, Sujet, Corps, Aperçu pièces jointes
 
 ### Staff Recrutement (Complete - 2026-03-24)
 - [x] Pipeline view (Kanban) - Nouveaux, Présélection, Entretien, Offre, Embauché
@@ -415,10 +456,12 @@ Build a modern, full-featured PMS with:
 - [x] **CRM Module** (clients, segmentation, communications, workflows, campaigns, analytics, AI intelligence)
 
 ## P1 Features (Upcoming)
-- [ ] Document storage integration (upload employee documents to cloud)
+- [ ] **Intégrer envoi email réel** pour les rapports de paie (Resend/SendGrid - actuellement MOCKÉ)
+- [ ] Document storage integration (upload employee documents to cloud via Object Storage API)
 - [ ] Background scheduler for automated monthly CP accrual (CRON)
 - [ ] Leave calendar visualization
 - [ ] Super Admin: Stripe integration for real payment processing
+- [ ] Connect Channel Manager to real OTA APIs (D-EDGE, SiteMinder)
 
 ## P2 Features (Future)
 - [ ] Payment webhooks (Stripe/Adyen/PayPal production)

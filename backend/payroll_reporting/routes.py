@@ -503,6 +503,10 @@ async def send_payroll_report_email(hotel_id: str, report_id: str, request: Send
     Envoyer le rapport de paie par email au comptable.
     ATTENTION: Actuellement en mode MOCK (simulation d'envoi)
     """
+    # Validation des destinataires
+    if not request.recipients or len(request.recipients) == 0:
+        raise HTTPException(status_code=400, detail="Au moins un destinataire est requis")
+    
     now = datetime.now(timezone.utc).isoformat()
     
     # Recuperer le rapport
