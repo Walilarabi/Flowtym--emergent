@@ -10,8 +10,9 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Badge } from '@/components/ui/badge'
-import { FileText, Plus, Download, Eye, Printer, MoreHorizontal, CheckCircle, AlertTriangle } from 'lucide-react'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { FileText, Plus, Download, Eye, Printer, MoreHorizontal, CheckCircle, AlertTriangle, ExternalLink, Copy, FileCheck, Building2 } from 'lucide-react'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 
 const CONTRACT_TYPES = [
   { value: 'cdi', label: 'CDI', color: 'bg-emerald-100 text-emerald-700' },
@@ -37,6 +38,9 @@ export const StaffContracts = () => {
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState('active')
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [dpaeModalOpen, setDpaeModalOpen] = useState(false)
+  const [selectedContract, setSelectedContract] = useState(null)
+  const [hotelSettings, setHotelSettings] = useState(null)
   const [formData, setFormData] = useState({
     employee_id: '', contract_type: 'cdi', start_date: format(new Date(), 'yyyy-MM-dd'),
     end_date: '', position: 'receptionist', department: 'front_office',
@@ -48,12 +52,14 @@ export const StaffContracts = () => {
     setLoading(true)
     try {
       const params = statusFilter !== 'all' ? `?status=${statusFilter}` : ''
-      const [contRes, empRes] = await Promise.all([
+      const [contRes, empRes, settingsRes] = await Promise.all([
         api.get(`/hotels/${currentHotel.id}/staff/contracts${params}`),
-        api.get(`/hotels/${currentHotel.id}/staff/employees?is_active=true`)
+        api.get(`/hotels/${currentHotel.id}/staff/employees?is_active=true`),
+        api.get(`/hotels/${currentHotel.id}/config/settings`).catch(() => ({ data: null }))
       ])
       setContracts(contRes.data)
       setEmployees(empRes.data)
+      setHotelSettings(settingsRes.data)
     } catch (error) {
       toast.error('Erreur lors du chargement')
     } finally {
@@ -86,6 +92,21 @@ export const StaffContracts = () => {
 
   const handleGenerateDocument = (contract) => {
     toast.success('Generation du contrat PDF...')
+  }
+
+  const handleOpenDPAE = (contract) => {
+    const employee = employees.find(e => e.id === contract.employee_id)
+    setSelectedContract({ ...contract, employee })
+    setDpaeModalOpen(true)
+  }
+
+  const handleCopyToClipboard = (text, fieldName) => {
+    navigator.clipboard.writeText(text)
+    toast.success(`${fieldName} copié dans le presse-papiers`)
+  }
+
+  const handleOpenURSSAF = () => {
+    window.open('https://www.due.urssaf.fr/declarant/index.jsf', '_blank')
   }
 
   const getContractType = (type) => CONTRACT_TYPES.find(c => c.value === type)
@@ -175,6 +196,10 @@ export const StaffContracts = () => {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleGenerateDocument(contract)}><Download className="w-4 h-4 mr-2" />Telecharger PDF</DropdownMenuItem>
                           <DropdownMenuItem><Printer className="w-4 h-4 mr-2" />Imprimer</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleOpenDPAE(contract)} className="text-blue-600">
+                            <FileCheck className="w-4 h-4 mr-2" />Declaration DPAE
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>
@@ -233,6 +258,178 @@ export const StaffContracts = () => {
           </form>
         </SheetContent>
       </Sheet>
+
+      {/* DPAE Modal */}
+      <Dialog open={dpaeModalOpen} onOpenChange={setDpaeModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileCheck className="w-5 h-5 text-blue-600" />
+              Declaration Prealable a l'Embauche (DPAE)
+            </DialogTitle>
+            <DialogDescription>
+              La DPAE doit etre effectuee au plus tot 8 jours avant l'embauche et au plus tard le jour de l'embauche avant la prise de fonction.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedContract && (
+            <div className="space-y-4">
+              {/* SIRET Status */}
+              <div className={`p-4 rounded-lg border ${hotelSettings?.siret ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <Building2 className={`w-5 h-5 ${hotelSettings?.siret ? 'text-emerald-600' : 'text-amber-600'}`} />
+                  <span className="font-semibold">{hotelSettings?.siret ? 'SIRET configure' : 'SIRET non configure'}</span>
+                </div>
+                {hotelSettings?.siret ? (
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-lg">{hotelSettings.siret}</span>
+                    <button onClick={() => handleCopyToClipboard(hotelSettings.siret, 'SIRET')} className="p-1 hover:bg-emerald-100 rounded">
+                      <Copy className="w-4 h-4 text-emerald-600" />
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-amber-700">
+                    Configurez votre numero SIRET dans Configuration {'>'} Parametres Staff pour pre-remplir la DPAE.
+                  </p>
+                )}
+              </div>
+
+              {/* Employee Information */}
+              <div className="bg-slate-50 rounded-lg p-4 space-y-3">
+                <h3 className="font-semibold text-slate-800 mb-3">Informations du salarie</h3>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-slate-500">Nom</Label>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{selectedContract.employee?.last_name || selectedContract.employee_name?.split(' ')[1] || '-'}</span>
+                      <button onClick={() => handleCopyToClipboard(selectedContract.employee?.last_name || '', 'Nom')} className="p-1 hover:bg-slate-200 rounded">
+                        <Copy className="w-3 h-3 text-slate-400" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-slate-500">Prenom</Label>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{selectedContract.employee?.first_name || selectedContract.employee_name?.split(' ')[0] || '-'}</span>
+                      <button onClick={() => handleCopyToClipboard(selectedContract.employee?.first_name || '', 'Prenom')} className="p-1 hover:bg-slate-200 rounded">
+                        <Copy className="w-3 h-3 text-slate-400" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-slate-500">Date de naissance</Label>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{selectedContract.employee?.date_of_birth ? format(parseISO(selectedContract.employee.date_of_birth), 'dd/MM/yyyy') : '-'}</span>
+                      {selectedContract.employee?.date_of_birth && (
+                        <button onClick={() => handleCopyToClipboard(format(parseISO(selectedContract.employee.date_of_birth), 'dd/MM/yyyy'), 'Date de naissance')} className="p-1 hover:bg-slate-200 rounded">
+                          <Copy className="w-3 h-3 text-slate-400" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-slate-500">N Securite Sociale</Label>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium font-mono">{selectedContract.employee?.social_security_number || '-'}</span>
+                      {selectedContract.employee?.social_security_number && (
+                        <button onClick={() => handleCopyToClipboard(selectedContract.employee.social_security_number, 'N SS')} className="p-1 hover:bg-slate-200 rounded">
+                          <Copy className="w-3 h-3 text-slate-400" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs text-slate-500">Nationalite</Label>
+                  <span className="font-medium">{selectedContract.employee?.nationality || 'Francaise'}</span>
+                </div>
+              </div>
+
+              {/* Contract Information */}
+              <div className="bg-blue-50 rounded-lg p-4 space-y-3">
+                <h3 className="font-semibold text-slate-800 mb-3">Informations du contrat</h3>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-slate-500">Type de contrat</Label>
+                    <div className="flex items-center gap-2">
+                      <Badge className={getContractType(selectedContract.contract_type)?.color}>
+                        {getContractType(selectedContract.contract_type)?.label}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-slate-500">Date d'embauche</Label>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{format(parseISO(selectedContract.start_date), 'dd/MM/yyyy')}</span>
+                      <button onClick={() => handleCopyToClipboard(format(parseISO(selectedContract.start_date), 'dd/MM/yyyy'), 'Date embauche')} className="p-1 hover:bg-blue-100 rounded">
+                        <Copy className="w-3 h-3 text-blue-400" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-slate-500">Heure d'embauche prevue</Label>
+                    <span className="font-medium">09:00</span>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-slate-500">Duree du travail</Label>
+                    <span className="font-medium">{selectedContract.weekly_hours || 35}h/semaine</span>
+                  </div>
+                </div>
+
+                {selectedContract.end_date && (
+                  <div className="space-y-1">
+                    <Label className="text-xs text-slate-500">Date de fin (CDD)</Label>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{format(parseISO(selectedContract.end_date), 'dd/MM/yyyy')}</span>
+                      <button onClick={() => handleCopyToClipboard(format(parseISO(selectedContract.end_date), 'dd/MM/yyyy'), 'Date fin')} className="p-1 hover:bg-blue-100 rounded">
+                        <Copy className="w-3 h-3 text-blue-400" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-1">
+                  <Label className="text-xs text-slate-500">Periode d'essai</Label>
+                  <span className="font-medium">{selectedContract.trial_period_days || 60} jours</span>
+                </div>
+              </div>
+
+              {/* Action Alert */}
+              <div className="bg-violet-50 border border-violet-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-violet-600 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-semibold text-violet-800">Important</p>
+                    <p className="text-violet-700 mt-1">
+                      Vous devez effectuer la DPAE sur le portail officiel de l'URSSAF. 
+                      Utilisez les boutons "Copier" pour transferer facilement les informations.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="flex-col sm:flex-row gap-2 mt-4">
+            <Button variant="outline" onClick={() => setDpaeModalOpen(false)}>
+              Fermer
+            </Button>
+            <Button onClick={handleOpenURSSAF} className="bg-blue-600 hover:bg-blue-700">
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Acceder au portail URSSAF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
