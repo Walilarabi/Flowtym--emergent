@@ -1,0 +1,99 @@
+{
+  "summary": "Completed comprehensive testing of Super Admin Catalog and Subscription Lifecycle features. All 11 backend API tests passed (1 skipped). All frontend pages verified working: Catalog page shows plans with modules/pricing/subscriber count, Create/Edit plan modal with module toggles and feature configuration, Subscriptions Lifecycle page shows all subscriptions with status badges, Quick actions (pause, reactivate) work from subscriptions table, Pause modal appears and allows reason input.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "passed_tests": [
+    "Backend: GET /api/superadmin/catalog/modules - returns list of 10 available modules (200)",
+    "Backend: GET /api/superadmin/catalog/plans - returns list of plans (200)",
+    "Backend: GET /api/superadmin/catalog/plans?include_inactive=true - includes inactive plans (200)",
+    "Backend: POST /api/superadmin/catalog/plans - create new plan with modules and features (200)",
+    "Backend: POST /api/superadmin/catalog/plans - duplicate code correctly rejected (400)",
+    "Backend: PUT /api/superadmin/catalog/plans/{id} - update plan (200)",
+    "Backend: DELETE /api/superadmin/catalog/plans/{id} - soft delete plan (200)",
+    "Backend: GET /api/superadmin/subscriptions/list - list all subscriptions (200)",
+    "Backend: GET /api/superadmin/subscriptions/list?status=active - filter by status (200)",
+    "Backend: POST /api/superadmin/subscriptions/{id}/pause - pause subscription (200)",
+    "Backend: POST /api/superadmin/subscriptions/{id}/reactivate - reactivate paused subscription (200)",
+    "Backend: POST /api/superadmin/subscriptions/{id}/downgrade/check - downgrade compatibility check endpoint exists (200/404)",
+    "Frontend: /superadmin/catalog displays plan cards with modules, pricing, subscriber count",
+    "Frontend: Starter plan shows 79€/mois, 948€/an (-10%), 3 users max, 14 jours trial, PMS+CRM modules",
+    "Frontend: Business plan shows 199€/mois, 2388€/an (-15%), 15 users max, 30 jours trial, 12 mois engagement, PMS+Staff+CRM+Finance modules, 'Populaire' badge",
+    "Frontend: 'Nouveau Plan' button opens create modal with all form fields",
+    "Frontend: Create plan modal has module toggles (10 modules) with feature counts",
+    "Frontend: Edit plan modal pre-fills existing plan data correctly",
+    "Frontend: Edit plan modal shows enabled modules (PMS, CRM) with Switch toggles",
+    "Frontend: /superadmin/subscriptions displays stats cards (Total, Actifs, En essai, En pause, MRR)",
+    "Frontend: Subscriptions table shows hotel name, plan badge, status badge, users count, price, end date",
+    "Frontend: Status badges display correctly (Actif=green, Essai=blue, Annulé=gray)",
+    "Frontend: Pause button (amber) visible for active subscriptions",
+    "Frontend: Pause modal opens with hotel info, reason input, and confirm button",
+    "Frontend: Pause modal shows 'L'accès sera suspendu mais les données seront conservées. La facturation sera interrompue.'"
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_catalog_lifecycle.py",
+    "/app/test_reports/pytest/pytest_catalog_lifecycle.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_catalog_lifecycle.py"
+  ],
+  "success_rate": {
+    "backend": "100% (11/11 tests passed, 1 skipped)",
+    "frontend": "100% (All UI tests passed)"
+  },
+  "test_credentials": {
+    "super_admin": {
+      "email": "superadmin@flowtym.com",
+      "password": "super123"
+    }
+  },
+  "seed_data_creation": "Created and cleaned up TEST_ prefixed plans during backend testing. Existing plans: Starter (79€/mois, PMS+CRM) and Business (199€/mois, PMS+Staff+CRM+Finance, featured).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Catalog and Subscription Lifecycle features fully tested. Catalog page (/superadmin/catalog) shows plan cards with modules, pricing, trial days, commitment, subscriber count. Create/Edit modal has module toggles using Shadcn Switch components. Subscriptions Lifecycle page (/superadmin/subscriptions) shows all subscriptions (legacy+new format merged) with status badges, quick actions (pause/reactivate), and filters. Pause/Reactivate flow works correctly. Downgrade check endpoint exists but requires subscription in sa_subscriptions collection (new format).",
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  },
+  "features_verified": {
+    "catalog_modules_api": {
+      "endpoint": "GET /api/superadmin/catalog/modules",
+      "returns": "10 modules: pms, staff, channel_manager, crm, rms, e_reputation, operations, booking_engine, finance, marketing",
+      "each_module_has": "code, name, description, icon, features (dict)"
+    },
+    "catalog_plans_api": {
+      "list": "GET /api/superadmin/catalog/plans",
+      "create": "POST /api/superadmin/catalog/plans",
+      "update": "PUT /api/superadmin/catalog/plans/{id}",
+      "delete": "DELETE /api/superadmin/catalog/plans/{id} (soft delete if active subscribers)"
+    },
+    "subscription_lifecycle_api": {
+      "list": "GET /api/superadmin/subscriptions/list (merges legacy sa_hotels + new sa_subscriptions)",
+      "pause": "POST /api/superadmin/subscriptions/{id}/pause",
+      "reactivate": "POST /api/superadmin/subscriptions/{id}/reactivate",
+      "downgrade_check": "POST /api/superadmin/subscriptions/{id}/downgrade/check"
+    },
+    "catalog_page": {
+      "route": "/superadmin/catalog",
+      "plan_cards": "Shows name, code, description, pricing (monthly/annual with discount), max users, trial days, commitment, subscriber count, modules list",
+      "create_modal": "Form fields: name, code, description, price_monthly, price_annual, annual_discount_percent, max_users, trial_days, commitment_months, is_active, is_featured, modules with feature toggles",
+      "edit_modal": "Same as create but pre-filled, code field disabled"
+    },
+    "subscriptions_lifecycle_page": {
+      "route": "/superadmin/subscriptions",
+      "stats_cards": ["Total", "Actifs", "En essai", "En pause", "MRR"],
+      "filters": ["Search by hotel name", "Status filter", "Plan filter"],
+      "table_columns": ["Hôtel", "Plan", "Statut", "Utilisateurs", "Prix", "Échéance", "Actions"],
+      "quick_actions": ["Pause (for active)", "Reactivate (for paused)", "More options dropdown"],
+      "pause_modal": "Shows hotel info, reason input, confirm button"
+    }
+  }
+}

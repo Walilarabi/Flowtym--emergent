@@ -7,7 +7,7 @@ import requests
 import os
 import uuid
 
-BASE_URL = os.environ.get('VITE_BACKEND_URL', 'https://staff-portal-preview-2.preview.emergentagent.com')
+BASE_URL = os.environ.get('VITE_BACKEND_URL', 'https://contract-signature.preview.emergentagent.com')
 
 # Test credentials
 SUPERADMIN_EMAIL = "superadmin@flowtym.com"

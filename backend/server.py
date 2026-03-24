@@ -3777,6 +3777,12 @@ async def sa_create_subscription(sub: SubscriptionCreate, credentials: HTTPAutho
     from superadmin.routes import create_subscription
     return await create_subscription(sub, db, credentials)
 
+# Lifecycle - List subscriptions (MUST be before parameterized routes)
+@api_router.get("/superadmin/subscriptions/list")
+async def sa_list_subscriptions(status: Optional[str] = None, plan_id: Optional[str] = None, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.catalog_routes import list_hotel_subscriptions
+    return await list_hotel_subscriptions(db, status, plan_id, credentials)
+
 @api_router.get("/superadmin/subscriptions/{hotel_id}")
 async def sa_get_subscription(hotel_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
     from superadmin.routes import get_subscription
@@ -3879,6 +3885,97 @@ async def sa_get_signature_status(signature_request_id: str, credentials: HTTPAu
 async def sa_list_signature_requests(hotel_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
     from superadmin.routes import list_signature_requests
     return await list_signature_requests(hotel_id, db, credentials)
+
+# ===================== SUBSCRIPTION CATALOG & LIFECYCLE =====================
+from superadmin.catalog_models import (
+    SubscriptionPlanCreate, SubscriptionPlanUpdate,
+    PauseSubscriptionRequest, ReactivateSubscriptionRequest,
+    UpgradeSubscriptionRequest, DowngradeSubscriptionRequest, DowngradeAction
+)
+
+# Catalog - Modules
+@api_router.get("/superadmin/catalog/modules")
+async def sa_get_modules(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.catalog_routes import get_available_modules
+    return await get_available_modules(credentials)
+
+# Catalog - Plans
+@api_router.get("/superadmin/catalog/plans")
+async def sa_list_catalog_plans(include_inactive: bool = False, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.catalog_routes import list_subscription_plans
+    return await list_subscription_plans(db, include_inactive, credentials)
+
+@api_router.get("/superadmin/catalog/plans/{plan_id}")
+async def sa_get_catalog_plan(plan_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.catalog_routes import get_subscription_plan
+    return await get_subscription_plan(plan_id, db, credentials)
+
+@api_router.post("/superadmin/catalog/plans")
+async def sa_create_catalog_plan(plan: SubscriptionPlanCreate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.catalog_routes import create_subscription_plan
+    return await create_subscription_plan(plan, db, credentials)
+
+@api_router.put("/superadmin/catalog/plans/{plan_id}")
+async def sa_update_catalog_plan(plan_id: str, plan_update: SubscriptionPlanUpdate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.catalog_routes import update_subscription_plan
+    return await update_subscription_plan(plan_id, plan_update, db, credentials)
+
+@api_router.delete("/superadmin/catalog/plans/{plan_id}")
+async def sa_delete_catalog_plan(plan_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.catalog_routes import delete_subscription_plan
+    return await delete_subscription_plan(plan_id, db, credentials)
+
+@api_router.get("/superadmin/subscriptions/{subscription_id}/detail")
+async def sa_get_subscription_detail(subscription_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.catalog_routes import get_subscription_detail
+    return await get_subscription_detail(subscription_id, db, credentials)
+
+# Lifecycle - Pause/Reactivate
+@api_router.post("/superadmin/subscriptions/{subscription_id}/pause")
+async def sa_pause_subscription(subscription_id: str, request: PauseSubscriptionRequest, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.catalog_routes import pause_subscription
+    return await pause_subscription(subscription_id, request, db, credentials)
+
+@api_router.post("/superadmin/subscriptions/{subscription_id}/reactivate")
+async def sa_reactivate_subscription(subscription_id: str, request: ReactivateSubscriptionRequest, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.catalog_routes import reactivate_subscription
+    return await reactivate_subscription(subscription_id, request, db, credentials)
+
+# Lifecycle - Upgrade
+@api_router.post("/superadmin/subscriptions/{subscription_id}/upgrade/check")
+async def sa_check_upgrade(subscription_id: str, request: UpgradeSubscriptionRequest, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.catalog_routes import check_upgrade_compatibility
+    return await check_upgrade_compatibility(subscription_id, request, db, credentials)
+
+@api_router.post("/superadmin/subscriptions/{subscription_id}/upgrade")
+async def sa_upgrade_subscription(subscription_id: str, request: UpgradeSubscriptionRequest, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.catalog_routes import upgrade_subscription
+    return await upgrade_subscription(subscription_id, request, db, credentials)
+
+# Lifecycle - Downgrade
+@api_router.post("/superadmin/subscriptions/{subscription_id}/downgrade/check")
+async def sa_check_downgrade(subscription_id: str, request: DowngradeSubscriptionRequest, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.catalog_routes import check_downgrade_compatibility
+    return await check_downgrade_compatibility(subscription_id, request, db, credentials)
+
+@api_router.post("/superadmin/subscriptions/{subscription_id}/downgrade")
+async def sa_downgrade_subscription(subscription_id: str, request: DowngradeSubscriptionRequest, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.catalog_routes import downgrade_subscription
+    return await downgrade_subscription(subscription_id, request, db, credentials)
+
+# Create subscription from catalog
+@api_router.post("/superadmin/subscriptions/create-from-catalog")
+async def sa_create_subscription_from_catalog(
+    hotel_id: str,
+    plan_id: str,
+    payment_frequency: str = "monthly",
+    trial_days: Optional[int] = None,
+    custom_max_users: Optional[int] = None,
+    custom_price: Optional[float] = None,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    from superadmin.catalog_routes import create_subscription_from_catalog
+    return await create_subscription_from_catalog(hotel_id, plan_id, payment_frequency, trial_days, custom_max_users, custom_price, db, credentials)
 
 # Include the router in the main app
 app.include_router(api_router)

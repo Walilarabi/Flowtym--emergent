@@ -5,7 +5,7 @@ import axios from 'axios'
 import {
   Building2, Users, CreditCard, FileText, Settings, BarChart3,
   ChevronRight, Plus, Search, MoreHorizontal, Download, Eye,
-  CheckCircle, XCircle, Clock, AlertTriangle, TrendingUp
+  CheckCircle, XCircle, Clock, AlertTriangle, TrendingUp, Package
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -498,6 +498,7 @@ export const SuperAdminApp = () => {
   const navItems = [
     { path: '/superadmin', label: 'Dashboard', icon: BarChart3 },
     { path: '/superadmin/hotels', label: 'Hôtels', icon: Building2 },
+    { path: '/superadmin/catalog', label: 'Catalogue', icon: Package },
     { path: '/superadmin/subscriptions', label: 'Abonnements', icon: CreditCard },
     { path: '/superadmin/users', label: 'Utilisateurs', icon: Users },
     { path: '/superadmin/invoices', label: 'Facturation', icon: FileText },
@@ -569,7 +570,8 @@ export const SuperAdminApp = () => {
           <Route path="/hotels" element={<SAHotels api={api} />} />
           <Route path="/hotels/new" element={<SAHotelForm api={api} />} />
           <Route path="/hotels/:hotelId" element={<SAHotelDetail api={api} />} />
-          <Route path="/subscriptions" element={<SASubscriptionsPage api={api} />} />
+          <Route path="/catalog" element={<SACatalogPage api={api} />} />
+          <Route path="/subscriptions" element={<SASubscriptionsLifecyclePage api={api} />} />
           <Route path="/users" element={<SAUsersPage api={api} />} />
           <Route path="/invoices" element={<SAInvoicesPage api={api} />} />
           <Route path="/logs" element={<SALogs api={api} />} />
@@ -581,6 +583,9 @@ export const SuperAdminApp = () => {
 
 // Import extended pages from SAPages
 import { SASubscriptions as SASubscriptionsPage, SAUsers as SAUsersPage, SAInvoices as SAInvoicesPage, SAHotelDetail } from './SAPages'
+// Import new catalog and lifecycle pages
+import { SACatalog as SACatalogPage } from './SACatalog'
+import { SASubscriptionsLifecycle as SASubscriptionsLifecyclePage } from './SASubscriptionsLifecycle'
 
 const SALogs = ({ api }) => {
   const [logs, setLogs] = useState([])

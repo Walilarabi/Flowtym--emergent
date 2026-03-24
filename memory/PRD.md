@@ -261,8 +261,8 @@ Build a modern, full-featured PMS with:
 - Password: test123
 
 ## Environment URLs
-- Preview: https://staff-portal-preview-2.preview.emergentagent.com
-- Backend API: https://staff-portal-preview-2.preview.emergentagent.com/api
+- Preview: https://contract-signature.preview.emergentagent.com
+- Backend API: https://contract-signature.preview.emergentagent.com/api
 
 ## Key Files
 - Backend: `/app/backend/server.py`
