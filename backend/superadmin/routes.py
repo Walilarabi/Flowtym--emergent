@@ -898,3 +898,204 @@ async def end_support_session(
     await log_activity(db, "support_end", "support", "", "", user)
     
     return {"message": "Session support terminée"}
+
+# ===================== ELECTRONIC SIGNATURE =====================
+
+from pydantic import BaseModel
+
+class SignatureRequestCreate(BaseModel):
+    hotel_id: str
+    document_type: str  # contract, sepa_mandate
+    signer_email: str
+    signer_name: str
+    test_mode: bool = True
+
+@superadmin_router.post("/signature/send")
+async def send_for_signature(
+    request: SignatureRequestCreate,
+    db,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Send document for electronic signature via Dropbox Sign"""
+    user = verify_superadmin(credentials)
+    
+    from .signature_service import dropbox_sign_service
+    
+    if not dropbox_sign_service.is_available():
+        raise HTTPException(status_code=503, detail="Service de signature électronique non configuré")
+    
+    # Get hotel data
+    hotel = await db.sa_hotels.find_one({"id": request.hotel_id}, {"_id": 0})
+    if not hotel:
+        raise HTTPException(status_code=404, detail="Hôtel non trouvé")
+    
+    # Generate PDF
+    if request.document_type == "contract":
+        sub = await db.sa_subscriptions.find_one(
+            {"hotel_id": request.hotel_id, "status": {"$in": ["active", "trial"]}},
+            {"_id": 0}
+        )
+        if not sub:
+            sub = {"plan": "pro", "plan_name": "Pro", "payment_frequency": "monthly",
+                   "price_monthly": 199, "modules": ["pms", "staff", "crm"],
+                   "features": {}, "max_users": 15, "trial_type": "free_15_days"}
+        
+        pdf_bytes = pdf_generator.generate_contract_pdf(hotel, sub)
+        subject = f"Contrat d'abonnement Flowtym - {hotel.get('name')}"
+        message = f"Bonjour {request.signer_name},\n\nVeuillez signer le contrat d'abonnement Flowtym ci-joint.\n\nCordialement,\nL'équipe Flowtym"
+    
+    elif request.document_type == "sepa_mandate":
+        mandate = await db.sa_sepa_mandates.find_one({"hotel_id": request.hotel_id}, {"_id": 0})
+        if not mandate:
+            mandate = {"reference": f"RUM-{datetime.now().strftime('%Y%m%d')}-{request.hotel_id[:8].upper()}",
+                      "iban": "FR76 XXXX XXXX XXXX XXXX XXXX XXX", "bic": "XXXXXXXX",
+                      "account_holder": hotel.get("contact_name", ""), "payment_type": "RCUR"}
+        
+        pdf_bytes = pdf_generator.generate_sepa_mandate_pdf(hotel, mandate)
+        subject = f"Mandat SEPA Flowtym - {hotel.get('name')}"
+        message = f"Bonjour {request.signer_name},\n\nVeuillez signer le mandat de prélèvement SEPA ci-joint.\n\nCordialement,\nL'équipe Flowtym"
+    
+    else:
+        raise HTTPException(status_code=400, detail="Type de document invalide")
+    
+    try:
+        # Send for signature
+        response = dropbox_sign_service.send_signature_request(
+            pdf_bytes=pdf_bytes,
+            filename=f"{request.document_type}_{hotel.get('name').replace(' ', '_')}.pdf",
+            signer_email=request.signer_email,
+            signer_name=request.signer_name,
+            subject=subject,
+            message=message,
+            test_mode=request.test_mode
+        )
+        
+        sig_request = response.get('signature_request', {})
+        
+        # Store signature request in database
+        sig_doc = {
+            "id": str(uuid.uuid4()),
+            "hotel_id": request.hotel_id,
+            "document_type": request.document_type,
+            "signature_request_id": sig_request.get('signature_request_id'),
+            "signer_email": request.signer_email,
+            "signer_name": request.signer_name,
+            "status": "sent",
+            "test_mode": request.test_mode,
+            "sent_at": datetime.now(timezone.utc).isoformat(),
+            "signed_at": None,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        await db.sa_signature_requests.insert_one(sig_doc)
+        
+        await log_activity(db, "send_for_signature", "signature", sig_doc["id"],
+                          f"{request.document_type} - {hotel.get('name')}", user)
+        
+        return {
+            "message": "Document envoyé pour signature",
+            "signature_request_id": sig_request.get('signature_request_id'),
+            "status": "sent"
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur d'envoi: {str(e)}")
+
+@superadmin_router.get("/signature/status/{signature_request_id}")
+async def get_signature_status(
+    signature_request_id: str,
+    db,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Get status of a signature request"""
+    verify_superadmin(credentials)
+    
+    from .signature_service import dropbox_sign_service
+    
+    if not dropbox_sign_service.is_available():
+        raise HTTPException(status_code=503, detail="Service de signature électronique non configuré")
+    
+    try:
+        response = dropbox_sign_service.get_signature_request_status(signature_request_id)
+        sig_request = response.get('signature_request', {})
+        
+        return {
+            "signature_request_id": signature_request_id,
+            "is_complete": sig_request.get('is_complete', False),
+            "is_declined": sig_request.get('is_declined', False),
+            "has_error": sig_request.get('has_error', False),
+            "signatures": [
+                {
+                    "signer_email": sig.get('signer_email_address'),
+                    "signer_name": sig.get('signer_name'),
+                    "status": sig.get('status_code'),
+                    "signed_at": sig.get('signed_at'),
+                    "last_viewed_at": sig.get('last_viewed_at')
+                }
+                for sig in sig_request.get('signatures', [])
+            ]
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
+
+@superadmin_router.get("/signature/requests/{hotel_id}")
+async def list_signature_requests(
+    hotel_id: str,
+    db,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """List signature requests for a hotel"""
+    verify_superadmin(credentials)
+    
+    requests = await db.sa_signature_requests.find(
+        {"hotel_id": hotel_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+    
+    return requests
+
+@superadmin_router.post("/webhooks/dropbox-sign")
+async def dropbox_sign_webhook(request_data: Dict[str, Any], db):
+    """Handle Dropbox Sign webhook events"""
+    from .signature_service import dropbox_sign_service
+    
+    # Verify webhook signature
+    api_key = os.environ.get('DROPBOX_SIGN_API_KEY', '')
+    if not dropbox_sign_service.verify_webhook_signature(request_data, api_key):
+        raise HTTPException(status_code=403, detail="Invalid webhook signature")
+    
+    event = request_data.get('event', {})
+    event_type = event.get('event_type')
+    sig_request = request_data.get('signature_request', {})
+    sig_request_id = sig_request.get('signature_request_id')
+    
+    # Update our database based on event
+    if event_type == 'signature_request_signed':
+        await db.sa_signature_requests.update_one(
+            {"signature_request_id": sig_request_id},
+            {"$set": {"status": "signed", "signed_at": datetime.now(timezone.utc).isoformat()}}
+        )
+    
+    elif event_type == 'signature_request_all_signed':
+        await db.sa_signature_requests.update_one(
+            {"signature_request_id": sig_request_id},
+            {"$set": {"status": "completed", "completed_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        
+        # Also update SEPA mandate status if applicable
+        sig_doc = await db.sa_signature_requests.find_one({"signature_request_id": sig_request_id})
+        if sig_doc and sig_doc.get('document_type') == 'sepa_mandate':
+            await db.sa_sepa_mandates.update_one(
+                {"hotel_id": sig_doc['hotel_id']},
+                {"$set": {"status": "active", "signed_date": datetime.now(timezone.utc).isoformat()}}
+            )
+    
+    elif event_type == 'signature_request_declined':
+        await db.sa_signature_requests.update_one(
+            {"signature_request_id": sig_request_id},
+            {"$set": {"status": "declined"}}
+        )
+    
+    return {"message": "Hello API Event Received"}
+

@@ -568,9 +568,10 @@ export const SuperAdminApp = () => {
           <Route path="/" element={<SADashboard api={api} />} />
           <Route path="/hotels" element={<SAHotels api={api} />} />
           <Route path="/hotels/new" element={<SAHotelForm api={api} />} />
-          <Route path="/subscriptions" element={<SASubscriptions api={api} />} />
-          <Route path="/users" element={<SAUsers api={api} />} />
-          <Route path="/invoices" element={<SAInvoices api={api} />} />
+          <Route path="/hotels/:hotelId" element={<SAHotelDetail api={api} />} />
+          <Route path="/subscriptions" element={<SASubscriptionsPage api={api} />} />
+          <Route path="/users" element={<SAUsersPage api={api} />} />
+          <Route path="/invoices" element={<SAInvoicesPage api={api} />} />
           <Route path="/logs" element={<SALogs api={api} />} />
         </Routes>
       </main>
@@ -578,28 +579,8 @@ export const SuperAdminApp = () => {
   )
 }
 
-// Placeholder components for other pages
-const SASubscriptions = ({ api }) => (
-  <div className="p-6">
-    <h1 className="text-2xl font-bold text-slate-900 mb-2">Abonnements</h1>
-    <p className="text-slate-500">Gestion des abonnements et plans</p>
-    {/* TODO: List subscriptions */}
-  </div>
-)
-
-const SAUsers = ({ api }) => (
-  <div className="p-6">
-    <h1 className="text-2xl font-bold text-slate-900 mb-2">Utilisateurs</h1>
-    <p className="text-slate-500">Gestion des utilisateurs par hôtel</p>
-  </div>
-)
-
-const SAInvoices = ({ api }) => (
-  <div className="p-6">
-    <h1 className="text-2xl font-bold text-slate-900 mb-2">Facturation</h1>
-    <p className="text-slate-500">Factures et paiements</p>
-  </div>
-)
+// Import extended pages from SAPages
+import { SASubscriptions as SASubscriptionsPage, SAUsers as SAUsersPage, SAInvoices as SAInvoicesPage, SAHotelDetail } from './SAPages'
 
 const SALogs = ({ api }) => {
   const [logs, setLogs] = useState([])

@@ -3862,6 +3862,24 @@ async def sa_end_support_session(credentials: HTTPAuthorizationCredentials = Dep
     from superadmin.routes import end_support_session
     return await end_support_session(db, credentials)
 
+# Electronic Signature endpoints
+from superadmin.routes import SignatureRequestCreate
+
+@api_router.post("/superadmin/signature/send")
+async def sa_send_for_signature(request: SignatureRequestCreate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import send_for_signature
+    return await send_for_signature(request, db, credentials)
+
+@api_router.get("/superadmin/signature/status/{signature_request_id}")
+async def sa_get_signature_status(signature_request_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import get_signature_status
+    return await get_signature_status(signature_request_id, db, credentials)
+
+@api_router.get("/superadmin/signature/requests/{hotel_id}")
+async def sa_list_signature_requests(hotel_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from superadmin.routes import list_signature_requests
+    return await list_signature_requests(hotel_id, db, credentials)
+
 # Include the router in the main app
 app.include_router(api_router)
 
