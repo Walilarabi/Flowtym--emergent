@@ -4,45 +4,41 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 262 83% 58%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 262 83% 58%;
-  --radius: 0.375rem;
-  
-  /* Flowtym brand colors */
-  --flowtym-purple: 262 83% 58%;
-  --flowtym-purple-dark: 262 83% 48%;
-  --flowtym-green: 142 76% 36%;
-  
-  /* Channel colors */
-  --channel-direct: 142 76% 36%;
-  --channel-booking: 217 100% 25%;
-  --channel-expedia: 43 96% 50%;
-  --channel-airbnb: 356 100% 68%;
-  --channel-other: 215 14% 34%;
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 262 83% 58%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 262 83% 58%;
+    --radius: 0.5rem;
+  }
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-semibold tracking-tight text-slate-900;
+  }
 }
 
 html, body, #root {
@@ -51,285 +47,82 @@ html, body, #root {
   overflow: hidden;
 }
 
-body {
-  font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: #f8fafc;
-  color: #0f172a;
-}
-
-h1, h2, h3, h4, h5, h6 {
-  font-family: 'Manrope', sans-serif;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  color: #0f172a;
-}
-
-code, .font-mono {
-  font-family: 'JetBrains Mono', monospace;
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-}
-
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
-
 ::-webkit-scrollbar-track {
   background: #f1f5f9;
 }
-
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 4px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
 
-/* Planning grid styles */
-.planning-grid {
-  display: grid;
-  position: relative;
-}
-
-.planning-cell {
-  min-height: 40px;
-  border-right: 1px solid #e2e8f0;
-  border-bottom: 1px solid #e2e8f0;
-  transition: background-color 0.15s ease;
-}
-
-.planning-cell:hover {
-  background-color: #f8fafc;
-}
-
 /* Reservation bar styles */
 .reservation-bar {
-  position: absolute;
-  height: 32px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  padding: 0 8px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  z-index: 10;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  @apply absolute h-8 rounded flex items-center px-2 text-xs font-medium cursor-pointer transition-all z-10 overflow-hidden whitespace-nowrap;
 }
-
 .reservation-bar:hover {
-  transform: scale(1.02);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 20;
-}
-
-.reservation-bar.dragging {
-  opacity: 0.8;
-  transform: scale(1.05);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-  z-index: 30;
+  @apply scale-[1.02] shadow-lg z-20;
 }
 
 /* Channel colors */
-.channel-direct {
-  background-color: #16a34a;
-  color: white;
-}
-
-.channel-booking_com {
-  background-color: #003580;
-  color: white;
-}
-
-.channel-expedia {
-  background-color: #FFB300;
-  color: #1e293b;
-}
-
-.channel-airbnb {
-  background-color: #FF5A5F;
-  color: white;
-}
-
-.channel-other {
-  background-color: #64748b;
-  color: white;
-}
+.channel-direct { @apply bg-emerald-500 text-white; }
+.channel-booking_com { @apply bg-[#003580] text-white; }
+.channel-expedia { @apply bg-[#FFB300] text-slate-900; }
+.channel-airbnb { @apply bg-[#FF5A5F] text-white; }
+.channel-other { @apply bg-slate-500 text-white; }
 
 /* Status badges */
 .status-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 9999px;
-  font-size: 11px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
+  @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium uppercase tracking-wide;
 }
+.status-pending { @apply bg-amber-100 text-amber-700; }
+.status-confirmed { @apply bg-blue-100 text-blue-700; }
+.status-checked_in { @apply bg-emerald-100 text-emerald-700; }
+.status-checked_out { @apply bg-slate-100 text-slate-600; }
+.status-cancelled { @apply bg-red-100 text-red-700; }
+.status-no_show { @apply bg-pink-100 text-pink-700; }
 
-.status-pending {
-  background-color: #fef3c7;
-  color: #92400e;
-}
-
-.status-confirmed {
-  background-color: #dbeafe;
-  color: #1e40af;
-}
-
-.status-checked_in {
-  background-color: #dcfce7;
-  color: #166534;
-}
-
-.status-checked_out {
-  background-color: #f1f5f9;
-  color: #475569;
-}
-
-.status-cancelled {
-  background-color: #fee2e2;
-  color: #991b1b;
-}
-
-.status-no_show {
-  background-color: #fce7f3;
-  color: #9d174d;
-}
-
-/* Navigation active state */
+/* Navigation */
 .nav-item {
-  position: relative;
-  padding: 8px 12px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #64748b;
-  transition: color 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  @apply relative px-3 py-2 text-sm font-medium text-slate-500 transition-colors flex items-center gap-1.5;
 }
-
-.nav-item:hover {
-  color: #0f172a;
-}
-
-.nav-item.active {
-  color: #7c3aed;
-}
-
+.nav-item:hover { @apply text-slate-900; }
+.nav-item.active { @apply text-violet-600; }
 .nav-item.active::after {
   content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 24px;
-  height: 3px;
-  background-color: #7c3aed;
-  border-radius: 2px 2px 0 0;
-}
-
-/* Card hover effect */
-.card-hover {
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-.card-hover:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transform: translateY(-1px);
-}
-
-/* Table row hover */
-.table-row-hover:hover {
-  background-color: #f8fafc;
+  @apply absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-violet-600 rounded-t;
 }
 
 /* KPI Card */
 .kpi-card {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 16px 20px;
-  transition: box-shadow 0.2s ease;
+  @apply bg-white border border-slate-200 rounded-lg p-4 transition-shadow;
 }
-
 .kpi-card:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  @apply shadow-sm;
 }
 
-/* Slide-in panel */
-.slide-panel {
-  box-shadow: -8px 0 30px rgba(0, 0, 0, 0.08);
+/* Table row hover */
+.table-row-hover:hover {
+  @apply bg-slate-50;
 }
 
-/* Form input focus */
-input:focus, select:focus, textarea:focus {
-  outline: none;
-  border-color: #7c3aed;
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
-}
-
-/* Button transitions */
-button {
-  transition: background-color 0.15s ease, transform 0.1s ease;
-}
-
-button:active {
-  transform: scale(0.98);
-}
-
-/* Dropdown animation */
-.dropdown-enter {
-  opacity: 0;
-  transform: translateY(-8px);
-}
-
-.dropdown-enter-active {
-  opacity: 1;
-  transform: translateY(0);
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-
-/* Toast styles */
-.toast {
-  font-family: 'IBM Plex Sans', sans-serif;
-}
-
-/* Loading spinner */
+/* Spinner */
 .spinner {
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* Hide scrollbar */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
-
-/* Data debug wrapper */
-@layer base {
-  [data-debug-wrapper="true"] {
-    display: contents !important;
-  }
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

@@ -1047,6 +1047,1645 @@ async def get_planning_data(hotel_id: str, from_date: str, to_date: str, current
         "daily_stats": daily_stats
     }
 
+# ===================== STAFF MODELS =====================
+
+class EmployeeCreate(BaseModel):
+    first_name: str
+    last_name: str
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    position: str  # receptionist, housekeeper, maintenance, manager, chef, waiter
+    department: str  # front_office, housekeeping, maintenance, food_beverage, administration
+    contract_type: str = "cdi"  # cdi, cdd, interim, stage, apprentissage
+    hire_date: str
+    birth_date: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    postal_code: Optional[str] = None
+    social_security_number: Optional[str] = None
+    hourly_rate: float = 11.65  # SMIC horaire
+    weekly_hours: float = 35.0
+    bank_iban: Optional[str] = None
+    emergency_contact: Optional[str] = None
+    emergency_phone: Optional[str] = None
+    notes: Optional[str] = None
+    is_active: bool = True
+
+class EmployeeResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    hotel_id: str
+    first_name: str
+    last_name: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    position: str
+    department: str
+    contract_type: str
+    hire_date: str
+    birth_date: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    postal_code: Optional[str] = None
+    social_security_number: Optional[str] = None
+    hourly_rate: float
+    weekly_hours: float
+    bank_iban: Optional[str] = None
+    emergency_contact: Optional[str] = None
+    emergency_phone: Optional[str] = None
+    notes: Optional[str] = None
+    is_active: bool
+    total_hours_month: float = 0.0
+    created_at: str
+
+class ShiftCreate(BaseModel):
+    employee_id: str
+    date: str
+    start_time: str  # HH:MM format
+    end_time: str
+    break_duration: int = 60  # minutes
+    shift_type: str = "regular"  # regular, overtime, holiday, sick, vacation
+    notes: Optional[str] = None
+
+class ShiftResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    hotel_id: str
+    employee_id: str
+    employee_name: str
+    date: str
+    start_time: str
+    end_time: str
+    break_duration: int
+    worked_hours: float
+    shift_type: str
+    status: str  # scheduled, in_progress, completed, cancelled
+    notes: Optional[str] = None
+    created_at: str
+
+class TimeEntryCreate(BaseModel):
+    employee_id: str
+    date: str
+    clock_in: str  # ISO datetime
+    clock_out: Optional[str] = None
+    notes: Optional[str] = None
+
+class TimeEntryResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    hotel_id: str
+    employee_id: str
+    employee_name: str
+    date: str
+    clock_in: str
+    clock_out: Optional[str] = None
+    worked_hours: Optional[float] = None
+    status: str  # clocked_in, clocked_out, validated
+    notes: Optional[str] = None
+    created_at: str
+
+class ContractCreate(BaseModel):
+    employee_id: str
+    contract_type: str  # cdi, cdd, interim, stage, apprentissage
+    start_date: str
+    end_date: Optional[str] = None  # For CDD
+    position: str
+    department: str
+    hourly_rate: float
+    weekly_hours: float
+    trial_period_days: int = 60
+    notes: Optional[str] = None
+
+class ContractResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    hotel_id: str
+    employee_id: str
+    employee_name: str
+    contract_type: str
+    start_date: str
+    end_date: Optional[str] = None
+    position: str
+    department: str
+    hourly_rate: float
+    weekly_hours: float
+    monthly_gross: float
+    trial_period_days: int
+    status: str  # draft, active, ended, terminated
+    document_url: Optional[str] = None
+    notes: Optional[str] = None
+    created_at: str
+
+class PayrollPeriod(BaseModel):
+    employee_id: str
+    month: int
+    year: int
+
+class PayrollResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    hotel_id: str
+    employee_id: str
+    employee_name: str
+    month: int
+    year: int
+    worked_hours: float
+    overtime_hours: float
+    gross_salary: float
+    social_charges_employee: float
+    social_charges_employer: float
+    net_salary: float
+    urssaf_declarations: Dict[str, float]
+    status: str  # draft, validated, paid
+    paid_at: Optional[str] = None
+    created_at: str
+
+# ===================== LEAVE (CP) MODELS =====================
+
+class LeaveConfigCreate(BaseModel):
+    """Configuration des règles de congés payés pour un hôtel"""
+    accrual_rate_monthly: float = 2.08  # Jours acquis par mois (25/12)
+    max_days_per_year: float = 25.0  # Maximum CP annuel
+    reference_period_start_month: int = 6  # 1er juin
+    reference_period_start_day: int = 1
+    n1_deadline_month: int = 5  # 31 mai pour utiliser N-1
+    n1_deadline_day: int = 31
+    allow_n1_rollover: bool = True  # Autoriser le report N-1
+    max_n1_rollover_days: float = 10.0  # Maximum jours N-1 reportables
+    seniority_bonus_years: int = 5  # Années d'ancienneté pour bonus
+    seniority_bonus_days: float = 1.0  # Jours bonus par tranche
+
+class LeaveConfigResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    hotel_id: str
+    accrual_rate_monthly: float
+    max_days_per_year: float
+    reference_period_start_month: int
+    reference_period_start_day: int
+    n1_deadline_month: int
+    n1_deadline_day: int
+    allow_n1_rollover: bool
+    max_n1_rollover_days: float
+    seniority_bonus_years: int
+    seniority_bonus_days: float
+    created_at: str
+    updated_at: str
+
+class LeaveBalanceResponse(BaseModel):
+    """Solde CP d'un employé pour une année de référence"""
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    hotel_id: str
+    employee_id: str
+    employee_name: str
+    reference_year: int  # Année de référence (ex: 2025 pour période juin 2025 - mai 2026)
+    cp_acquis: float  # CP acquis dans l'année
+    cp_pris: float  # CP pris dans l'année
+    cp_restant: float  # CP restant (acquis - pris)
+    cp_n1: float  # CP reportés de l'année précédente
+    cp_n1_pris: float  # CP N-1 utilisés
+    cp_n1_restant: float  # CP N-1 restants
+    cp_total_disponible: float  # Total disponible (restant + N-1 restant)
+    last_accrual_date: Optional[str] = None
+    created_at: str
+    updated_at: str
+
+class LeaveTransactionCreate(BaseModel):
+    """Création d'une transaction de congé (prise ou acquisition)"""
+    employee_id: str
+    transaction_type: str  # accrual, taken, adjustment, rollover_in, rollover_out, expiry
+    leave_type: str  # cp_n, cp_n1 (congé année N ou N-1)
+    date_start: Optional[str] = None  # Pour les prises de congé
+    date_end: Optional[str] = None
+    days_count: float
+    reason: Optional[str] = None
+    notes: Optional[str] = None
+
+class LeaveTransactionResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    hotel_id: str
+    employee_id: str
+    employee_name: str
+    transaction_type: str
+    leave_type: str
+    date_start: Optional[str] = None
+    date_end: Optional[str] = None
+    days_count: float
+    balance_before: float
+    balance_after: float
+    reason: Optional[str] = None
+    notes: Optional[str] = None
+    created_by: str
+    created_at: str
+
+class LeaveRequestCreate(BaseModel):
+    """Demande de congé par un employé"""
+    employee_id: str
+    date_start: str
+    date_end: str
+    leave_type: str = "cp"  # cp, rtt, maladie, sans_solde, evenement_familial
+    use_n1_first: bool = True  # Utiliser les CP N-1 en priorité
+    reason: Optional[str] = None
+    notes: Optional[str] = None
+
+class LeaveRequestResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    hotel_id: str
+    employee_id: str
+    employee_name: str
+    date_start: str
+    date_end: str
+    days_count: float
+    leave_type: str
+    use_n1_first: bool
+    cp_n1_used: float  # Jours N-1 utilisés
+    cp_n_used: float  # Jours N utilisés
+    status: str  # pending, approved, rejected, cancelled
+    reason: Optional[str] = None
+    notes: Optional[str] = None
+    approved_by: Optional[str] = None
+    approved_at: Optional[str] = None
+    rejection_reason: Optional[str] = None
+    created_at: str
+
+# ===================== PUBLIC HOLIDAYS MODELS =====================
+
+class PublicHolidayCreate(BaseModel):
+    """Création d'un jour férié"""
+    date: str  # Format YYYY-MM-DD
+    name: str  # Ex: "Jour de l'An", "Fête du Travail"
+    holiday_type: str = "national"  # national, regional, custom
+    is_mandatory: bool = True  # Jour férié obligatoire (chômé)
+    compensation_type: str = "off"  # off (repos), recovery (récupération), bonus (majoration)
+    bonus_rate: float = 1.0  # Taux de majoration si travaillé (1.0 = 100%, 2.0 = 200%)
+    applies_to_all: bool = True  # S'applique à tous les employés
+    department_restrictions: List[str] = []  # Départements concernés si pas tous
+
+class PublicHolidayResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    hotel_id: str
+    date: str
+    name: str
+    holiday_type: str
+    is_mandatory: bool
+    compensation_type: str
+    bonus_rate: float
+    applies_to_all: bool
+    department_restrictions: List[str]
+    created_at: str
+
+class PublicHolidayWorkedCreate(BaseModel):
+    """Enregistrement d'un jour férié travaillé"""
+    employee_id: str
+    holiday_id: str
+    hours_worked: float
+    compensation_choice: str  # recovery, bonus
+    recovery_date: Optional[str] = None  # Date de récupération si choisi
+    notes: Optional[str] = None
+
+class PublicHolidayWorkedResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    hotel_id: str
+    employee_id: str
+    employee_name: str
+    holiday_id: str
+    holiday_name: str
+    holiday_date: str
+    hours_worked: float
+    compensation_choice: str
+    bonus_amount: Optional[float] = None
+    recovery_date: Optional[str] = None
+    recovery_used: bool = False
+    notes: Optional[str] = None
+    created_at: str
+
+# ===================== STAFF EMPLOYEES ROUTES =====================
+
+@api_router.post("/hotels/{hotel_id}/staff/employees", response_model=EmployeeResponse)
+async def create_employee(hotel_id: str, employee: EmployeeCreate, current_user: dict = Depends(get_current_user)):
+    employee_id = str(uuid.uuid4())
+    employee_doc = {
+        "id": employee_id,
+        "hotel_id": hotel_id,
+        **employee.model_dump(),
+        "total_hours_month": 0.0,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.staff_employees.insert_one(employee_doc)
+    return EmployeeResponse(**employee_doc)
+
+@api_router.get("/hotels/{hotel_id}/staff/employees", response_model=List[EmployeeResponse])
+async def get_employees(hotel_id: str, department: Optional[str] = None, is_active: Optional[bool] = None, current_user: dict = Depends(get_current_user)):
+    query = {"hotel_id": hotel_id}
+    if department:
+        query["department"] = department
+    if is_active is not None:
+        query["is_active"] = is_active
+    employees = await db.staff_employees.find(query, {"_id": 0}).sort("last_name", 1).to_list(500)
+    return [EmployeeResponse(**e) for e in employees]
+
+@api_router.get("/hotels/{hotel_id}/staff/employees/{employee_id}", response_model=EmployeeResponse)
+async def get_employee(hotel_id: str, employee_id: str, current_user: dict = Depends(get_current_user)):
+    employee = await db.staff_employees.find_one({"id": employee_id, "hotel_id": hotel_id}, {"_id": 0})
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employe non trouve")
+    return EmployeeResponse(**employee)
+
+@api_router.put("/hotels/{hotel_id}/staff/employees/{employee_id}", response_model=EmployeeResponse)
+async def update_employee(hotel_id: str, employee_id: str, employee: EmployeeCreate, current_user: dict = Depends(get_current_user)):
+    result = await db.staff_employees.update_one(
+        {"id": employee_id, "hotel_id": hotel_id},
+        {"$set": employee.model_dump()}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Employe non trouve")
+    updated = await db.staff_employees.find_one({"id": employee_id}, {"_id": 0})
+    return EmployeeResponse(**updated)
+
+@api_router.delete("/hotels/{hotel_id}/staff/employees/{employee_id}")
+async def delete_employee(hotel_id: str, employee_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.staff_employees.update_one(
+        {"id": employee_id, "hotel_id": hotel_id},
+        {"$set": {"is_active": False}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Employe non trouve")
+    return {"message": "Employe desactive"}
+
+# ===================== STAFF SHIFTS/PLANNING ROUTES =====================
+
+@api_router.post("/hotels/{hotel_id}/staff/shifts", response_model=ShiftResponse)
+async def create_shift(hotel_id: str, shift: ShiftCreate, current_user: dict = Depends(get_current_user)):
+    employee = await db.staff_employees.find_one({"id": shift.employee_id, "hotel_id": hotel_id}, {"_id": 0})
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employe non trouve")
+    
+    # Calculate worked hours
+    start_parts = shift.start_time.split(":")
+    end_parts = shift.end_time.split(":")
+    start_minutes = int(start_parts[0]) * 60 + int(start_parts[1])
+    end_minutes = int(end_parts[0]) * 60 + int(end_parts[1])
+    if end_minutes < start_minutes:
+        end_minutes += 24 * 60  # Next day
+    worked_minutes = end_minutes - start_minutes - shift.break_duration
+    worked_hours = max(0, worked_minutes / 60)
+    
+    shift_id = str(uuid.uuid4())
+    shift_doc = {
+        "id": shift_id,
+        "hotel_id": hotel_id,
+        **shift.model_dump(),
+        "employee_name": f"{employee['first_name']} {employee['last_name']}",
+        "worked_hours": round(worked_hours, 2),
+        "status": "scheduled",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.staff_shifts.insert_one(shift_doc)
+    return ShiftResponse(**shift_doc)
+
+@api_router.get("/hotels/{hotel_id}/staff/shifts", response_model=List[ShiftResponse])
+async def get_shifts(hotel_id: str, from_date: Optional[str] = None, to_date: Optional[str] = None, employee_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    query = {"hotel_id": hotel_id}
+    if from_date and to_date:
+        query["date"] = {"$gte": from_date, "$lte": to_date}
+    if employee_id:
+        query["employee_id"] = employee_id
+    shifts = await db.staff_shifts.find(query, {"_id": 0}).sort("date", 1).to_list(1000)
+    return [ShiftResponse(**s) for s in shifts]
+
+@api_router.put("/hotels/{hotel_id}/staff/shifts/{shift_id}", response_model=ShiftResponse)
+async def update_shift(hotel_id: str, shift_id: str, shift: ShiftCreate, current_user: dict = Depends(get_current_user)):
+    # Recalculate worked hours
+    start_parts = shift.start_time.split(":")
+    end_parts = shift.end_time.split(":")
+    start_minutes = int(start_parts[0]) * 60 + int(start_parts[1])
+    end_minutes = int(end_parts[0]) * 60 + int(end_parts[1])
+    if end_minutes < start_minutes:
+        end_minutes += 24 * 60
+    worked_minutes = end_minutes - start_minutes - shift.break_duration
+    worked_hours = max(0, worked_minutes / 60)
+    
+    update_data = shift.model_dump()
+    update_data["worked_hours"] = round(worked_hours, 2)
+    
+    result = await db.staff_shifts.update_one(
+        {"id": shift_id, "hotel_id": hotel_id},
+        {"$set": update_data}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Shift non trouve")
+    updated = await db.staff_shifts.find_one({"id": shift_id}, {"_id": 0})
+    return ShiftResponse(**updated)
+
+@api_router.delete("/hotels/{hotel_id}/staff/shifts/{shift_id}")
+async def delete_shift(hotel_id: str, shift_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.staff_shifts.delete_one({"id": shift_id, "hotel_id": hotel_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Shift non trouve")
+    return {"message": "Shift supprime"}
+
+# ===================== STAFF TIME TRACKING ROUTES =====================
+
+@api_router.post("/hotels/{hotel_id}/staff/time-entries", response_model=TimeEntryResponse)
+async def create_time_entry(hotel_id: str, entry: TimeEntryCreate, current_user: dict = Depends(get_current_user)):
+    employee = await db.staff_employees.find_one({"id": entry.employee_id, "hotel_id": hotel_id}, {"_id": 0})
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employe non trouve")
+    
+    entry_id = str(uuid.uuid4())
+    entry_doc = {
+        "id": entry_id,
+        "hotel_id": hotel_id,
+        **entry.model_dump(),
+        "employee_name": f"{employee['first_name']} {employee['last_name']}",
+        "worked_hours": None,
+        "status": "clocked_in" if not entry.clock_out else "clocked_out",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    # Calculate worked hours if clock_out provided
+    if entry.clock_out:
+        clock_in = datetime.fromisoformat(entry.clock_in.replace('Z', '+00:00'))
+        clock_out = datetime.fromisoformat(entry.clock_out.replace('Z', '+00:00'))
+        worked_hours = (clock_out - clock_in).total_seconds() / 3600
+        entry_doc["worked_hours"] = round(worked_hours, 2)
+    
+    await db.staff_time_entries.insert_one(entry_doc)
+    return TimeEntryResponse(**entry_doc)
+
+@api_router.get("/hotels/{hotel_id}/staff/time-entries", response_model=List[TimeEntryResponse])
+async def get_time_entries(hotel_id: str, from_date: Optional[str] = None, to_date: Optional[str] = None, employee_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    query = {"hotel_id": hotel_id}
+    if from_date and to_date:
+        query["date"] = {"$gte": from_date, "$lte": to_date}
+    if employee_id:
+        query["employee_id"] = employee_id
+    entries = await db.staff_time_entries.find(query, {"_id": 0}).sort([("date", -1), ("clock_in", -1)]).to_list(1000)
+    return [TimeEntryResponse(**e) for e in entries]
+
+@api_router.patch("/hotels/{hotel_id}/staff/time-entries/{entry_id}/clock-out")
+async def clock_out(hotel_id: str, entry_id: str, current_user: dict = Depends(get_current_user)):
+    entry = await db.staff_time_entries.find_one({"id": entry_id, "hotel_id": hotel_id}, {"_id": 0})
+    if not entry:
+        raise HTTPException(status_code=404, detail="Pointage non trouve")
+    
+    if entry.get("clock_out"):
+        raise HTTPException(status_code=400, detail="Deja pointe")
+    
+    clock_out_time = datetime.now(timezone.utc)
+    clock_in = datetime.fromisoformat(entry["clock_in"].replace('Z', '+00:00'))
+    worked_hours = (clock_out_time - clock_in).total_seconds() / 3600
+    
+    await db.staff_time_entries.update_one(
+        {"id": entry_id},
+        {"$set": {
+            "clock_out": clock_out_time.isoformat(),
+            "worked_hours": round(worked_hours, 2),
+            "status": "clocked_out"
+        }}
+    )
+    
+    return {"message": "Pointage de sortie enregistre", "worked_hours": round(worked_hours, 2)}
+
+# ===================== STAFF CONTRACTS ROUTES =====================
+
+@api_router.post("/hotels/{hotel_id}/staff/contracts", response_model=ContractResponse)
+async def create_contract(hotel_id: str, contract: ContractCreate, current_user: dict = Depends(get_current_user)):
+    employee = await db.staff_employees.find_one({"id": contract.employee_id, "hotel_id": hotel_id}, {"_id": 0})
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employe non trouve")
+    
+    # Calculate monthly gross salary (based on 4.33 weeks per month average)
+    monthly_gross = contract.hourly_rate * contract.weekly_hours * 4.33
+    
+    contract_id = str(uuid.uuid4())
+    contract_doc = {
+        "id": contract_id,
+        "hotel_id": hotel_id,
+        **contract.model_dump(),
+        "employee_name": f"{employee['first_name']} {employee['last_name']}",
+        "monthly_gross": round(monthly_gross, 2),
+        "status": "active",
+        "document_url": None,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.staff_contracts.insert_one(contract_doc)
+    
+    # Update employee with contract info
+    await db.staff_employees.update_one(
+        {"id": contract.employee_id},
+        {"$set": {
+            "contract_type": contract.contract_type,
+            "position": contract.position,
+            "department": contract.department,
+            "hourly_rate": contract.hourly_rate,
+            "weekly_hours": contract.weekly_hours
+        }}
+    )
+    
+    return ContractResponse(**contract_doc)
+
+@api_router.get("/hotels/{hotel_id}/staff/contracts", response_model=List[ContractResponse])
+async def get_contracts(hotel_id: str, employee_id: Optional[str] = None, status: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    query = {"hotel_id": hotel_id}
+    if employee_id:
+        query["employee_id"] = employee_id
+    if status:
+        query["status"] = status
+    contracts = await db.staff_contracts.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
+    return [ContractResponse(**c) for c in contracts]
+
+@api_router.get("/hotels/{hotel_id}/staff/contracts/{contract_id}", response_model=ContractResponse)
+async def get_contract(hotel_id: str, contract_id: str, current_user: dict = Depends(get_current_user)):
+    contract = await db.staff_contracts.find_one({"id": contract_id, "hotel_id": hotel_id}, {"_id": 0})
+    if not contract:
+        raise HTTPException(status_code=404, detail="Contrat non trouve")
+    return ContractResponse(**contract)
+
+# ===================== STAFF PAYROLL ROUTES =====================
+
+@api_router.post("/hotels/{hotel_id}/staff/payroll/calculate", response_model=PayrollResponse)
+async def calculate_payroll(hotel_id: str, period: PayrollPeriod, current_user: dict = Depends(get_current_user)):
+    employee = await db.staff_employees.find_one({"id": period.employee_id, "hotel_id": hotel_id}, {"_id": 0})
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employe non trouve")
+    
+    # Get time entries for the month
+    start_date = f"{period.year}-{str(period.month).zfill(2)}-01"
+    if period.month == 12:
+        end_date = f"{period.year + 1}-01-01"
+    else:
+        end_date = f"{period.year}-{str(period.month + 1).zfill(2)}-01"
+    
+    entries = await db.staff_time_entries.find({
+        "hotel_id": hotel_id,
+        "employee_id": period.employee_id,
+        "date": {"$gte": start_date, "$lt": end_date},
+        "status": {"$in": ["clocked_out", "validated"]}
+    }, {"_id": 0}).to_list(100)
+    
+    # Calculate total hours
+    worked_hours = sum(e.get("worked_hours", 0) or 0 for e in entries)
+    
+    # Calculate expected hours (weekly_hours * 4.33)
+    expected_hours = employee.get("weekly_hours", 35) * 4.33
+    
+    # Overtime (heures supplementaires)
+    overtime_hours = max(0, worked_hours - expected_hours)
+    
+    # Calculate gross salary
+    hourly_rate = employee.get("hourly_rate", 11.65)
+    base_salary = min(worked_hours, expected_hours) * hourly_rate
+    overtime_salary = overtime_hours * hourly_rate * 1.25  # 25% premium for overtime
+    gross_salary = base_salary + overtime_salary
+    
+    # French social charges (simplified rates)
+    # Employee charges ~22%
+    social_charges_employee = gross_salary * 0.22
+    # Employer charges ~42% (URSSAF, etc.)
+    social_charges_employer = gross_salary * 0.42
+    
+    # Net salary
+    net_salary = gross_salary - social_charges_employee
+    
+    # URSSAF declarations breakdown (simplified)
+    urssaf_declarations = {
+        "securite_sociale": round(gross_salary * 0.157, 2),
+        "assurance_chomage": round(gross_salary * 0.0405, 2),
+        "retraite_complementaire": round(gross_salary * 0.077, 2),
+        "csg_crds": round(gross_salary * 0.097, 2),
+        "formation_professionnelle": round(gross_salary * 0.0055, 2),
+        "taxe_apprentissage": round(gross_salary * 0.0068, 2),
+    }
+    
+    # Check if payroll already exists
+    existing = await db.staff_payroll.find_one({
+        "hotel_id": hotel_id,
+        "employee_id": period.employee_id,
+        "month": period.month,
+        "year": period.year
+    })
+    
+    payroll_id = existing["id"] if existing else str(uuid.uuid4())
+    payroll_doc = {
+        "id": payroll_id,
+        "hotel_id": hotel_id,
+        "employee_id": period.employee_id,
+        "employee_name": f"{employee['first_name']} {employee['last_name']}",
+        "month": period.month,
+        "year": period.year,
+        "worked_hours": round(worked_hours, 2),
+        "overtime_hours": round(overtime_hours, 2),
+        "gross_salary": round(gross_salary, 2),
+        "social_charges_employee": round(social_charges_employee, 2),
+        "social_charges_employer": round(social_charges_employer, 2),
+        "net_salary": round(net_salary, 2),
+        "urssaf_declarations": urssaf_declarations,
+        "status": "draft",
+        "paid_at": None,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    if existing:
+        await db.staff_payroll.update_one({"id": payroll_id}, {"$set": payroll_doc})
+    else:
+        await db.staff_payroll.insert_one(payroll_doc)
+    
+    return PayrollResponse(**payroll_doc)
+
+@api_router.get("/hotels/{hotel_id}/staff/payroll", response_model=List[PayrollResponse])
+async def get_payrolls(hotel_id: str, month: Optional[int] = None, year: Optional[int] = None, current_user: dict = Depends(get_current_user)):
+    query = {"hotel_id": hotel_id}
+    if month:
+        query["month"] = month
+    if year:
+        query["year"] = year
+    payrolls = await db.staff_payroll.find(query, {"_id": 0}).sort([("year", -1), ("month", -1)]).to_list(500)
+    return [PayrollResponse(**p) for p in payrolls]
+
+@api_router.patch("/hotels/{hotel_id}/staff/payroll/{payroll_id}/validate")
+async def validate_payroll(hotel_id: str, payroll_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.staff_payroll.update_one(
+        {"id": payroll_id, "hotel_id": hotel_id},
+        {"$set": {"status": "validated"}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Bulletin non trouve")
+    return {"message": "Bulletin valide"}
+
+@api_router.patch("/hotels/{hotel_id}/staff/payroll/{payroll_id}/mark-paid")
+async def mark_payroll_paid(hotel_id: str, payroll_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.staff_payroll.update_one(
+        {"id": payroll_id, "hotel_id": hotel_id},
+        {"$set": {"status": "paid", "paid_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Bulletin non trouve")
+    return {"message": "Bulletin marque comme paye"}
+
+# ===================== STAFF DASHBOARD =====================
+
+@api_router.get("/hotels/{hotel_id}/staff/dashboard")
+async def get_staff_dashboard(hotel_id: str, current_user: dict = Depends(get_current_user)):
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    # Count active employees
+    total_employees = await db.staff_employees.count_documents({"hotel_id": hotel_id, "is_active": True})
+    
+    # Employees by department
+    pipeline = [
+        {"$match": {"hotel_id": hotel_id, "is_active": True}},
+        {"$group": {"_id": "$department", "count": {"$sum": 1}}}
+    ]
+    by_department = await db.staff_employees.aggregate(pipeline).to_list(20)
+    
+    # Today's shifts
+    today_shifts = await db.staff_shifts.count_documents({"hotel_id": hotel_id, "date": today})
+    
+    # Currently clocked in
+    clocked_in = await db.staff_time_entries.count_documents({
+        "hotel_id": hotel_id,
+        "date": today,
+        "status": "clocked_in"
+    })
+    
+    # Contracts expiring soon (30 days)
+    future_date = (datetime.now(timezone.utc) + timedelta(days=30)).strftime("%Y-%m-%d")
+    expiring_contracts = await db.staff_contracts.count_documents({
+        "hotel_id": hotel_id,
+        "contract_type": "cdd",
+        "end_date": {"$lte": future_date, "$gte": today},
+        "status": "active"
+    })
+    
+    # This month's payroll total
+    current_month = datetime.now(timezone.utc).month
+    current_year = datetime.now(timezone.utc).year
+    payrolls = await db.staff_payroll.find({
+        "hotel_id": hotel_id,
+        "month": current_month,
+        "year": current_year
+    }, {"_id": 0, "gross_salary": 1, "net_salary": 1}).to_list(500)
+    
+    total_gross = sum(p.get("gross_salary", 0) for p in payrolls)
+    total_net = sum(p.get("net_salary", 0) for p in payrolls)
+    
+    return {
+        "total_employees": total_employees,
+        "by_department": {d["_id"]: d["count"] for d in by_department},
+        "today_shifts": today_shifts,
+        "clocked_in_now": clocked_in,
+        "expiring_contracts": expiring_contracts,
+        "month_gross_salary": round(total_gross, 2),
+        "month_net_salary": round(total_net, 2)
+    }
+
+# ===================== LEAVE CONFIGURATION ROUTES =====================
+
+@api_router.get("/hotels/{hotel_id}/leave/config", response_model=LeaveConfigResponse)
+async def get_leave_config(hotel_id: str, current_user: dict = Depends(get_current_user)):
+    """Récupérer la configuration des CP pour un hôtel"""
+    config = await db.leave_config.find_one({"hotel_id": hotel_id}, {"_id": 0})
+    if not config:
+        # Créer une config par défaut
+        config_id = str(uuid.uuid4())
+        now = datetime.now(timezone.utc).isoformat()
+        config = {
+            "id": config_id,
+            "hotel_id": hotel_id,
+            "accrual_rate_monthly": 2.08,
+            "max_days_per_year": 25.0,
+            "reference_period_start_month": 6,
+            "reference_period_start_day": 1,
+            "n1_deadline_month": 5,
+            "n1_deadline_day": 31,
+            "allow_n1_rollover": True,
+            "max_n1_rollover_days": 10.0,
+            "seniority_bonus_years": 5,
+            "seniority_bonus_days": 1.0,
+            "created_at": now,
+            "updated_at": now
+        }
+        await db.leave_config.insert_one(config)
+    return LeaveConfigResponse(**config)
+
+@api_router.put("/hotels/{hotel_id}/leave/config", response_model=LeaveConfigResponse)
+async def update_leave_config(hotel_id: str, config: LeaveConfigCreate, current_user: dict = Depends(get_current_user)):
+    """Mettre à jour la configuration des CP"""
+    now = datetime.now(timezone.utc).isoformat()
+    existing = await db.leave_config.find_one({"hotel_id": hotel_id})
+    
+    if existing:
+        await db.leave_config.update_one(
+            {"hotel_id": hotel_id},
+            {"$set": {**config.model_dump(), "updated_at": now}}
+        )
+        updated = await db.leave_config.find_one({"hotel_id": hotel_id}, {"_id": 0})
+    else:
+        config_id = str(uuid.uuid4())
+        config_doc = {
+            "id": config_id,
+            "hotel_id": hotel_id,
+            **config.model_dump(),
+            "created_at": now,
+            "updated_at": now
+        }
+        await db.leave_config.insert_one(config_doc)
+        updated = config_doc
+    
+    return LeaveConfigResponse(**updated)
+
+# ===================== LEAVE BALANCE ROUTES =====================
+
+def get_current_reference_year() -> int:
+    """Retourne l'année de référence actuelle (basée sur période juin-mai)"""
+    now = datetime.now(timezone.utc)
+    if now.month >= 6:  # Juin ou après
+        return now.year
+    else:  # Avant juin
+        return now.year - 1
+
+@api_router.get("/hotels/{hotel_id}/leave/balances", response_model=List[LeaveBalanceResponse])
+async def get_leave_balances(hotel_id: str, reference_year: Optional[int] = None, employee_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    """Récupérer les soldes CP de tous les employés ou d'un employé spécifique"""
+    if reference_year is None:
+        reference_year = get_current_reference_year()
+    
+    query = {"hotel_id": hotel_id, "reference_year": reference_year}
+    if employee_id:
+        query["employee_id"] = employee_id
+    
+    balances = await db.leave_balances.find(query, {"_id": 0}).to_list(500)
+    return [LeaveBalanceResponse(**b) for b in balances]
+
+@api_router.get("/hotels/{hotel_id}/leave/balances/{employee_id}", response_model=LeaveBalanceResponse)
+async def get_employee_leave_balance(hotel_id: str, employee_id: str, reference_year: Optional[int] = None, current_user: dict = Depends(get_current_user)):
+    """Récupérer le solde CP d'un employé pour une année de référence"""
+    if reference_year is None:
+        reference_year = get_current_reference_year()
+    
+    balance = await db.leave_balances.find_one({
+        "hotel_id": hotel_id,
+        "employee_id": employee_id,
+        "reference_year": reference_year
+    }, {"_id": 0})
+    
+    if not balance:
+        # Créer un solde initial pour cet employé
+        employee = await db.staff_employees.find_one({"id": employee_id, "hotel_id": hotel_id}, {"_id": 0})
+        if not employee:
+            raise HTTPException(status_code=404, detail="Employé non trouvé")
+        
+        balance_id = str(uuid.uuid4())
+        now = datetime.now(timezone.utc).isoformat()
+        balance = {
+            "id": balance_id,
+            "hotel_id": hotel_id,
+            "employee_id": employee_id,
+            "employee_name": f"{employee['first_name']} {employee['last_name']}",
+            "reference_year": reference_year,
+            "cp_acquis": 0.0,
+            "cp_pris": 0.0,
+            "cp_restant": 0.0,
+            "cp_n1": 0.0,
+            "cp_n1_pris": 0.0,
+            "cp_n1_restant": 0.0,
+            "cp_total_disponible": 0.0,
+            "last_accrual_date": None,
+            "created_at": now,
+            "updated_at": now
+        }
+        await db.leave_balances.insert_one(balance)
+    
+    return LeaveBalanceResponse(**balance)
+
+@api_router.post("/hotels/{hotel_id}/leave/balances/initialize")
+async def initialize_leave_balances(hotel_id: str, reference_year: Optional[int] = None, current_user: dict = Depends(get_current_user)):
+    """Initialiser les soldes CP pour tous les employés actifs"""
+    if reference_year is None:
+        reference_year = get_current_reference_year()
+    
+    employees = await db.staff_employees.find({"hotel_id": hotel_id, "is_active": True}, {"_id": 0}).to_list(500)
+    created_count = 0
+    now = datetime.now(timezone.utc).isoformat()
+    
+    for employee in employees:
+        existing = await db.leave_balances.find_one({
+            "hotel_id": hotel_id,
+            "employee_id": employee["id"],
+            "reference_year": reference_year
+        })
+        
+        if not existing:
+            balance_id = str(uuid.uuid4())
+            balance = {
+                "id": balance_id,
+                "hotel_id": hotel_id,
+                "employee_id": employee["id"],
+                "employee_name": f"{employee['first_name']} {employee['last_name']}",
+                "reference_year": reference_year,
+                "cp_acquis": 0.0,
+                "cp_pris": 0.0,
+                "cp_restant": 0.0,
+                "cp_n1": 0.0,
+                "cp_n1_pris": 0.0,
+                "cp_n1_restant": 0.0,
+                "cp_total_disponible": 0.0,
+                "last_accrual_date": None,
+                "created_at": now,
+                "updated_at": now
+            }
+            await db.leave_balances.insert_one(balance)
+            created_count += 1
+    
+    return {"message": f"{created_count} soldes créés pour l'année {reference_year}"}
+
+# ===================== LEAVE TRANSACTIONS ROUTES =====================
+
+@api_router.get("/hotels/{hotel_id}/leave/transactions", response_model=List[LeaveTransactionResponse])
+async def get_leave_transactions(hotel_id: str, employee_id: Optional[str] = None, transaction_type: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    """Récupérer l'historique des transactions de congés"""
+    query = {"hotel_id": hotel_id}
+    if employee_id:
+        query["employee_id"] = employee_id
+    if transaction_type:
+        query["transaction_type"] = transaction_type
+    
+    transactions = await db.leave_transactions.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return [LeaveTransactionResponse(**t) for t in transactions]
+
+@api_router.post("/hotels/{hotel_id}/leave/transactions", response_model=LeaveTransactionResponse)
+async def create_leave_transaction(hotel_id: str, transaction: LeaveTransactionCreate, current_user: dict = Depends(get_current_user)):
+    """Créer une transaction de congé (acquisition, prise, ajustement)"""
+    employee = await db.staff_employees.find_one({"id": transaction.employee_id, "hotel_id": hotel_id}, {"_id": 0})
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employé non trouvé")
+    
+    reference_year = get_current_reference_year()
+    balance = await db.leave_balances.find_one({
+        "hotel_id": hotel_id,
+        "employee_id": transaction.employee_id,
+        "reference_year": reference_year
+    }, {"_id": 0})
+    
+    if not balance:
+        raise HTTPException(status_code=404, detail="Solde CP non initialisé pour cet employé")
+    
+    # Calculer le solde avant et après selon le type de transaction et de congé
+    if transaction.leave_type == "cp_n1":
+        balance_before = balance["cp_n1_restant"]
+    else:
+        balance_before = balance["cp_restant"]
+    
+    if transaction.transaction_type in ["accrual", "adjustment", "rollover_in"]:
+        balance_after = balance_before + transaction.days_count
+    elif transaction.transaction_type in ["taken", "rollover_out", "expiry"]:
+        balance_after = balance_before - transaction.days_count
+    else:
+        balance_after = balance_before
+    
+    # Créer la transaction
+    transaction_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    transaction_doc = {
+        "id": transaction_id,
+        "hotel_id": hotel_id,
+        "employee_id": transaction.employee_id,
+        "employee_name": f"{employee['first_name']} {employee['last_name']}",
+        **transaction.model_dump(),
+        "balance_before": balance_before,
+        "balance_after": balance_after,
+        "created_by": current_user["user_id"],
+        "created_at": now
+    }
+    await db.leave_transactions.insert_one(transaction_doc)
+    
+    # Mettre à jour le solde
+    if transaction.leave_type == "cp_n1":
+        if transaction.transaction_type in ["taken"]:
+            new_cp_n1_pris = balance["cp_n1_pris"] + transaction.days_count
+            new_cp_n1_restant = balance["cp_n1"] - new_cp_n1_pris
+            await db.leave_balances.update_one(
+                {"id": balance["id"]},
+                {"$set": {
+                    "cp_n1_pris": new_cp_n1_pris,
+                    "cp_n1_restant": new_cp_n1_restant,
+                    "cp_total_disponible": balance["cp_restant"] + new_cp_n1_restant,
+                    "updated_at": now
+                }}
+            )
+    else:  # cp_n
+        if transaction.transaction_type == "accrual":
+            new_cp_acquis = balance["cp_acquis"] + transaction.days_count
+            new_cp_restant = new_cp_acquis - balance["cp_pris"]
+            await db.leave_balances.update_one(
+                {"id": balance["id"]},
+                {"$set": {
+                    "cp_acquis": new_cp_acquis,
+                    "cp_restant": new_cp_restant,
+                    "cp_total_disponible": new_cp_restant + balance["cp_n1_restant"],
+                    "last_accrual_date": now,
+                    "updated_at": now
+                }}
+            )
+        elif transaction.transaction_type == "taken":
+            new_cp_pris = balance["cp_pris"] + transaction.days_count
+            new_cp_restant = balance["cp_acquis"] - new_cp_pris
+            await db.leave_balances.update_one(
+                {"id": balance["id"]},
+                {"$set": {
+                    "cp_pris": new_cp_pris,
+                    "cp_restant": new_cp_restant,
+                    "cp_total_disponible": new_cp_restant + balance["cp_n1_restant"],
+                    "updated_at": now
+                }}
+            )
+    
+    return LeaveTransactionResponse(**transaction_doc)
+
+# ===================== LEAVE ACCRUAL (CRON) ROUTES =====================
+
+@api_router.post("/hotels/{hotel_id}/leave/accrual/run")
+async def run_monthly_accrual(hotel_id: str, month: Optional[int] = None, year: Optional[int] = None, current_user: dict = Depends(get_current_user)):
+    """Exécuter l'acquisition mensuelle des CP pour tous les employés actifs"""
+    now = datetime.now(timezone.utc)
+    if month is None:
+        month = now.month
+    if year is None:
+        year = now.year
+    
+    # Déterminer l'année de référence
+    if month >= 6:
+        reference_year = year
+    else:
+        reference_year = year - 1
+    
+    # Récupérer la config
+    config = await db.leave_config.find_one({"hotel_id": hotel_id}, {"_id": 0})
+    accrual_rate = config["accrual_rate_monthly"] if config else 2.08
+    
+    # Récupérer tous les employés actifs
+    employees = await db.staff_employees.find({"hotel_id": hotel_id, "is_active": True}, {"_id": 0}).to_list(500)
+    
+    accrued_count = 0
+    for employee in employees:
+        # Vérifier si l'acquisition a déjà été faite ce mois
+        accrual_key = f"{year}-{str(month).zfill(2)}"
+        existing_accrual = await db.leave_transactions.find_one({
+            "hotel_id": hotel_id,
+            "employee_id": employee["id"],
+            "transaction_type": "accrual",
+            "created_at": {"$regex": f"^{accrual_key}"}
+        })
+        
+        if existing_accrual:
+            continue
+        
+        # S'assurer que le solde existe
+        balance = await db.leave_balances.find_one({
+            "hotel_id": hotel_id,
+            "employee_id": employee["id"],
+            "reference_year": reference_year
+        }, {"_id": 0})
+        
+        if not balance:
+            balance_id = str(uuid.uuid4())
+            balance = {
+                "id": balance_id,
+                "hotel_id": hotel_id,
+                "employee_id": employee["id"],
+                "employee_name": f"{employee['first_name']} {employee['last_name']}",
+                "reference_year": reference_year,
+                "cp_acquis": 0.0,
+                "cp_pris": 0.0,
+                "cp_restant": 0.0,
+                "cp_n1": 0.0,
+                "cp_n1_pris": 0.0,
+                "cp_n1_restant": 0.0,
+                "cp_total_disponible": 0.0,
+                "last_accrual_date": None,
+                "created_at": now.isoformat(),
+                "updated_at": now.isoformat()
+            }
+            await db.leave_balances.insert_one(balance)
+        
+        # Créer la transaction d'acquisition
+        transaction_id = str(uuid.uuid4())
+        new_cp_acquis = balance["cp_acquis"] + accrual_rate
+        new_cp_restant = new_cp_acquis - balance["cp_pris"]
+        
+        transaction_doc = {
+            "id": transaction_id,
+            "hotel_id": hotel_id,
+            "employee_id": employee["id"],
+            "employee_name": f"{employee['first_name']} {employee['last_name']}",
+            "transaction_type": "accrual",
+            "leave_type": "cp_n",
+            "date_start": None,
+            "date_end": None,
+            "days_count": accrual_rate,
+            "balance_before": balance["cp_restant"],
+            "balance_after": new_cp_restant,
+            "reason": f"Acquisition mensuelle {month}/{year}",
+            "notes": None,
+            "created_by": "system",
+            "created_at": now.isoformat()
+        }
+        await db.leave_transactions.insert_one(transaction_doc)
+        
+        # Mettre à jour le solde
+        await db.leave_balances.update_one(
+            {"id": balance["id"]},
+            {"$set": {
+                "cp_acquis": new_cp_acquis,
+                "cp_restant": new_cp_restant,
+                "cp_total_disponible": new_cp_restant + balance["cp_n1_restant"],
+                "last_accrual_date": now.isoformat(),
+                "updated_at": now.isoformat()
+            }}
+        )
+        accrued_count += 1
+    
+    return {
+        "message": f"Acquisition effectuée pour {accrued_count} employés",
+        "month": month,
+        "year": year,
+        "accrual_rate": accrual_rate
+    }
+
+@api_router.post("/hotels/{hotel_id}/leave/rollover/run")
+async def run_annual_rollover(hotel_id: str, from_year: int, current_user: dict = Depends(get_current_user)):
+    """Exécuter le report annuel N vers N-1 (à faire au 1er juin)"""
+    to_year = from_year + 1
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # Récupérer la config
+    config = await db.leave_config.find_one({"hotel_id": hotel_id}, {"_id": 0})
+    allow_rollover = config["allow_n1_rollover"] if config else True
+    max_rollover = config["max_n1_rollover_days"] if config else 10.0
+    
+    if not allow_rollover:
+        return {"message": "Le report N-1 est désactivé dans la configuration"}
+    
+    # Récupérer tous les soldes de l'année précédente
+    old_balances = await db.leave_balances.find({
+        "hotel_id": hotel_id,
+        "reference_year": from_year
+    }, {"_id": 0}).to_list(500)
+    
+    rollover_count = 0
+    for old_balance in old_balances:
+        # Calculer le montant à reporter (max = config)
+        rollover_amount = min(old_balance["cp_restant"], max_rollover)
+        
+        if rollover_amount <= 0:
+            continue
+        
+        # Vérifier/créer le solde de la nouvelle année
+        new_balance = await db.leave_balances.find_one({
+            "hotel_id": hotel_id,
+            "employee_id": old_balance["employee_id"],
+            "reference_year": to_year
+        }, {"_id": 0})
+        
+        if not new_balance:
+            balance_id = str(uuid.uuid4())
+            new_balance = {
+                "id": balance_id,
+                "hotel_id": hotel_id,
+                "employee_id": old_balance["employee_id"],
+                "employee_name": old_balance["employee_name"],
+                "reference_year": to_year,
+                "cp_acquis": 0.0,
+                "cp_pris": 0.0,
+                "cp_restant": 0.0,
+                "cp_n1": rollover_amount,
+                "cp_n1_pris": 0.0,
+                "cp_n1_restant": rollover_amount,
+                "cp_total_disponible": rollover_amount,
+                "last_accrual_date": None,
+                "created_at": now,
+                "updated_at": now
+            }
+            await db.leave_balances.insert_one(new_balance)
+        else:
+            await db.leave_balances.update_one(
+                {"id": new_balance["id"]},
+                {"$set": {
+                    "cp_n1": rollover_amount,
+                    "cp_n1_restant": rollover_amount,
+                    "cp_total_disponible": new_balance["cp_restant"] + rollover_amount,
+                    "updated_at": now
+                }}
+            )
+        
+        # Créer les transactions de rollover
+        await db.leave_transactions.insert_one({
+            "id": str(uuid.uuid4()),
+            "hotel_id": hotel_id,
+            "employee_id": old_balance["employee_id"],
+            "employee_name": old_balance["employee_name"],
+            "transaction_type": "rollover_out",
+            "leave_type": "cp_n",
+            "days_count": rollover_amount,
+            "balance_before": old_balance["cp_restant"],
+            "balance_after": old_balance["cp_restant"] - rollover_amount,
+            "reason": f"Report vers N-1 ({to_year})",
+            "created_by": "system",
+            "created_at": now
+        })
+        
+        await db.leave_transactions.insert_one({
+            "id": str(uuid.uuid4()),
+            "hotel_id": hotel_id,
+            "employee_id": old_balance["employee_id"],
+            "employee_name": old_balance["employee_name"],
+            "transaction_type": "rollover_in",
+            "leave_type": "cp_n1",
+            "days_count": rollover_amount,
+            "balance_before": 0,
+            "balance_after": rollover_amount,
+            "reason": f"Report depuis N ({from_year})",
+            "created_by": "system",
+            "created_at": now
+        })
+        
+        rollover_count += 1
+    
+    return {
+        "message": f"Report effectué pour {rollover_count} employés",
+        "from_year": from_year,
+        "to_year": to_year,
+        "max_rollover_days": max_rollover
+    }
+
+# ===================== LEAVE REQUESTS ROUTES =====================
+
+@api_router.post("/hotels/{hotel_id}/leave/requests", response_model=LeaveRequestResponse)
+async def create_leave_request(hotel_id: str, request: LeaveRequestCreate, current_user: dict = Depends(get_current_user)):
+    """Créer une demande de congé"""
+    employee = await db.staff_employees.find_one({"id": request.employee_id, "hotel_id": hotel_id}, {"_id": 0})
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employé non trouvé")
+    
+    # Calculer le nombre de jours
+    start = datetime.strptime(request.date_start, "%Y-%m-%d")
+    end = datetime.strptime(request.date_end, "%Y-%m-%d")
+    days_count = (end - start).days + 1
+    
+    # Exclure les week-ends (simplification)
+    working_days = 0
+    current = start
+    while current <= end:
+        if current.weekday() < 5:  # Lundi = 0, Vendredi = 4
+            working_days += 1
+        current += timedelta(days=1)
+    days_count = working_days
+    
+    # Récupérer le solde
+    reference_year = get_current_reference_year()
+    balance = await db.leave_balances.find_one({
+        "hotel_id": hotel_id,
+        "employee_id": request.employee_id,
+        "reference_year": reference_year
+    }, {"_id": 0})
+    
+    if not balance:
+        raise HTTPException(status_code=400, detail="Solde CP non initialisé")
+    
+    # Vérifier le solde disponible
+    if days_count > balance["cp_total_disponible"]:
+        raise HTTPException(status_code=400, detail=f"Solde insuffisant. Disponible: {balance['cp_total_disponible']} jours")
+    
+    # Calculer la répartition N-1 / N
+    cp_n1_used = 0.0
+    cp_n_used = 0.0
+    
+    if request.use_n1_first and balance["cp_n1_restant"] > 0:
+        cp_n1_used = min(days_count, balance["cp_n1_restant"])
+        cp_n_used = days_count - cp_n1_used
+    else:
+        cp_n_used = min(days_count, balance["cp_restant"])
+        cp_n1_used = days_count - cp_n_used
+    
+    request_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    request_doc = {
+        "id": request_id,
+        "hotel_id": hotel_id,
+        "employee_id": request.employee_id,
+        "employee_name": f"{employee['first_name']} {employee['last_name']}",
+        "date_start": request.date_start,
+        "date_end": request.date_end,
+        "days_count": days_count,
+        "leave_type": request.leave_type,
+        "use_n1_first": request.use_n1_first,
+        "cp_n1_used": cp_n1_used,
+        "cp_n_used": cp_n_used,
+        "status": "pending",
+        "reason": request.reason,
+        "notes": request.notes,
+        "approved_by": None,
+        "approved_at": None,
+        "rejection_reason": None,
+        "created_at": now
+    }
+    await db.leave_requests.insert_one(request_doc)
+    
+    return LeaveRequestResponse(**request_doc)
+
+@api_router.get("/hotels/{hotel_id}/leave/requests", response_model=List[LeaveRequestResponse])
+async def get_leave_requests(hotel_id: str, employee_id: Optional[str] = None, status: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    """Récupérer les demandes de congés"""
+    query = {"hotel_id": hotel_id}
+    if employee_id:
+        query["employee_id"] = employee_id
+    if status:
+        query["status"] = status
+    
+    requests = await db.leave_requests.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
+    return [LeaveRequestResponse(**r) for r in requests]
+
+@api_router.patch("/hotels/{hotel_id}/leave/requests/{request_id}/approve")
+async def approve_leave_request(hotel_id: str, request_id: str, current_user: dict = Depends(get_current_user)):
+    """Approuver une demande de congé"""
+    leave_request = await db.leave_requests.find_one({"id": request_id, "hotel_id": hotel_id}, {"_id": 0})
+    if not leave_request:
+        raise HTTPException(status_code=404, detail="Demande non trouvée")
+    
+    if leave_request["status"] != "pending":
+        raise HTTPException(status_code=400, detail="Cette demande a déjà été traitée")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # Mettre à jour la demande
+    await db.leave_requests.update_one(
+        {"id": request_id},
+        {"$set": {
+            "status": "approved",
+            "approved_by": current_user["user_id"],
+            "approved_at": now
+        }}
+    )
+    
+    # Créer les transactions de prise de congé
+    reference_year = get_current_reference_year()
+    balance = await db.leave_balances.find_one({
+        "hotel_id": hotel_id,
+        "employee_id": leave_request["employee_id"],
+        "reference_year": reference_year
+    }, {"_id": 0})
+    
+    if leave_request["cp_n1_used"] > 0:
+        await db.leave_transactions.insert_one({
+            "id": str(uuid.uuid4()),
+            "hotel_id": hotel_id,
+            "employee_id": leave_request["employee_id"],
+            "employee_name": leave_request["employee_name"],
+            "transaction_type": "taken",
+            "leave_type": "cp_n1",
+            "date_start": leave_request["date_start"],
+            "date_end": leave_request["date_end"],
+            "days_count": leave_request["cp_n1_used"],
+            "balance_before": balance["cp_n1_restant"],
+            "balance_after": balance["cp_n1_restant"] - leave_request["cp_n1_used"],
+            "reason": leave_request.get("reason"),
+            "created_by": current_user["user_id"],
+            "created_at": now
+        })
+        
+        new_cp_n1_pris = balance["cp_n1_pris"] + leave_request["cp_n1_used"]
+        new_cp_n1_restant = balance["cp_n1"] - new_cp_n1_pris
+        await db.leave_balances.update_one(
+            {"id": balance["id"]},
+            {"$set": {
+                "cp_n1_pris": new_cp_n1_pris,
+                "cp_n1_restant": new_cp_n1_restant,
+                "updated_at": now
+            }}
+        )
+        # Refresh balance for N calculation
+        balance = await db.leave_balances.find_one({"id": balance["id"]}, {"_id": 0})
+    
+    if leave_request["cp_n_used"] > 0:
+        await db.leave_transactions.insert_one({
+            "id": str(uuid.uuid4()),
+            "hotel_id": hotel_id,
+            "employee_id": leave_request["employee_id"],
+            "employee_name": leave_request["employee_name"],
+            "transaction_type": "taken",
+            "leave_type": "cp_n",
+            "date_start": leave_request["date_start"],
+            "date_end": leave_request["date_end"],
+            "days_count": leave_request["cp_n_used"],
+            "balance_before": balance["cp_restant"],
+            "balance_after": balance["cp_restant"] - leave_request["cp_n_used"],
+            "reason": leave_request.get("reason"),
+            "created_by": current_user["user_id"],
+            "created_at": now
+        })
+        
+        new_cp_pris = balance["cp_pris"] + leave_request["cp_n_used"]
+        new_cp_restant = balance["cp_acquis"] - new_cp_pris
+        await db.leave_balances.update_one(
+            {"id": balance["id"]},
+            {"$set": {
+                "cp_pris": new_cp_pris,
+                "cp_restant": new_cp_restant,
+                "cp_total_disponible": new_cp_restant + balance["cp_n1_restant"],
+                "updated_at": now
+            }}
+        )
+    
+    return {"message": "Demande approuvée"}
+
+@api_router.patch("/hotels/{hotel_id}/leave/requests/{request_id}/reject")
+async def reject_leave_request(hotel_id: str, request_id: str, rejection_reason: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    """Rejeter une demande de congé"""
+    result = await db.leave_requests.update_one(
+        {"id": request_id, "hotel_id": hotel_id, "status": "pending"},
+        {"$set": {
+            "status": "rejected",
+            "rejection_reason": rejection_reason,
+            "approved_by": current_user["user_id"],
+            "approved_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Demande non trouvée ou déjà traitée")
+    return {"message": "Demande rejetée"}
+
+# ===================== PUBLIC HOLIDAYS ROUTES =====================
+
+@api_router.post("/hotels/{hotel_id}/holidays", response_model=PublicHolidayResponse)
+async def create_public_holiday(hotel_id: str, holiday: PublicHolidayCreate, current_user: dict = Depends(get_current_user)):
+    """Créer un jour férié"""
+    holiday_id = str(uuid.uuid4())
+    holiday_doc = {
+        "id": holiday_id,
+        "hotel_id": hotel_id,
+        **holiday.model_dump(),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.public_holidays.insert_one(holiday_doc)
+    return PublicHolidayResponse(**holiday_doc)
+
+@api_router.get("/hotels/{hotel_id}/holidays", response_model=List[PublicHolidayResponse])
+async def get_public_holidays(hotel_id: str, year: Optional[int] = None, current_user: dict = Depends(get_current_user)):
+    """Récupérer les jours fériés"""
+    query = {"hotel_id": hotel_id}
+    if year:
+        query["date"] = {"$regex": f"^{year}"}
+    
+    holidays = await db.public_holidays.find(query, {"_id": 0}).sort("date", 1).to_list(100)
+    return [PublicHolidayResponse(**h) for h in holidays]
+
+@api_router.post("/hotels/{hotel_id}/holidays/initialize/{year}")
+async def initialize_french_holidays(hotel_id: str, year: int, current_user: dict = Depends(get_current_user)):
+    """Initialiser les jours fériés français pour une année"""
+    french_holidays = [
+        {"date": f"{year}-01-01", "name": "Jour de l'An", "holiday_type": "national"},
+        {"date": f"{year}-05-01", "name": "Fête du Travail", "holiday_type": "national"},
+        {"date": f"{year}-05-08", "name": "Victoire 1945", "holiday_type": "national"},
+        {"date": f"{year}-07-14", "name": "Fête Nationale", "holiday_type": "national"},
+        {"date": f"{year}-08-15", "name": "Assomption", "holiday_type": "national"},
+        {"date": f"{year}-11-01", "name": "Toussaint", "holiday_type": "national"},
+        {"date": f"{year}-11-11", "name": "Armistice", "holiday_type": "national"},
+        {"date": f"{year}-12-25", "name": "Noël", "holiday_type": "national"},
+    ]
+    
+    # Calculer Pâques (algorithme de Meeus/Jones/Butcher)
+    a = year % 19
+    b = year // 100
+    c = year % 100
+    d = b // 4
+    e = b % 4
+    f = (b + 8) // 25
+    g = (b - f + 1) // 3
+    h = (19 * a + b - d - g + 15) % 30
+    i = c // 4
+    k = c % 4
+    l = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 22 * l) // 451
+    month = (h + l - 7 * m + 114) // 31
+    day = ((h + l - 7 * m + 114) % 31) + 1
+    
+    easter = datetime(year, month, day)
+    french_holidays.extend([
+        {"date": (easter + timedelta(days=1)).strftime("%Y-%m-%d"), "name": "Lundi de Pâques", "holiday_type": "national"},
+        {"date": (easter + timedelta(days=39)).strftime("%Y-%m-%d"), "name": "Ascension", "holiday_type": "national"},
+        {"date": (easter + timedelta(days=50)).strftime("%Y-%m-%d"), "name": "Lundi de Pentecôte", "holiday_type": "national"},
+    ])
+    
+    created_count = 0
+    for h in french_holidays:
+        existing = await db.public_holidays.find_one({"hotel_id": hotel_id, "date": h["date"]})
+        if not existing:
+            holiday_id = str(uuid.uuid4())
+            await db.public_holidays.insert_one({
+                "id": holiday_id,
+                "hotel_id": hotel_id,
+                **h,
+                "is_mandatory": True,
+                "compensation_type": "off",
+                "bonus_rate": 1.0,
+                "applies_to_all": True,
+                "department_restrictions": [],
+                "created_at": datetime.now(timezone.utc).isoformat()
+            })
+            created_count += 1
+    
+    return {"message": f"{created_count} jours fériés créés pour {year}"}
+
+@api_router.delete("/hotels/{hotel_id}/holidays/{holiday_id}")
+async def delete_public_holiday(hotel_id: str, holiday_id: str, current_user: dict = Depends(get_current_user)):
+    """Supprimer un jour férié"""
+    result = await db.public_holidays.delete_one({"id": holiday_id, "hotel_id": hotel_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Jour férié non trouvé")
+    return {"message": "Jour férié supprimé"}
+
+# ===================== PUBLIC HOLIDAYS WORKED ROUTES =====================
+
+@api_router.post("/hotels/{hotel_id}/holidays/worked", response_model=PublicHolidayWorkedResponse)
+async def record_holiday_worked(hotel_id: str, worked: PublicHolidayWorkedCreate, current_user: dict = Depends(get_current_user)):
+    """Enregistrer qu'un employé a travaillé un jour férié"""
+    employee = await db.staff_employees.find_one({"id": worked.employee_id, "hotel_id": hotel_id}, {"_id": 0})
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employé non trouvé")
+    
+    holiday = await db.public_holidays.find_one({"id": worked.holiday_id, "hotel_id": hotel_id}, {"_id": 0})
+    if not holiday:
+        raise HTTPException(status_code=404, detail="Jour férié non trouvé")
+    
+    # Calculer le bonus si applicable
+    bonus_amount = None
+    if worked.compensation_choice == "bonus":
+        hourly_rate = employee.get("hourly_rate", 11.65)
+        bonus_amount = worked.hours_worked * hourly_rate * holiday.get("bonus_rate", 1.0)
+    
+    worked_id = str(uuid.uuid4())
+    worked_doc = {
+        "id": worked_id,
+        "hotel_id": hotel_id,
+        "employee_id": worked.employee_id,
+        "employee_name": f"{employee['first_name']} {employee['last_name']}",
+        "holiday_id": worked.holiday_id,
+        "holiday_name": holiday["name"],
+        "holiday_date": holiday["date"],
+        "hours_worked": worked.hours_worked,
+        "compensation_choice": worked.compensation_choice,
+        "bonus_amount": round(bonus_amount, 2) if bonus_amount else None,
+        "recovery_date": worked.recovery_date,
+        "recovery_used": False,
+        "notes": worked.notes,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.holidays_worked.insert_one(worked_doc)
+    
+    return PublicHolidayWorkedResponse(**worked_doc)
+
+@api_router.get("/hotels/{hotel_id}/holidays/worked", response_model=List[PublicHolidayWorkedResponse])
+async def get_holidays_worked(hotel_id: str, employee_id: Optional[str] = None, year: Optional[int] = None, current_user: dict = Depends(get_current_user)):
+    """Récupérer les jours fériés travaillés"""
+    query = {"hotel_id": hotel_id}
+    if employee_id:
+        query["employee_id"] = employee_id
+    if year:
+        query["holiday_date"] = {"$regex": f"^{year}"}
+    
+    worked = await db.holidays_worked.find(query, {"_id": 0}).sort("holiday_date", -1).to_list(500)
+    return [PublicHolidayWorkedResponse(**w) for w in worked]
+
+@api_router.patch("/hotels/{hotel_id}/holidays/worked/{worked_id}/use-recovery")
+async def mark_recovery_used(hotel_id: str, worked_id: str, current_user: dict = Depends(get_current_user)):
+    """Marquer la récupération comme utilisée"""
+    result = await db.holidays_worked.update_one(
+        {"id": worked_id, "hotel_id": hotel_id},
+        {"$set": {"recovery_used": True}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Enregistrement non trouvé")
+    return {"message": "Récupération marquée comme utilisée"}
+
+# ===================== STAFF PLANNING SUMMARY (for UI) =====================
+
+@api_router.get("/hotels/{hotel_id}/staff/planning-summary")
+async def get_staff_planning_summary(hotel_id: str, from_date: str, to_date: str, current_user: dict = Depends(get_current_user)):
+    """Récupérer un résumé pour l'affichage dans le planning (CP, jours fériés, etc.)"""
+    reference_year = get_current_reference_year()
+    
+    # Récupérer tous les employés actifs
+    employees = await db.staff_employees.find({"hotel_id": hotel_id, "is_active": True}, {"_id": 0}).to_list(500)
+    
+    # Récupérer les soldes CP
+    balances = await db.leave_balances.find({
+        "hotel_id": hotel_id,
+        "reference_year": reference_year
+    }, {"_id": 0}).to_list(500)
+    balance_map = {b["employee_id"]: b for b in balances}
+    
+    # Récupérer les demandes de congés approuvées dans la période
+    leave_requests = await db.leave_requests.find({
+        "hotel_id": hotel_id,
+        "status": "approved",
+        "date_start": {"$lte": to_date},
+        "date_end": {"$gte": from_date}
+    }, {"_id": 0}).to_list(500)
+    
+    # Récupérer les jours fériés dans la période
+    holidays = await db.public_holidays.find({
+        "hotel_id": hotel_id,
+        "date": {"$gte": from_date, "$lte": to_date}
+    }, {"_id": 0}).to_list(50)
+    
+    # Récupérer les jours fériés travaillés
+    holidays_worked = await db.holidays_worked.find({
+        "hotel_id": hotel_id,
+        "holiday_date": {"$gte": from_date, "$lte": to_date}
+    }, {"_id": 0}).to_list(500)
+    worked_map = {}
+    for hw in holidays_worked:
+        key = f"{hw['employee_id']}_{hw['holiday_date']}"
+        worked_map[key] = hw
+    
+    # Construire le résumé par employé
+    summary = []
+    for emp in employees:
+        balance = balance_map.get(emp["id"], {})
+        emp_leave_requests = [lr for lr in leave_requests if lr["employee_id"] == emp["id"]]
+        emp_holidays_worked = [hw for hw in holidays_worked if hw["employee_id"] == emp["id"]]
+        
+        # Calculer les CP pris dans la période
+        cp_pris_periode = sum(lr["days_count"] for lr in emp_leave_requests)
+        
+        summary.append({
+            "employee_id": emp["id"],
+            "employee_name": f"{emp['first_name']} {emp['last_name']}",
+            "position": emp.get("position", ""),
+            "department": emp.get("department", ""),
+            "cp_acquis": balance.get("cp_acquis", 0),
+            "cp_pris_total": balance.get("cp_pris", 0),
+            "cp_restant": balance.get("cp_restant", 0),
+            "cp_n1_restant": balance.get("cp_n1_restant", 0),
+            "cp_total_disponible": balance.get("cp_total_disponible", 0),
+            "cp_pris_periode": cp_pris_periode,
+            "leave_requests": emp_leave_requests,
+            "holidays_worked": emp_holidays_worked
+        })
+    
+    return {
+        "employees": summary,
+        "holidays": holidays,
+        "period": {"from": from_date, "to": to_date},
+        "reference_year": reference_year
+    }
+
 # ===================== ROOT & HEALTH =====================
 
 @api_router.get("/")
