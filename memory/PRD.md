@@ -162,6 +162,21 @@ Build a modern, full-featured PMS with:
   - Status badges: Active (green), Trial (blue), Paused (amber), Expired (red)
   - Filters: Search, Status, Plan
 
+### CRM Module (2026-03-24)
+- [x] **Dashboard CRM** avec KPIs (Clients totaux, Taux rétention, Score NPS, CA par client)
+- [x] **Alertes Temps Réel** (Chute rétention, Clients VIP sans interaction, Messages WhatsApp)
+- [x] **Gestion Clients** avec liste, fiches détaillées, scores fidélité, tags
+- [x] **Segmentation** des clients par critères
+- [x] **Communications** (Inbox unifié)
+- [x] **Réponses Auto** configurables
+- [x] **Workflows** automatisés
+- [x] **Campagnes** marketing
+- [x] **Intelligence** (menu déroulant avec modules IA)
+- [x] **Analytics** et rapports
+- [x] **Connecteurs** (intégrations tierces)
+- [x] **Configuration** du module
+- [x] **Interface bilingue** FR/EN
+
 ### Hotel Configuration & Management (2026-03-24)
 - [x] **Hotel Management Page** (/superadmin/hotels/{hotelId})
   - 6 Tabs: Informations, Abonnement, Modules, Chambres, Équipements, Services
@@ -324,6 +339,7 @@ Build a modern, full-featured PMS with:
 - [x] Staff Recrutement with REAL GPT-4o AI generation
 - [x] **Super Admin SaaS Module** (multi-tenant, subscriptions, billing, PDF contracts, SEPA mandates)
 - [x] **Subscription Catalog & Lifecycle** (dynamic plans, modules/features, pause/reactivate/upgrade/downgrade)
+- [x] **CRM Module** (clients, segmentation, communications, workflows, campaigns, analytics, AI intelligence)
 
 ## P1 Features (Upcoming)
 - [ ] Document storage integration (upload employee documents to cloud)

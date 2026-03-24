@@ -22,6 +22,7 @@ import { StaffReporting } from '@/pages/staff/StaffReporting'
 import { StaffConfiguration } from '@/pages/staff/StaffConfiguration'
 import { StaffRecruitment } from '@/pages/staff/StaffRecruitment'
 import { SuperAdminApp } from '@/pages/superadmin/SuperAdminApp'
+import CRMPage from '@/pages/crm/index'
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth()
@@ -78,6 +79,9 @@ const AppRoutes = () => {
                   <Route path="/staff/reporting" element={<StaffReporting />} />
                   <Route path="/staff/configuration" element={<StaffConfiguration />} />
                   <Route path="/staff/recruitment" element={<StaffRecruitment />} />
+                  {/* CRM Routes */}
+                  <Route path="/crm" element={<CRMPage />} />
+                  <Route path="/crm/*" element={<CRMPage />} />
                   {/* Settings */}
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="*" element={<Navigate to="/pms/planning" replace />} />

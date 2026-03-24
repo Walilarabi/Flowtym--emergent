@@ -15,7 +15,7 @@ const modules = [
   { id: 'channel', label: 'Channel', icon: Network, path: '/channel', disabled: true },
   { id: 'rms', label: 'RMS', icon: TrendingUp, path: '/rms', disabled: true },
   { id: 'ereputation', label: 'E-Reputation', icon: Star, path: '/e-reputation', disabled: true },
-  { id: 'crm', label: 'CRM', icon: Users, path: '/crm', disabled: true },
+  { id: 'crm', label: 'CRM', icon: Users, path: '/crm', disabled: false },
   { id: 'booking', label: 'Booking', icon: CalendarCheck, path: '/booking', disabled: true },
   { id: 'housekeeping', label: 'Housekeeping', icon: Brush, path: '/housekeeping', disabled: true },
   { id: 'staff', label: 'Staff', icon: UsersRound, path: '/staff', disabled: false },
@@ -33,6 +33,7 @@ export const TopNavigation = () => {
   const isActive = (path) => {
     if (path === '/pms/planning') return location.pathname.startsWith('/pms')
     if (path === '/staff') return location.pathname.startsWith('/staff')
+    if (path === '/crm') return location.pathname.startsWith('/crm')
     return location.pathname.startsWith(path)
   }
 
