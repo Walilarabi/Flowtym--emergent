@@ -132,6 +132,36 @@ Build a modern, full-featured PMS with:
 - [x] **Activity Logs**: Full audit trail of admin actions
 - [x] **Support Mode**: Simulate user view by role (scaffolded)
 
+### Subscription Catalog & Lifecycle Management (NEW - 2026-03-24)
+- [x] **Dynamic Subscription Plans Catalog**
+  - Create/Edit/Delete plans with full configuration
+  - 10 configurable modules: PMS, Staff, Channel Manager, CRM, RMS, E-Réputation, Operations, Booking Engine, Finance, Marketing
+  - Feature toggles per module (e.g., Staff: Planning, Contrats, OCR, Export Paie)
+  - Pricing: Monthly + Annual with configurable discount (%)
+  - Trial period configurable per plan (0-30+ days)
+  - Commitment period (months)
+  - Max users configuration (-1 = unlimited)
+  - Featured/Popular badge
+- [x] **Hotel Subscription Lifecycle Management**
+  - **Pause**: Suspend access, keep data, suspend billing
+  - **Reactivate**: Restore access, resume billing with pause duration extension
+  - **Upgrade**: Add modules/features, increase users, immediate or scheduled
+  - **Downgrade**: Reduce plan with compatibility check
+    - Block downgrade if excess users
+    - Auto-disable excess users option
+  - Subscription statuses: active, paused, trial, expired, cancelled
+- [x] **Backend Modular Architecture** (`/backend/superadmin/`)
+  - `catalog_models.py`: Plan, Module, Feature definitions
+  - `catalog_routes.py`: Catalog CRUD + Lifecycle actions
+  - Supports legacy (sa_hotels.subscription_plan) + new (sa_subscriptions) formats
+- [x] **Frontend UI**
+  - Catalog page: Plan cards with modules, pricing, subscriber count
+  - Create/Edit modal: Module toggles with feature configuration
+  - Subscriptions Lifecycle page: Stats (Total, Active, Trial, Paused, MRR)
+  - Quick actions: Pause/Reactivate buttons
+  - Status badges: Active (green), Trial (blue), Paused (amber), Expired (red)
+  - Filters: Search, Status, Plan
+
 ---
 
 ## API Endpoints
@@ -212,6 +242,23 @@ Build a modern, full-featured PMS with:
 - `POST /api/hotels/{id}/recruitment/candidates/{id}/interviews`
 - `GET /api/hotels/{id}/recruitment/pipeline-stats`
 
+### Super Admin Subscription Catalog
+- `GET /api/superadmin/catalog/modules` - List all 10 configurable modules
+- `GET /api/superadmin/catalog/plans` - List all subscription plans
+- `POST /api/superadmin/catalog/plans` - Create new plan
+- `PUT /api/superadmin/catalog/plans/{id}` - Update plan
+- `DELETE /api/superadmin/catalog/plans/{id}` - Soft delete plan
+
+### Super Admin Subscription Lifecycle
+- `GET /api/superadmin/subscriptions/list` - List all hotel subscriptions (legacy + new)
+- `GET /api/superadmin/subscriptions/{id}/detail` - Get subscription detail
+- `POST /api/superadmin/subscriptions/{id}/pause` - Pause subscription
+- `POST /api/superadmin/subscriptions/{id}/reactivate` - Reactivate paused subscription
+- `POST /api/superadmin/subscriptions/{id}/upgrade/check` - Check upgrade compatibility
+- `POST /api/superadmin/subscriptions/{id}/upgrade` - Apply upgrade
+- `POST /api/superadmin/subscriptions/{id}/downgrade/check` - Check downgrade compatibility
+- `POST /api/superadmin/subscriptions/{id}/downgrade` - Apply downgrade
+
 ---
 
 ## Database Collections
@@ -220,7 +267,7 @@ Build a modern, full-featured PMS with:
 - staff_contracts, staff_payroll
 - leave_config, leave_balances, leave_transactions, leave_requests
 - public_holidays, holidays_worked
-- **Super Admin**: sa_hotels, sa_subscriptions, sa_hotel_users, sa_sepa_mandates, sa_invoices, superadmin_logs
+- **Super Admin**: sa_hotels, sa_subscriptions, sa_subscription_plans, sa_hotel_users, sa_sepa_mandates, sa_invoices, superadmin_logs
 
 ---
 
@@ -236,15 +283,13 @@ Build a modern, full-featured PMS with:
 - [x] Staff Reporting with real PDF/Excel exports
 - [x] Staff Recrutement with REAL GPT-4o AI generation
 - [x] **Super Admin SaaS Module** (multi-tenant, subscriptions, billing, PDF contracts, SEPA mandates)
+- [x] **Subscription Catalog & Lifecycle** (dynamic plans, modules/features, pause/reactivate/upgrade/downgrade)
 
 ## P1 Features (Upcoming)
 - [ ] Document storage integration (upload employee documents to cloud)
 - [ ] Background scheduler for automated monthly CP accrual (CRON)
 - [ ] Leave calendar visualization
-- [ ] Electronic signature integration (DocuSign/HelloSign)
-- [ ] Super Admin: Subscriptions management page (full CRUD)
-- [ ] Super Admin: Users management page per hotel
-- [ ] Super Admin: Invoices management with payment tracking
+- [ ] Super Admin: Stripe integration for real payment processing
 
 ## P2 Features (Future)
 - [ ] Payment webhooks (Stripe/Adyen/PayPal production)
@@ -269,6 +314,9 @@ Build a modern, full-featured PMS with:
 - **Super Admin Backend**: `/app/backend/superadmin/routes.py`, `/app/backend/superadmin/models.py`, `/app/backend/superadmin/pdf_generator.py`
 - Frontend Entry: `/app/frontend/src/App.jsx`
 - **Super Admin Frontend**: `/app/frontend/src/pages/superadmin/SuperAdminApp.jsx`
+- **Subscription Catalog**: `/app/frontend/src/pages/superadmin/SACatalog.jsx`
+- **Subscription Lifecycle**: `/app/frontend/src/pages/superadmin/SASubscriptionsLifecycle.jsx`
+- **Catalog Backend**: `/app/backend/superadmin/catalog_models.py`, `/app/backend/superadmin/catalog_routes.py`
 - Design System: `/app/frontend/src/index.css`, `/app/frontend/tailwind.config.js`
 - Navigation: `/app/frontend/src/components/layout/TopNavigation.jsx`, `/app/frontend/src/components/layout/SubNavigation.jsx`
 - Staff Planning: `/app/frontend/src/pages/staff/StaffPlanning.jsx`
