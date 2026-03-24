@@ -83,6 +83,30 @@ Build a modern, full-featured PMS with:
 - [x] Employee card styling (Trombinoscope)
 - [x] Wizard step indicators
 
+### Staff Configuration (Complete - 2026-03-24)
+- [x] Services & Postes management (departments CRUD with positions)
+- [x] Horaires & Shifts management (shift templates with code, times, majoration)
+- [x] Contrats (Modeles) - contract templates with status toggle
+- [x] Utilisateurs & Roles - permission matrix (8 permissions x 6 roles)
+- [x] Documents RH - HR document types with mandatory/OCR flags
+- [x] Parametres Staff - logo, emails, toggles, CP settings
+
+### Staff Reporting (Complete - 2026-03-24)
+- [x] KPI Cards (Collaborateurs actifs, Heures totales, Heures supp., Arrets maladie)
+- [x] Period selector with month/year navigation
+- [x] Employee details table with TOTAUX row
+- [x] Hours by service bar chart
+- [x] **REAL Functional Exports** - PDF (window.print), Excel (CSV download)
+- [x] Auto-report toggle with email configuration
+
+### Staff Recrutement (Complete - 2026-03-24)
+- [x] Pipeline view (Kanban) - Nouveaux, Présélection, Entretien, Offre, Embauché
+- [x] Job Offers CRUD with publish/unpublish
+- [x] Candidates CRUD with status progression and rating
+- [x] **AI Job Offer Generation (MOCK)** - Pre-filled French templates by department
+- [x] Filters: search, status, job offer
+- [x] Interview scheduling (endpoint ready)
+
 ---
 
 ## API Endpoints
@@ -129,6 +153,40 @@ Build a modern, full-featured PMS with:
 ### Planning Summary
 - `GET /api/hotels/{id}/staff/planning-summary`
 
+### Staff Configuration
+- `GET /api/hotels/{id}/config/departments`
+- `POST /api/hotels/{id}/config/departments`
+- `DELETE /api/hotels/{id}/config/departments/{id}`
+- `GET /api/hotels/{id}/config/shifts`
+- `POST /api/hotels/{id}/config/shifts`
+- `DELETE /api/hotels/{id}/config/shifts/{id}`
+- `GET /api/hotels/{id}/config/contract-templates`
+- `GET /api/hotels/{id}/config/roles`
+- `PUT /api/hotels/{id}/config/roles/{id}`
+- `GET /api/hotels/{id}/config/hr-documents`
+- `POST /api/hotels/{id}/config/hr-documents`
+- `DELETE /api/hotels/{id}/config/hr-documents/{id}`
+- `GET /api/hotels/{id}/config/settings`
+- `PUT /api/hotels/{id}/config/settings`
+
+### Staff Reporting
+- `GET /api/hotels/{id}/reporting/staff-analytics`
+
+### Staff Recrutement
+- `GET /api/hotels/{id}/recruitment/job-offers`
+- `POST /api/hotels/{id}/recruitment/job-offers`
+- `PUT /api/hotels/{id}/recruitment/job-offers/{id}`
+- `DELETE /api/hotels/{id}/recruitment/job-offers/{id}`
+- `POST /api/hotels/{id}/recruitment/job-offers/generate-ai` (**MOCK**)
+- `GET /api/hotels/{id}/recruitment/candidates`
+- `POST /api/hotels/{id}/recruitment/candidates`
+- `PUT /api/hotels/{id}/recruitment/candidates/{id}`
+- `PATCH /api/hotels/{id}/recruitment/candidates/{id}/status`
+- `PATCH /api/hotels/{id}/recruitment/candidates/{id}/rating`
+- `DELETE /api/hotels/{id}/recruitment/candidates/{id}`
+- `POST /api/hotels/{id}/recruitment/candidates/{id}/interviews`
+- `GET /api/hotels/{id}/recruitment/pipeline-stats`
+
 ---
 
 ## Database Collections
@@ -148,13 +206,15 @@ Build a modern, full-featured PMS with:
 - [x] Design System global refonte
 - [x] Personnel Liste/Trombinoscope views
 - [x] Add Employee Wizard (3 steps)
+- [x] Staff Configuration (departments, shifts, roles, documents, settings)
+- [x] Staff Reporting with real PDF/Excel exports
+- [x] Staff Recrutement with MOCK AI generation
 
 ## P1 Features (Upcoming)
 - [ ] Document storage integration (upload employee documents to cloud)
 - [ ] Background scheduler for automated monthly CP accrual (CRON)
-- [ ] Staff Configuration UI panel (departments CRUD)
 - [ ] Leave calendar visualization
-- [ ] PDF export for leave reports
+- [ ] Real AI integration for job offer generation (replace MOCK)
 
 ## P2 Features (Future)
 - [ ] Payment webhooks (Stripe/Adyen/PayPal production)
@@ -181,9 +241,18 @@ Build a modern, full-featured PMS with:
 - Staff Planning: `/app/frontend/src/pages/staff/StaffPlanning.jsx`
 - Personnel: `/app/frontend/src/pages/staff/StaffEmployees.jsx`
 - Add Employee Wizard: `/app/frontend/src/components/staff/AddEmployeeWizard.jsx`
+- Staff Configuration: `/app/frontend/src/pages/staff/StaffConfiguration.jsx`
+- Staff Reporting: `/app/frontend/src/pages/staff/StaffReporting.jsx`
+- Staff Recrutement: `/app/frontend/src/pages/staff/StaffRecruitment.jsx`
 
 ---
 
 ## Mocked Features
 - **Document Storage**: Employee documents in wizard are stored in form state only, not persisted to backend storage. Needs integration with object storage service.
 - **Payment Webhooks**: Stripe/Adyen/PayPal endpoints are scaffolded but lack production event handling.
+- **AI Job Offer Generation**: Returns pre-filled French templates by department (front_office, housekeeping, food_beverage). NOT connected to real AI.
+
+## Test Credentials (Updated)
+- Email: admin@flowtym.com
+- Password: admin123
+- Hotel ID: 4f02769a-5f63-4121-bb97-a7061563d934
