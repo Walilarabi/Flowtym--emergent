@@ -4449,6 +4449,62 @@ async def storage_entity_files(entity_type: str, entity_id: str, hotel_id: str =
     from storage.routes import list_entity_files
     return await list_entity_files(entity_type, entity_id, hotel_id, db, credentials)
 
+# ===================== PAYROLL REPORTING MODULE =====================
+
+from payroll_reporting.models import (
+    PayrollReportConfigCreate, PayrollReportConfigResponse,
+    GenerateReportRequest, PayrollReportResponse, SendReportRequest, EmailLogResponse
+)
+from payroll_reporting.routes import set_database as set_payroll_db
+
+# Initialize payroll reporting with database
+set_payroll_db(db)
+
+@api_router.get("/hotels/{hotel_id}/payroll-reports/config", response_model=PayrollReportConfigResponse)
+async def payroll_get_config(hotel_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from payroll_reporting.routes import get_payroll_config
+    return await get_payroll_config(hotel_id)
+
+@api_router.put("/hotels/{hotel_id}/payroll-reports/config", response_model=PayrollReportConfigResponse)
+async def payroll_update_config(hotel_id: str, config: PayrollReportConfigCreate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from payroll_reporting.routes import update_payroll_config
+    return await update_payroll_config(hotel_id, config)
+
+@api_router.post("/hotels/{hotel_id}/payroll-reports/generate", response_model=PayrollReportResponse)
+async def payroll_generate_reports(hotel_id: str, request: GenerateReportRequest, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from payroll_reporting.routes import generate_payroll_reports
+    return await generate_payroll_reports(hotel_id, request)
+
+@api_router.get("/hotels/{hotel_id}/payroll-reports/reports", response_model=List[PayrollReportResponse])
+async def payroll_list_reports(hotel_id: str, year: Optional[int] = None, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from payroll_reporting.routes import list_payroll_reports
+    return await list_payroll_reports(hotel_id, year)
+
+@api_router.get("/hotels/{hotel_id}/payroll-reports/reports/{report_id}")
+async def payroll_get_report(hotel_id: str, report_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from payroll_reporting.routes import get_payroll_report
+    return await get_payroll_report(hotel_id, report_id)
+
+@api_router.get("/hotels/{hotel_id}/payroll-reports/reports/{report_id}/download/{file_type}")
+async def payroll_download_file(hotel_id: str, report_id: str, file_type: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from payroll_reporting.routes import download_report_file
+    return await download_report_file(hotel_id, report_id, file_type)
+
+@api_router.post("/hotels/{hotel_id}/payroll-reports/reports/{report_id}/send")
+async def payroll_send_email(hotel_id: str, report_id: str, request: SendReportRequest, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from payroll_reporting.routes import send_payroll_report_email
+    return await send_payroll_report_email(hotel_id, report_id, request)
+
+@api_router.get("/hotels/{hotel_id}/payroll-reports/email-logs", response_model=List[EmailLogResponse])
+async def payroll_email_logs(hotel_id: str, limit: int = 20, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from payroll_reporting.routes import get_email_logs
+    return await get_email_logs(hotel_id, limit)
+
+@api_router.get("/hotels/{hotel_id}/payroll-reports/preview")
+async def payroll_preview(hotel_id: str, month: int, year: int, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from payroll_reporting.routes import preview_payroll_data
+    return await preview_payroll_data(hotel_id, month, year)
+
 # ===================== PMS-CRM AUTO SYNC =====================
 # This function is called automatically when a new reservation is created
 
