@@ -964,9 +964,9 @@ export const StaffRecruitment = () => {
           </DialogHeader>
           
           <div className="space-y-4 pt-4">
-            <p className="text-sm text-slate-600 bg-amber-50 border border-amber-200 rounded-lg p-3">
-              <strong>Mode MOCK :</strong> Génération simulée avec des textes pré-remplis adaptés au poste. 
-              Personnalisez le contenu selon vos besoins après génération.
+            <p className="text-sm text-slate-600 bg-violet-50 border border-violet-200 rounded-lg p-3">
+              <strong>IA GPT-4o :</strong> Génération intelligente d'offres d'emploi professionnelles adaptées au secteur hôtelier français.
+              Le contenu est personnalisé selon le poste et peut être modifié après génération.
             </p>
             
             <div>

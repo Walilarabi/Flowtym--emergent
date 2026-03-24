@@ -3322,11 +3322,109 @@ async def delete_job_offer(hotel_id: str, offer_id: str, credentials: HTTPAuthor
 @api_router.post("/hotels/{hotel_id}/recruitment/job-offers/generate-ai")
 async def generate_ai_job_offer(hotel_id: str, request: AIJobOfferRequest, credentials: HTTPAuthorizationCredentials = Depends(security)):
     """
-    MOCK AI Generation - Returns pre-filled example text for job offers
+    Real AI Generation using GPT-4o - Generates professional job offer descriptions in French
     """
     verify_token(credentials.credentials)
     
-    # Mock AI-generated content based on department and contract type
+    # Import AI library
+    try:
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
+    except ImportError:
+        # Fallback to mock if library not available
+        logger.warning("emergentintegrations not available, falling back to mock")
+        return await generate_ai_job_offer_mock(request)
+    
+    # Get API key
+    api_key = os.environ.get('EMERGENT_LLM_KEY')
+    if not api_key:
+        logger.warning("EMERGENT_LLM_KEY not configured, falling back to mock")
+        return await generate_ai_job_offer_mock(request)
+    
+    # Department labels for prompt
+    dept_labels = {
+        "front_office": "Réception",
+        "housekeeping": "Hébergement/Housekeeping",
+        "food_beverage": "Restauration",
+        "maintenance": "Maintenance technique",
+        "administration": "Direction/Administration"
+    }
+    department_name = dept_labels.get(request.department, request.department)
+    
+    # Keywords text
+    keywords_text = f"Compétences recherchées: {', '.join(request.keywords)}" if request.keywords else ""
+    
+    # Create AI prompt
+    system_prompt = """Tu es un expert RH spécialisé dans l'hôtellerie française. Tu génères des offres d'emploi professionnelles, attractives et conformes au marché français.
+
+Règles:
+- Utilise un ton professionnel mais engageant
+- Adapte le contenu au secteur hôtelier français
+- Inclus des missions concrètes et réalistes
+- Propose des prérequis pertinents pour le poste
+- Respecte les conventions du marché de l'emploi français"""
+
+    user_prompt = f"""Génère une offre d'emploi pour le poste suivant:
+
+**Titre du poste**: {request.title}
+**Département**: {department_name}
+**Type de contrat**: {request.contract_type}
+{keywords_text}
+
+Réponds UNIQUEMENT avec un JSON valide dans ce format exact (sans markdown, sans ```):
+{{
+    "description": "Description complète du poste avec missions principales (5-7 points)",
+    "requirements": ["Prérequis 1", "Prérequis 2", "Prérequis 3", "Prérequis 4", "Prérequis 5"],
+    "salary_min": 1800,
+    "salary_max": 2500
+}}
+
+Notes pour les salaires:
+- CDI/CDD: salaire mensuel brut en euros (ex: 1800-2500)
+- Extra/Interim: taux horaire en euros (ex: 12-18)
+- Adapte selon le niveau du poste et le marché français"""
+
+    try:
+        # Initialize AI chat
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=f"job-gen-{hotel_id}-{uuid.uuid4()}",
+            system_message=system_prompt
+        ).with_model("openai", "gpt-4o")
+        
+        # Send message and get response
+        user_message = UserMessage(text=user_prompt)
+        response_text = await chat.send_message(user_message)
+        
+        # Parse JSON response
+        import json
+        # Clean response if needed (remove markdown code blocks)
+        response_text = response_text.strip()
+        if response_text.startswith("```"):
+            response_text = response_text.split("```")[1]
+            if response_text.startswith("json"):
+                response_text = response_text[4:]
+        response_text = response_text.strip()
+        
+        ai_response = json.loads(response_text)
+        
+        return {
+            "generated": True,
+            "ai_powered": True,
+            "title": request.title,
+            "description": ai_response.get("description", ""),
+            "requirements": ai_response.get("requirements", []),
+            "salary_min": ai_response.get("salary_min", 1800),
+            "salary_max": ai_response.get("salary_max", 2500),
+            "note": "Contenu généré par IA - Vérifiez et personnalisez selon vos besoins"
+        }
+        
+    except Exception as e:
+        logger.error(f"AI generation error: {str(e)}")
+        # Fallback to mock on error
+        return await generate_ai_job_offer_mock(request)
+
+async def generate_ai_job_offer_mock(request: AIJobOfferRequest):
+    """Fallback mock generation when AI is unavailable"""
     templates = {
         "front_office": {
             "description": f"Nous recherchons un(e) {request.title} dynamique et passionné(e) pour rejoindre notre équipe de réception. Vous serez le premier point de contact de nos clients et veillerez à leur offrir une expérience exceptionnelle dès leur arrivée.\n\nVos missions principales :\n- Accueillir chaleureusement les clients et gérer les check-in/check-out\n- Répondre aux demandes et réclamations avec professionnalisme\n- Assurer la gestion des réservations (téléphone, email, OTA)\n- Coordonner avec les autres services (housekeeping, maintenance)\n- Promouvoir les services additionnels de l'établissement",
@@ -3371,30 +3469,27 @@ async def generate_ai_job_offer(hotel_id: str, request: AIJobOfferRequest, crede
     }
     
     template = templates.get(request.department, templates["default"])
-    
-    # Add keywords to description if provided
     keywords_text = ""
     if request.keywords:
         keywords_text = f"\n\nCompétences clés recherchées : {', '.join(request.keywords)}"
     
-    # Salary suggestions based on contract type
     salary_ranges = {
         "CDI": {"min": 1800, "max": 2500},
         "CDD": {"min": 1700, "max": 2300},
-        "Extra": {"min": 12, "max": 15},  # Hourly
-        "Interim": {"min": 13, "max": 18}  # Hourly
+        "Extra": {"min": 12, "max": 15},
+        "Interim": {"min": 13, "max": 18}
     }
-    
     salary = salary_ranges.get(request.contract_type, {"min": 1700, "max": 2200})
     
     return {
         "generated": True,
+        "ai_powered": False,
         "title": request.title,
         "description": template["description"] + keywords_text,
         "requirements": template["requirements"],
         "salary_min": salary["min"],
         "salary_max": salary["max"],
-        "note": "Contenu généré automatiquement - À personnaliser selon vos besoins"
+        "note": "Contenu généré (mode fallback) - À personnaliser selon vos besoins"
     }
 
 # ---- Candidates Endpoints ----

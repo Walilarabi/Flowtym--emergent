@@ -103,7 +103,7 @@ Build a modern, full-featured PMS with:
 - [x] Pipeline view (Kanban) - Nouveaux, Présélection, Entretien, Offre, Embauché
 - [x] Job Offers CRUD with publish/unpublish
 - [x] Candidates CRUD with status progression and rating
-- [x] **AI Job Offer Generation (MOCK)** - Pre-filled French templates by department
+- [x] **AI Job Offer Generation (REAL GPT-4o)** - Generates professional French job descriptions
 - [x] Filters: search, status, job offer
 - [x] Interview scheduling (endpoint ready)
 
@@ -214,7 +214,6 @@ Build a modern, full-featured PMS with:
 - [ ] Document storage integration (upload employee documents to cloud)
 - [ ] Background scheduler for automated monthly CP accrual (CRON)
 - [ ] Leave calendar visualization
-- [ ] Real AI integration for job offer generation (replace MOCK)
 
 ## P2 Features (Future)
 - [ ] Payment webhooks (Stripe/Adyen/PayPal production)
@@ -250,7 +249,9 @@ Build a modern, full-featured PMS with:
 ## Mocked Features
 - **Document Storage**: Employee documents in wizard are stored in form state only, not persisted to backend storage. Needs integration with object storage service.
 - **Payment Webhooks**: Stripe/Adyen/PayPal endpoints are scaffolded but lack production event handling.
-- **AI Job Offer Generation**: Returns pre-filled French templates by department (front_office, housekeeping, food_beverage). NOT connected to real AI.
+
+## Real AI Integration (2026-03-24)
+- **AI Job Offer Generation**: Uses GPT-4o via Emergent Universal Key. Generates professional French job descriptions, requirements, and salary suggestions based on job title, department, and contract type. Fallback to mock templates if AI unavailable.
 
 ## Test Credentials (Updated)
 - Email: admin@flowtym.com
