@@ -13,7 +13,7 @@ import os
 import uuid
 from datetime import datetime, timedelta
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://hotel-crm-hub.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://ota-integration-lab.preview.emergentagent.com').rstrip('/')
 
 class TestAdvancedAnalytics:
     """Advanced Analytics API tests"""

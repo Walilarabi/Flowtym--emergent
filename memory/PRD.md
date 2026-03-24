@@ -11,16 +11,20 @@ Build a modern, full-featured PMS with:
 - Staff Management (time tracking, payroll, contracts, scheduling)
 - Advanced Paid Leave (CP) and Public Holidays management
 - **Super Admin SaaS Back-Office** (multi-tenant, subscriptions, billing, contracts)
+- **Channel Manager** (OTA connections, inventory sync, rate management)
+- **CRM Module** (customer relationship management with AI analytics)
 - Modern UI with violet/purple accent, white/light grey backgrounds
 - Custom JWT authentication
 - Payment integrations (SEPA direct debit, Stripe scaffolded)
 
 ## Tech Stack
 - **Backend**: FastAPI + MongoDB (Motor async driver)
-- **Frontend**: React + Vite + TailwindCSS + shadcn/ui
+- **Frontend**: React + Vite + TailwindCSS + shadcn/ui + TypeScript (CRM module)
 - **Authentication**: Custom JWT-based auth
 - **Payments**: SEPA Direct Debit (mandates), Stripe (scaffolded), Adyen, PayPal
 - **PDF Generation**: ReportLab (contracts, SEPA mandates, invoices)
+- **Object Storage**: Emergent Object Storage API
+- **AI**: OpenAI GPT-4o via Emergent LLM Key (attrition analysis)
 
 ## Design System (NEW - Implemented 2026-03-24)
 - **Primary Color**: Violet/Purple (#7c3aed)
@@ -47,6 +51,7 @@ Build a modern, full-featured PMS with:
 - [x] Client/Cardex management
 - [x] Night Audit
 - [x] Reports dashboard
+- [x] **PMS-CRM Auto Sync** (automatic client sync on new reservations)
 
 ### Staff Module (Complete - 2026-03-24)
 - [x] Employee management (CRUD)
@@ -430,8 +435,8 @@ Build a modern, full-featured PMS with:
 - Password: test123
 
 ## Environment URLs
-- Preview: https://hotel-crm-hub.preview.emergentagent.com
-- Backend API: https://hotel-crm-hub.preview.emergentagent.com/api
+- Preview: https://ota-integration-lab.preview.emergentagent.com
+- Backend API: https://ota-integration-lab.preview.emergentagent.com/api
 
 ## Key Files
 - Backend: `/app/backend/server.py`
