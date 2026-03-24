@@ -391,6 +391,99 @@ export async function getAnalytics(): Promise<CRMAnalytics> {
   return apiCall('/crm/analytics');
 }
 
+// ===================== ADVANCED ANALYTICS =====================
+
+export interface PeriodFilter {
+  type: '6m' | '12m' | 'custom';
+  start_date?: string;
+  end_date?: string;
+}
+
+export interface RetentionCohort {
+  cohort_month: string;
+  initial_clients: number;
+  retention_30d: number;
+  retention_60d: number;
+  retention_90d: number;
+  retention_180d: number;
+}
+
+export interface LTVData {
+  segment: string;
+  avg_ltv: number;
+  total_revenue: number;
+  client_count: number;
+}
+
+export interface AttritionRisk {
+  client_id: string;
+  client_name: string;
+  email: string;
+  risk_score: number;
+  risk_level: 'low' | 'medium' | 'high' | 'critical';
+  days_since_last_stay: number;
+  total_stays: number;
+  total_spent: number;
+  risk_factors: string[];
+  ai_analysis: string;
+  recommended_actions: string[];
+}
+
+export interface AdvancedAnalyticsResponse {
+  period: { type: string; start_date: string; end_date: string };
+  retention_cohorts: RetentionCohort[];
+  ltv_by_segment: LTVData[];
+  ltv_trend: Array<{ month: string; avg_ltv: number; total_clients: number }>;
+  top_clients_by_ltv: Array<{
+    id: string;
+    name: string;
+    email: string;
+    total_spent: number;
+    total_stays: number;
+    client_type: string;
+  }>;
+  attrition_risks: AttritionRisk[];
+  summary_kpis: {
+    total_clients: number;
+    active_clients: number;
+    high_risk_clients: number;
+    average_ltv: number;
+    total_revenue: number;
+    retention_rate_avg: number;
+  };
+}
+
+export async function getAdvancedAnalytics(period?: PeriodFilter): Promise<AdvancedAnalyticsResponse> {
+  return apiCall('/crm/analytics/advanced', {
+    method: 'POST',
+    body: JSON.stringify(period || { type: '6m' }),
+  });
+}
+
+export async function getAttritionAnalysis(limit: number = 20): Promise<{
+  total_analyzed: number;
+  risk_summary: { critical: number; high: number; medium: number; low: number };
+  clients: AttritionRisk[];
+}> {
+  return apiCall(`/crm/analytics/attrition?limit=${limit}`);
+}
+
+export async function getRetentionCohorts(periodType: '6m' | '12m' = '6m'): Promise<{
+  period: { type: string; start_date: string; end_date: string };
+  cohorts: RetentionCohort[];
+}> {
+  return apiCall(`/crm/analytics/retention-cohorts?period_type=${periodType}`);
+}
+
+export async function getLTVAnalytics(periodType: '6m' | '12m' = '12m'): Promise<{
+  period: { type: string; start_date: string; end_date: string };
+  by_segment: LTVData[];
+  top_clients: Array<{ id: string; name: string; email: string; total_spent: number; total_stays: number; client_type: string }>;
+  trend: Array<{ month: string; avg_ltv: number; total_clients: number }>;
+}> {
+  return apiCall(`/crm/analytics/ltv?period_type=${periodType}`);
+}
+
 // ===================== PMS INTEGRATION =====================
 
 export async function syncFromPMS(): Promise<{ message: string; new_clients: number; updated_clients: number }> {

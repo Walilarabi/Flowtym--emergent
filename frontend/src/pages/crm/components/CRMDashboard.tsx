@@ -10,6 +10,7 @@ import Communications from './Communications';
 import Workflows from './Workflows';
 import Campaigns from './Campaigns';
 import Analytics from './Analytics';
+import AdvancedAnalytics from './AdvancedAnalytics';
 import Alerts from './Alerts';
 import Integrations from './Integrations';
 import AutoReplies from './AutoReplies';
@@ -51,7 +52,7 @@ function clientToGuest(client: CRMClient): Guest {
   };
 }
 
-type TabId = 'clients' | 'segments' | 'communications' | 'auto-replies' | 'workflows' | 'campaigns' | 'analytics' | 'connectors' | 'configuration' | 'copilot' | 'upsells' | 'loyalty' | 'feedback' | 'sustainability' | 'marketplace' | 'voice' | 'housekeeping' | 'community';
+type TabId = 'clients' | 'segments' | 'communications' | 'auto-replies' | 'workflows' | 'campaigns' | 'analytics' | 'advanced-analytics' | 'connectors' | 'configuration' | 'copilot' | 'upsells' | 'loyalty' | 'feedback' | 'sustainability' | 'marketplace' | 'voice' | 'housekeeping' | 'community';
 type Language = 'fr' | 'en';
 
 const innovationTabIds: TabId[] = ['copilot', 'upsells', 'loyalty', 'feedback', 'sustainability', 'marketplace', 'voice', 'housekeeping', 'community'];
@@ -66,7 +67,8 @@ const translations = {
     tabs: {
       clients: 'Clients', segments: 'Segmentation', communications: 'Inbox',
       'auto-replies': 'Réponses Auto', workflows: 'Workflows', campaigns: 'Campagnes',
-      innovations: 'Intelligence', analytics: 'Analytics', connectors: 'Connecteurs',
+      innovations: 'Intelligence', analytics: 'Analytics', 'advanced-analytics': 'Analytique Avancée',
+      connectors: 'Connecteurs',
       configuration: 'Configuration', copilot: 'Copilot IA', upsells: 'Upsells',
       loyalty: 'Fidélité', feedback: 'Feedback', sustainability: 'Éco-Score',
       marketplace: 'Marketplace', voice: 'Voice Concierge', housekeeping: 'Housekeeping',
@@ -82,7 +84,8 @@ const translations = {
     tabs: {
       clients: 'Clients', segments: 'Segmentation', communications: 'Inbox',
       'auto-replies': 'Auto Replies', workflows: 'Workflows', campaigns: 'Campaigns',
-      innovations: 'Intelligence', analytics: 'Analytics', connectors: 'Connectors',
+      innovations: 'Intelligence', analytics: 'Analytics', 'advanced-analytics': 'Advanced Analytics',
+      connectors: 'Connectors',
       configuration: 'Configuration', copilot: 'Copilot AI', upsells: 'Upsells',
       loyalty: 'Loyalty', feedback: 'Feedback', sustainability: 'Eco-Score',
       marketplace: 'Marketplace', voice: 'Voice Concierge', housekeeping: 'Housekeeping',
@@ -102,6 +105,7 @@ const mainTabs = [
 
 const afterInnovationTabs = [
   { id: 'analytics', icon: '📊' },
+  { id: 'advanced-analytics', icon: '📈' },
   { id: 'connectors', icon: '🔗' },
   { id: 'configuration', icon: '🛠️' },
 ];
@@ -409,6 +413,7 @@ export default function CRMDashboard() {
             {activeTab === 'workflows' && <Workflows workflows={workflows} />}
             {activeTab === 'campaigns' && <Campaigns campaigns={campaigns} />}
             {activeTab === 'analytics' && <Analytics />}
+            {activeTab === 'advanced-analytics' && <AdvancedAnalytics language={language} />}
             {activeTab === 'connectors' && <Integrations integrations={mockIntegrations} />}
             {activeTab === 'configuration' && <Configuration />}
             {activeTab === 'copilot' && <Copilot language={language} />}

@@ -4264,6 +4264,41 @@ async def crm_get_client_by_email(email: str, credentials: HTTPAuthorizationCred
     from crm.routes import get_client_by_email
     return await get_client_by_email(email, db, credentials)
 
+# CRM Advanced Analytics
+from crm.advanced_analytics import PeriodFilter
+
+@api_router.post("/crm/analytics/advanced")
+async def crm_get_advanced_analytics(
+    period: PeriodFilter = None,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    from crm.routes import get_advanced_analytics
+    return await get_advanced_analytics(db, period, credentials)
+
+@api_router.get("/crm/analytics/attrition")
+async def crm_get_attrition_analysis(
+    limit: int = 20,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    from crm.routes import get_attrition_analysis
+    return await get_attrition_analysis(db, limit, credentials)
+
+@api_router.get("/crm/analytics/retention-cohorts")
+async def crm_get_retention_cohorts(
+    period_type: str = "6m",
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    from crm.routes import get_retention_cohorts
+    return await get_retention_cohorts(db, period_type, credentials)
+
+@api_router.get("/crm/analytics/ltv")
+async def crm_get_ltv_analytics(
+    period_type: str = "12m",
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    from crm.routes import get_ltv_analytics
+    return await get_ltv_analytics(db, period_type, credentials)
+
 # Include the router in the main app
 app.include_router(api_router)
 

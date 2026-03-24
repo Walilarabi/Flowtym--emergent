@@ -1037,3 +1037,146 @@ async def get_client_by_email(
         raise HTTPException(status_code=404, detail="Client non trouvé")
     
     return client
+
+
+# ===================== ADVANCED ANALYTICS =====================
+
+from .advanced_analytics import (
+    PeriodFilter, calculate_period_dates, calculate_retention_cohorts,
+    calculate_ltv_analytics, get_clients_at_risk, analyze_attrition_with_ai
+)
+
+@crm_router.post("/analytics/advanced")
+async def get_advanced_analytics(
+    db,
+    period: PeriodFilter = None,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Get advanced CRM analytics with retention cohorts, LTV, and attrition predictions"""
+    verify_token(credentials)
+    
+    if period is None:
+        period = PeriodFilter(type="6m")
+    
+    start_date, end_date = calculate_period_dates(period)
+    
+    # Calculate all analytics in parallel
+    retention_cohorts = await calculate_retention_cohorts(db, start_date, end_date)
+    ltv_by_segment, top_clients, ltv_trend = await calculate_ltv_analytics(db, start_date, end_date)
+    
+    # Get clients at risk
+    clients_at_risk = await get_clients_at_risk(db, limit=20)
+    
+    # Analyze attrition with AI (for top 10 high-risk clients)
+    attrition_risks = await analyze_attrition_with_ai(db, clients_at_risk[:10])
+    
+    # Calculate summary KPIs
+    all_clients = await db.crm_clients.count_documents({})
+    active_clients = await db.crm_clients.count_documents({"status": "active"})
+    high_risk_count = len([r for r in attrition_risks if r.risk_level in ["high", "critical"]])
+    
+    total_ltv = sum(s.total_revenue for s in ltv_by_segment)
+    avg_ltv = total_ltv / all_clients if all_clients > 0 else 0
+    
+    summary_kpis = {
+        "total_clients": all_clients,
+        "active_clients": active_clients,
+        "high_risk_clients": high_risk_count,
+        "average_ltv": round(avg_ltv, 2),
+        "total_revenue": total_ltv,
+        "retention_rate_avg": round(
+            sum(c.retention_90d for c in retention_cohorts) / len(retention_cohorts), 1
+        ) if retention_cohorts else 0
+    }
+    
+    return {
+        "period": {
+            "type": period.type,
+            "start_date": start_date.isoformat(),
+            "end_date": end_date.isoformat()
+        },
+        "retention_cohorts": [c.dict() for c in retention_cohorts],
+        "ltv_by_segment": [l.dict() for l in ltv_by_segment],
+        "ltv_trend": ltv_trend,
+        "top_clients_by_ltv": top_clients,
+        "attrition_risks": [r.dict() for r in attrition_risks],
+        "summary_kpis": summary_kpis
+    }
+
+
+@crm_router.get("/analytics/attrition")
+async def get_attrition_analysis(
+    db,
+    limit: int = Query(20, ge=1, le=100),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Get detailed attrition risk analysis for clients"""
+    verify_token(credentials)
+    
+    clients_at_risk = await get_clients_at_risk(db, limit=limit)
+    attrition_risks = await analyze_attrition_with_ai(db, clients_at_risk)
+    
+    # Group by risk level
+    risk_summary = {
+        "critical": len([r for r in attrition_risks if r.risk_level == "critical"]),
+        "high": len([r for r in attrition_risks if r.risk_level == "high"]),
+        "medium": len([r for r in attrition_risks if r.risk_level == "medium"]),
+        "low": len([r for r in attrition_risks if r.risk_level == "low"])
+    }
+    
+    return {
+        "total_analyzed": len(attrition_risks),
+        "risk_summary": risk_summary,
+        "clients": [r.dict() for r in attrition_risks]
+    }
+
+
+@crm_router.get("/analytics/retention-cohorts")
+async def get_retention_cohorts(
+    db,
+    period_type: str = Query("6m", regex="^(6m|12m)$"),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Get retention cohort analysis"""
+    verify_token(credentials)
+    
+    period = PeriodFilter(type=period_type)
+    start_date, end_date = calculate_period_dates(period)
+    
+    cohorts = await calculate_retention_cohorts(db, start_date, end_date)
+    
+    return {
+        "period": {
+            "type": period_type,
+            "start_date": start_date.isoformat(),
+            "end_date": end_date.isoformat()
+        },
+        "cohorts": [c.dict() for c in cohorts]
+    }
+
+
+@crm_router.get("/analytics/ltv")
+async def get_ltv_analytics(
+    db,
+    period_type: str = Query("12m", regex="^(6m|12m)$"),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Get LTV (Lifetime Value) analytics"""
+    verify_token(credentials)
+    
+    period = PeriodFilter(type=period_type)
+    start_date, end_date = calculate_period_dates(period)
+    
+    ltv_by_segment, top_clients, ltv_trend = await calculate_ltv_analytics(db, start_date, end_date)
+    
+    return {
+        "period": {
+            "type": period_type,
+            "start_date": start_date.isoformat(),
+            "end_date": end_date.isoformat()
+        },
+        "by_segment": [l.dict() for l in ltv_by_segment],
+        "top_clients": top_clients,
+        "trend": ltv_trend
+    }
+

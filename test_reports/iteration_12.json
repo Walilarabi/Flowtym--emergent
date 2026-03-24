@@ -1,0 +1,105 @@
+{
+  "summary": "Completed comprehensive testing of CRM Advanced Analytics module. All 20 backend API tests passed (100%). Frontend Advanced Analytics tab fully functional with period selector, sub-tabs, KPI cards, charts, and export buttons working correctly. Fixed timezone comparison bug in custom period handling.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "AdvancedAnalytics.tsx",
+        "issues": ["Missing data-testid attributes on interactive elements (buttons, tabs, inputs) for automated testing"]
+      }
+    ]
+  },
+  "passed_tests": [
+    "Backend: POST /api/crm/analytics/advanced - Default 6m period returns all analytics data (200)",
+    "Backend: POST /api/crm/analytics/advanced - 12m period works correctly (200)",
+    "Backend: POST /api/crm/analytics/advanced - Custom period with dates works (200)",
+    "Backend: POST /api/crm/analytics/advanced - Returns retention_cohorts structure (200)",
+    "Backend: POST /api/crm/analytics/advanced - Returns ltv_by_segment, ltv_trend, top_clients_by_ltv (200)",
+    "Backend: POST /api/crm/analytics/advanced - Returns attrition_risks with AI analysis (200)",
+    "Backend: POST /api/crm/analytics/advanced - Returns summary_kpis (200)",
+    "Backend: POST /api/crm/analytics/advanced - Requires authentication (401)",
+    "Backend: GET /api/crm/analytics/attrition - Returns risk analysis with risk_summary (200)",
+    "Backend: GET /api/crm/analytics/attrition - Limit parameter works (200)",
+    "Backend: GET /api/crm/analytics/attrition - Requires authentication (401)",
+    "Backend: GET /api/crm/analytics/retention-cohorts - Returns cohort data (200)",
+    "Backend: GET /api/crm/analytics/retention-cohorts - 12m period works (200)",
+    "Backend: GET /api/crm/analytics/retention-cohorts - Requires authentication (401)",
+    "Backend: GET /api/crm/analytics/ltv - Returns LTV by segment, top clients, trend (200)",
+    "Backend: GET /api/crm/analytics/ltv - 6m period works (200)",
+    "Backend: GET /api/crm/analytics/ltv - Requires authentication (401)",
+    "Backend: AI analysis generated for high/critical risk clients (200)",
+    "Backend: KPI consistency between endpoints verified",
+    "Backend: Risk score bounds (0-100) and level mapping verified",
+    "Frontend: Analytique Avancée tab visible and clickable",
+    "Frontend: Period selector (6 derniers mois, 12 derniers mois, Personnalisé) works",
+    "Frontend: Custom period shows date inputs when selected",
+    "Frontend: KPI cards display (Clients totaux, Clients actifs, Clients à risque, LTV moyen, CA total, Taux rétention)",
+    "Frontend: Sub-tabs work (Vue d'ensemble, Rétention, Valeur Client (LTV), Prédictions Attrition)",
+    "Frontend: Retention cohorts chart displays with 30/90/180 days legend",
+    "Frontend: LTV by segment chart and trend chart display",
+    "Frontend: Attrition risks section shows risk level badges (Critique, Élevé, Moyen)",
+    "Frontend: Export Excel button downloads CSV file (crm_analytics_YYYY-MM-DD.csv)",
+    "Frontend: Export PDF button triggers print dialog"
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_advanced_analytics.py",
+    "/app/test_reports/pytest/pytest_advanced_analytics.xml"
+  ],
+  "action_items": [
+    "Add data-testid attributes to AdvancedAnalytics.tsx for better automated testing coverage"
+  ],
+  "critical_code_review_comments": [
+    "Fixed: Timezone comparison bug in calculate_period_dates() - custom dates without timezone info now properly converted to UTC"
+  ],
+  "updated_files": [
+    "/app/backend/crm/advanced_analytics.py",
+    "/app/backend/tests/test_advanced_analytics.py"
+  ],
+  "success_rate": {
+    "backend": "100% (20/20 tests passed)",
+    "frontend": "100% (All features functional)"
+  },
+  "test_credentials": {
+    "admin_user": "admin@flowtym.com",
+    "admin_password": "admin123"
+  },
+  "seed_data_creation": "Used existing CRM clients for testing. No new test data created.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Advanced Analytics module fully tested. All 4 backend endpoints work: POST /api/crm/analytics/advanced, GET /api/crm/analytics/attrition, GET /api/crm/analytics/retention-cohorts, GET /api/crm/analytics/ltv. Frontend AdvancedAnalytics.tsx component renders correctly with all sub-tabs, period selector, charts, and export buttons. AI analysis uses GPT-4o via EMERGENT_LLM_KEY for high/critical risk clients. Export Excel generates CSV, Export PDF triggers browser print.",
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  },
+  "features_verified": {
+    "advanced_analytics_api": {
+      "main_endpoint": "POST /api/crm/analytics/advanced - returns retention_cohorts, ltv_by_segment, ltv_trend, top_clients_by_ltv, attrition_risks, summary_kpis",
+      "attrition_endpoint": "GET /api/crm/analytics/attrition - returns risk_summary and clients with risk_score, risk_level, risk_factors, ai_analysis, recommended_actions",
+      "retention_endpoint": "GET /api/crm/analytics/retention-cohorts - returns cohorts with retention_30d, 60d, 90d, 180d",
+      "ltv_endpoint": "GET /api/crm/analytics/ltv - returns by_segment, top_clients, trend"
+    },
+    "frontend_advanced_analytics": {
+      "tab": "Analytique Avancée tab visible in CRM navigation",
+      "period_selector": "6 derniers mois, 12 derniers mois, Personnalisé with date inputs",
+      "sub_tabs": ["Vue d'ensemble", "Rétention", "Valeur Client (LTV)", "Prédictions Attrition"],
+      "kpi_cards": ["Clients totaux", "Clients actifs", "Clients à risque", "LTV moyen", "CA total", "Taux rétention"],
+      "charts": ["Cohortes de rétention (Line)", "LTV par segment (Bar)", "Évolution LTV (Line)"],
+      "attrition_display": "Risk level badges (Critique, Élevé, Moyen) with AI analysis and recommendations",
+      "exports": ["Export PDF (triggers print)", "Export Excel (downloads CSV)"]
+    },
+    "ai_integration": {
+      "model": "GPT-4o via EMERGENT_LLM_KEY",
+      "usage": "Generates ai_analysis and recommended_actions for clients with risk_score >= 50 (high/critical)"
+    }
+  },
+  "bug_fixed": {
+    "issue": "Custom period dates caused TypeError: can't compare offset-naive and offset-aware datetimes",
+    "file": "/app/backend/crm/advanced_analytics.py",
+    "fix": "Added timezone handling in calculate_period_dates() to ensure all dates have UTC timezone info"
+  }
+}
