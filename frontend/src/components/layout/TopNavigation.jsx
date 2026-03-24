@@ -39,55 +39,86 @@ export const TopNavigation = () => {
   const getInitials = (firstName, lastName) => `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase()
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200 flex items-center px-4 shrink-0">
-      <div className="flex items-center gap-2 mr-6">
-        <div className="w-9 h-9 bg-violet-600 rounded-lg flex items-center justify-center">
-          <Building2 className="w-5 h-5 text-white" />
+    <header className="h-14 bg-white border-b border-slate-200 flex items-center px-4 shrink-0 shadow-sm">
+      {/* Logo */}
+      <div className="flex items-center gap-2.5 mr-8">
+        <div className="w-8 h-8 bg-gradient-to-br from-violet-600 to-violet-700 rounded-lg flex items-center justify-center shadow-sm">
+          <Building2 className="w-4.5 h-4.5 text-white" />
         </div>
-        <span className="text-xl font-bold tracking-tight">
-          <span className="text-violet-600">FLOW</span><span className="text-slate-900">TYM</span>
+        <span className="text-lg font-bold tracking-tight">
+          <span className="text-violet-600">FLOW</span><span className="text-slate-800">TYM</span>
         </span>
       </div>
 
-      <nav className="flex-1 flex items-center gap-1 overflow-x-auto scrollbar-hide">
+      {/* Main Navigation */}
+      <nav className="flex-1 flex items-center gap-0.5 overflow-x-auto scrollbar-hide">
         {modules.map((module) => {
           const Icon = module.icon
           const active = isActive(module.path)
           
           if (module.disabled) {
             return (
-              <div key={module.id} className="nav-item opacity-50 cursor-not-allowed whitespace-nowrap" data-testid={`nav-${module.id}`}>
-                <Icon className="w-4 h-4" /><span>{module.label}</span>
+              <div 
+                key={module.id} 
+                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-400 whitespace-nowrap cursor-not-allowed" 
+                data-testid={`nav-${module.id}`}
+              >
+                <Icon className="w-4 h-4" />
+                <span className="hidden lg:inline">{module.label}</span>
               </div>
             )
           }
 
           return (
-            <NavLink key={module.id} to={module.path} className={`nav-item whitespace-nowrap ${active ? 'active' : ''}`} data-testid={`nav-${module.id}`}>
-              <Icon className="w-4 h-4" /><span>{module.label}</span>
+            <NavLink 
+              key={module.id} 
+              to={module.path} 
+              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium whitespace-nowrap rounded-md transition-colors
+                ${active 
+                  ? 'text-violet-700 bg-violet-50' 
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                }`}
+              data-testid={`nav-${module.id}`}
+            >
+              <Icon className="w-4 h-4" />
+              <span className="hidden lg:inline">{module.label}</span>
             </NavLink>
           )
         })}
       </nav>
 
-      <div className="flex items-center gap-3 ml-4">
-        <button className="p-2 rounded-lg hover:bg-slate-100 text-slate-500"><Moon className="w-5 h-5" /></button>
-        <button className="p-2 rounded-lg hover:bg-slate-100 text-slate-500 relative">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+      {/* Right Side Actions */}
+      <div className="flex items-center gap-2 ml-4">
+        {/* Theme Toggle */}
+        <button className="p-2 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
+          <Moon className="w-4.5 h-4.5" />
+        </button>
+        
+        {/* Notifications */}
+        <button className="p-2 rounded-lg hover:bg-slate-100 text-slate-500 relative transition-colors">
+          <Bell className="w-4.5 h-4.5" />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white" />
         </button>
 
+        {/* Hotel Selector */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100" data-testid="btn-hotel-selector">
+            <button 
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all" 
+              data-testid="btn-hotel-selector"
+            >
               <span className="w-2 h-2 bg-emerald-500 rounded-full" />
-              <span className="text-sm font-medium text-slate-700 max-w-[150px] truncate">{currentHotel?.name || 'Selectionner'}</span>
-              <ChevronDown className="w-4 h-4 text-slate-400" />
+              <span className="text-sm font-medium text-slate-700 max-w-[120px] truncate">{currentHotel?.name || 'Selectionner'}</span>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             {hotels.map((hotel) => (
-              <DropdownMenuItem key={hotel.id} onClick={() => switchHotel(hotel)} className="flex items-center justify-between">
+              <DropdownMenuItem 
+                key={hotel.id} 
+                onClick={() => switchHotel(hotel)} 
+                className="flex items-center justify-between cursor-pointer"
+              >
                 <span>{hotel.name}</span>
                 {currentHotel?.id === hotel.id && <Check className="w-4 h-4 text-violet-600" />}
               </DropdownMenuItem>
@@ -95,23 +126,35 @@ export const TopNavigation = () => {
           </DropdownMenuContent>
         </DropdownMenu>
 
+        {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-3 pl-3 pr-2 py-1.5 rounded-lg hover:bg-slate-100" data-testid="btn-user-menu">
+            <button 
+              className="flex items-center gap-2.5 pl-3 pr-2 py-1 rounded-lg hover:bg-slate-50 transition-colors" 
+              data-testid="btn-user-menu"
+            >
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-medium text-slate-900">{user?.first_name} {user?.last_name}</p>
-                <p className="text-xs text-slate-500 capitalize">{user?.role === 'admin' ? 'Directeur' : user?.role}</p>
+                <p className="text-sm font-medium text-slate-800 leading-tight">{user?.first_name} {user?.last_name}</p>
+                <p className="text-xs text-slate-500 capitalize leading-tight">{user?.role === 'admin' ? 'Directeur' : user?.role}</p>
               </div>
-              <Avatar className="w-9 h-9 bg-violet-100">
-                <AvatarFallback className="bg-violet-100 text-violet-700 font-semibold text-sm">{getInitials(user?.first_name, user?.last_name)}</AvatarFallback>
+              <Avatar className="w-8 h-8">
+                <AvatarFallback className="bg-gradient-to-br from-violet-500 to-violet-600 text-white font-semibold text-xs">
+                  {getInitials(user?.first_name, user?.last_name)}
+                </AvatarFallback>
               </Avatar>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem><User className="w-4 h-4 mr-2" />Mon profil</DropdownMenuItem>
-            <DropdownMenuItem><Settings className="w-4 h-4 mr-2" />Parametres</DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer">
+              <User className="w-4 h-4 mr-2" />Mon profil
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer">
+              <Settings className="w-4 h-4 mr-2" />Parametres
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={logout} className="text-red-600"><LogOut className="w-4 h-4 mr-2" />Deconnexion</DropdownMenuItem>
+            <DropdownMenuItem onClick={logout} className="text-red-600 cursor-pointer">
+              <LogOut className="w-4 h-4 mr-2" />Deconnexion
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

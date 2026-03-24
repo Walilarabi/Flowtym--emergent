@@ -61,9 +61,9 @@ const AppRoutes = () => {
                   <Route path="/pms/night-audit" element={<NightAuditPage />} />
                   <Route path="/pms/reports" element={<ReportsPage />} />
                   {/* Staff Routes */}
-                  <Route path="/staff" element={<StaffDashboard />} />
-                  <Route path="/staff/employees" element={<StaffEmployees />} />
+                  <Route path="/staff" element={<Navigate to="/staff/planning" replace />} />
                   <Route path="/staff/planning" element={<StaffPlanning />} />
+                  <Route path="/staff/employees" element={<StaffEmployees />} />
                   <Route path="/staff/time-tracking" element={<StaffTimeTracking />} />
                   <Route path="/staff/contracts" element={<StaffContracts />} />
                   <Route path="/staff/payroll" element={<StaffPayroll />} />

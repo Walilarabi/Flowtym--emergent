@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { Calendar, List, Users, LogIn, LogOut, Moon, BarChart3, Clock, FileText, Receipt, UsersRound } from 'lucide-react'
+import { Calendar, List, Users, LogIn, LogOut, Moon, BarChart3, Clock, FileText, Receipt, UsersRound, Settings, UserPlus, PieChart } from 'lucide-react'
 
 const pmsSubNav = [
   { label: 'Planning', icon: Calendar, path: '/pms/planning' },
@@ -12,12 +12,12 @@ const pmsSubNav = [
 ]
 
 const staffSubNav = [
-  { label: 'Tableau de bord', icon: BarChart3, path: '/staff' },
-  { label: 'Employes', icon: UsersRound, path: '/staff/employees' },
   { label: 'Planning', icon: Calendar, path: '/staff/planning' },
-  { label: 'Pointage', icon: Clock, path: '/staff/time-tracking' },
+  { label: 'Personnel', icon: UsersRound, path: '/staff/employees' },
   { label: 'Contrats', icon: FileText, path: '/staff/contracts' },
-  { label: 'Paie & URSSAF', icon: Receipt, path: '/staff/payroll' },
+  { label: 'Recrutement', icon: UserPlus, path: '/staff/recruitment', disabled: true },
+  { label: 'Reporting', icon: PieChart, path: '/staff/payroll' },
+  { label: 'Configuration', icon: Settings, path: '/staff/settings', disabled: true },
 ]
 
 export const SubNavigation = () => {
@@ -35,14 +35,33 @@ export const SubNavigation = () => {
       <nav className="flex items-center gap-1">
         {navItems.map((item) => {
           const Icon = item.icon
-          const isActive = location.pathname === item.path || (item.path === '/staff' && location.pathname === '/staff')
+          const isActive = location.pathname === item.path || 
+            (item.path === '/staff/planning' && location.pathname === '/staff') ||
+            (item.path === '/pms/planning' && location.pathname === '/pms')
+          const isDisabled = item.disabled
+          
+          if (isDisabled) {
+            return (
+              <div
+                key={item.path}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-400 cursor-not-allowed"
+                data-testid={`subnav-${item.label.toLowerCase().replace(/ /g, '-')}`}
+              >
+                <Icon className="w-4 h-4" />
+                <span>{item.label}</span>
+              </div>
+            )
+          }
           
           return (
             <NavLink
               key={item.path}
               to={item.path}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors
-                ${isActive ? 'bg-white text-violet-700 shadow-sm border border-slate-200' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'}`}
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all
+                ${isActive 
+                  ? 'bg-white text-violet-700 shadow-sm border border-slate-200' 
+                  : 'text-slate-600 hover:text-slate-800 hover:bg-white/60'
+                }`}
               data-testid={`subnav-${item.label.toLowerCase().replace(/ /g, '-')}`}
             >
               <Icon className="w-4 h-4" />

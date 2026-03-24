@@ -8,7 +8,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['IBM Plex Sans', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
         heading: ['Manrope', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
@@ -48,8 +48,8 @@ export default {
         },
         flowtym: {
           purple: '#7c3aed',
+          'purple-light': '#a78bfa',
           'purple-dark': '#6d28d9',
-          green: '#16a34a',
         },
         channel: {
           direct: '#16a34a',
@@ -58,11 +58,35 @@ export default {
           airbnb: '#FF5A5F',
           other: '#64748b',
         },
+        shift: {
+          matin: '#f97316',
+          soir: '#3b82f6',
+          nuit: '#8b5cf6',
+          repos: '#94a3b8',
+          off: '#e2e8f0',
+          conge: '#22c55e',
+          maladie: '#ef4444',
+          ferie: '#a855f7',
+        },
+        contract: {
+          cdi: '#7c3aed',
+          cdd: '#f59e0b',
+          extra: '#3b82f6',
+          interim: '#f97316',
+          stage: '#06b6d4',
+          apprentissage: '#ec4899',
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xl: "0.75rem",
+        "2xl": "1rem",
+      },
+      boxShadow: {
+        'soft': '0 2px 8px -2px rgba(0, 0, 0, 0.08)',
+        'card': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)',
       },
       keyframes: {
         "accordion-down": {
@@ -77,11 +101,21 @@ export default {
           from: { transform: "rotate(0deg)" },
           to: { transform: "rotate(360deg)" },
         },
+        "fade-in": {
+          from: { opacity: "0" },
+          to: { opacity: "1" },
+        },
+        "slide-up": {
+          from: { transform: "translateY(10px)", opacity: "0" },
+          to: { transform: "translateY(0)", opacity: "1" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         spin: "spin 1s linear infinite",
+        "fade-in": "fade-in 0.2s ease-out",
+        "slide-up": "slide-up 0.3s ease-out",
       },
     },
   },

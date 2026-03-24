@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { useHotel } from '@/context/HotelContext'
 import { toast } from 'sonner'
@@ -9,7 +9,11 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Search, UserPlus, Mail, Phone, Building2, Calendar, MoreHorizontal, Edit, Trash2, FileText } from 'lucide-react'
+import { 
+  Plus, Search, UserPlus, Mail, Phone, Building2, Calendar, MoreHorizontal, 
+  Edit, Trash2, FileText, List, LayoutGrid, X, User, Clock, 
+  CreditCard, MapPin, AlertCircle, Download, Copy, BarChart3, Palmtree
+} from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 
 const POSITIONS = [
@@ -25,29 +29,220 @@ const POSITIONS = [
 
 const DEPARTMENTS = [
   { value: 'front_office', label: 'Reception' },
-  { value: 'housekeeping', label: 'Housekeeping' },
+  { value: 'housekeeping', label: 'Hebergement' },
   { value: 'maintenance', label: 'Maintenance' },
   { value: 'food_beverage', label: 'Restauration' },
   { value: 'administration', label: 'Administration' },
 ]
 
 const CONTRACT_TYPES = [
-  { value: 'cdi', label: 'CDI' },
-  { value: 'cdd', label: 'CDD' },
-  { value: 'interim', label: 'Interim' },
-  { value: 'stage', label: 'Stage' },
-  { value: 'apprentissage', label: 'Apprentissage' },
+  { value: 'cdi', label: 'CDI', color: 'badge-cdi' },
+  { value: 'cdd', label: 'CDD', color: 'badge-cdd' },
+  { value: 'extra', label: 'Extra', color: 'badge-extra' },
+  { value: 'interim', label: 'Interim', color: 'badge-interim' },
+  { value: 'stage', label: 'Stage', color: 'badge-stage' },
+  { value: 'apprentissage', label: 'Apprentissage', color: 'badge-apprentissage' },
 ]
+
+// Employee Detail Modal Component
+const EmployeeDetailModal = ({ employee, onClose, onEdit, leaveBalance }) => {
+  if (!employee) return null
+
+  const contractType = CONTRACT_TYPES.find(c => c.value === employee.contract_type)
+  const position = POSITIONS.find(p => p.value === employee.position)
+  const department = DEPARTMENTS.find(d => d.value === employee.department)
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content max-w-md" onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div className="modal-header relative">
+          <button onClick={onClose} className="absolute right-4 top-4 p-1 hover:bg-white/20 rounded transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-2xl font-bold">
+              {employee.first_name?.charAt(0)}{employee.last_name?.charAt(0)}
+            </div>
+            <div>
+              <h2 className="text-xl font-bold">{employee.first_name} {employee.last_name}</h2>
+              <p className="text-violet-200">{position?.label || employee.position}</p>
+              <p className="text-violet-200/80 text-sm">{department?.label || employee.department}</p>
+            </div>
+          </div>
+          <div className="mt-3">
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${employee.is_active ? 'bg-emerald-500 text-white' : 'bg-slate-400 text-white'}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${employee.is_active ? 'bg-white' : 'bg-slate-200'}`} />
+              {employee.is_active ? 'Actif' : 'Inactif'}
+            </span>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 space-y-6">
+          {/* Contact Section */}
+          <div>
+            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Contact</h3>
+            <div className="space-y-2">
+              {employee.phone && (
+                <div className="flex items-center gap-3 text-sm">
+                  <Phone className="w-4 h-4 text-slate-400" />
+                  <span>{employee.phone}</span>
+                </div>
+              )}
+              {employee.email && (
+                <div className="flex items-center gap-3 text-sm">
+                  <Mail className="w-4 h-4 text-slate-400" />
+                  <span>{employee.email}</span>
+                </div>
+              )}
+              {employee.address && (
+                <div className="flex items-center gap-3 text-sm">
+                  <MapPin className="w-4 h-4 text-slate-400" />
+                  <span>{employee.address}, {employee.postal_code} {employee.city}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* HR Info Section */}
+          <div>
+            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Informations RH</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs text-slate-500">Contrat</p>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium mt-1 ${contractType?.color || 'badge-cdi'}`}>
+                  {contractType?.label || employee.contract_type}
+                </span>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">Heures/semaine</p>
+                <p className="text-sm font-medium">{employee.weekly_hours}h</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">Date embauche</p>
+                <p className="text-sm font-medium">{format(new Date(employee.hire_date), 'dd/MM/yyyy')}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">Taux horaire</p>
+                <p className="text-sm font-medium">{employee.hourly_rate?.toFixed(2)} EUR</p>
+              </div>
+              {leaveBalance && (
+                <>
+                  <div>
+                    <p className="text-xs text-slate-500">CP disponibles</p>
+                    <p className="text-sm font-medium text-emerald-600">{leaveBalance.cp_total_disponible?.toFixed(1)} jours</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500">CP pris</p>
+                    <p className="text-sm font-medium">{leaveBalance.cp_pris?.toFixed(1)} jours</p>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Documents Section */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Documents</h3>
+              <Button variant="ghost" size="sm" className="text-xs text-violet-600 h-7">
+                <Plus className="w-3 h-3 mr-1" /> Ajouter
+              </Button>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-slate-400" />
+                  <span className="text-sm">Carte Nationale d'Identite</span>
+                </div>
+                <span className="text-xs text-emerald-600 font-medium">OK</span>
+              </div>
+              <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-slate-400" />
+                  <span className="text-sm">Carte Vitale</span>
+                </div>
+                <span className="text-xs text-emerald-600 font-medium">OK</span>
+              </div>
+              <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-slate-400" />
+                  <span className="text-sm">RIB</span>
+                </div>
+                <span className="text-xs text-amber-600 font-medium">Manquant</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="border-t border-slate-200 p-4 flex gap-2">
+          <Button variant="outline" className="flex-1 text-sm" onClick={() => onEdit(employee)}>
+            <Edit className="w-4 h-4 mr-2" /> Modifier
+          </Button>
+          <Button variant="outline" className="flex-1 text-sm">
+            <FileText className="w-4 h-4 mr-2" /> Contrat
+          </Button>
+          <Button variant="outline" className="flex-1 text-sm">
+            <BarChart3 className="w-4 h-4 mr-2" /> Statistiques
+          </Button>
+          <Button variant="outline" size="icon" className="text-sm">
+            <Copy className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Employee Card Component (Trombinoscope view)
+const EmployeeCard = ({ employee, onClick }) => {
+  const contractType = CONTRACT_TYPES.find(c => c.value === employee.contract_type)
+  const position = POSITIONS.find(p => p.value === employee.position)
+  const department = DEPARTMENTS.find(d => d.value === employee.department)
+
+  return (
+    <div 
+      className="employee-card"
+      onClick={() => onClick(employee)}
+      data-testid={`employee-card-${employee.id}`}
+    >
+      <div className="flex flex-col items-center text-center">
+        <div className="employee-avatar mb-3">
+          {employee.first_name?.charAt(0)}{employee.last_name?.charAt(0)}
+        </div>
+        <h3 className="font-semibold text-slate-800">{employee.first_name} {employee.last_name}</h3>
+        <p className="text-sm text-slate-500 mt-0.5">{position?.label || employee.position}</p>
+        <p className="text-xs text-slate-400 mt-0.5">{department?.label || employee.department}</p>
+        <div className="flex items-center gap-2 mt-3">
+          <span className={`text-xs font-medium px-2 py-0.5 rounded ${contractType?.color || 'badge-cdi'}`}>
+            {contractType?.label || employee.contract_type}
+          </span>
+          <span className={`inline-flex items-center gap-1 text-xs font-medium ${employee.is_active ? 'text-emerald-600' : 'text-slate-400'}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${employee.is_active ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+            {employee.is_active ? 'Actif' : 'Inactif'}
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export const StaffEmployees = () => {
   const { api } = useAuth()
   const { currentHotel } = useHotel()
   const [employees, setEmployees] = useState([])
+  const [leaveBalances, setLeaveBalances] = useState([])
   const [loading, setLoading] = useState(true)
+  const [viewMode, setViewMode] = useState('list') // 'list' or 'trombinoscope'
   const [search, setSearch] = useState('')
   const [departmentFilter, setDepartmentFilter] = useState('all')
+  const [contractFilter, setContractFilter] = useState('all')
+  const [statusFilter, setStatusFilter] = useState('all')
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState(null)
+  const [selectedEmployee, setSelectedEmployee] = useState(null)
   const [formData, setFormData] = useState({
     first_name: '', last_name: '', email: '', phone: '', position: 'receptionist',
     department: 'front_office', contract_type: 'cdi', hire_date: format(new Date(), 'yyyy-MM-dd'),
@@ -55,13 +250,16 @@ export const StaffEmployees = () => {
     social_security_number: '', bank_iban: '', emergency_contact: '', emergency_phone: '', notes: ''
   })
 
-  const fetchEmployees = async () => {
+  const fetchData = async () => {
     if (!currentHotel) return
     setLoading(true)
     try {
-      const params = departmentFilter !== 'all' ? `?department=${departmentFilter}` : ''
-      const response = await api.get(`/hotels/${currentHotel.id}/staff/employees${params}`)
-      setEmployees(response.data)
+      const [empRes, balanceRes] = await Promise.all([
+        api.get(`/hotels/${currentHotel.id}/staff/employees`),
+        api.get(`/hotels/${currentHotel.id}/leave/balances`)
+      ])
+      setEmployees(empRes.data)
+      setLeaveBalances(balanceRes.data)
     } catch (error) {
       toast.error('Erreur lors du chargement des employes')
     } finally {
@@ -69,13 +267,25 @@ export const StaffEmployees = () => {
     }
   }
 
-  useEffect(() => { fetchEmployees() }, [currentHotel, departmentFilter])
+  useEffect(() => { fetchData() }, [currentHotel])
 
-  const filteredEmployees = employees.filter(e => {
-    if (!search) return true
-    const s = search.toLowerCase()
-    return e.first_name.toLowerCase().includes(s) || e.last_name.toLowerCase().includes(s) || e.email?.toLowerCase().includes(s)
-  })
+  const filteredEmployees = useMemo(() => {
+    return employees.filter(e => {
+      const matchesSearch = search === '' || 
+        `${e.first_name} ${e.last_name}`.toLowerCase().includes(search.toLowerCase()) ||
+        e.email?.toLowerCase().includes(search.toLowerCase())
+      const matchesDepartment = departmentFilter === 'all' || e.department === departmentFilter
+      const matchesContract = contractFilter === 'all' || e.contract_type === contractFilter
+      const matchesStatus = statusFilter === 'all' || 
+        (statusFilter === 'active' && e.is_active) || 
+        (statusFilter === 'inactive' && !e.is_active)
+      return matchesSearch && matchesDepartment && matchesContract && matchesStatus
+    })
+  }, [employees, search, departmentFilter, contractFilter, statusFilter])
+
+  const getLeaveBalance = (employeeId) => {
+    return leaveBalances.find(b => b.employee_id === employeeId)
+  }
 
   const handleNewEmployee = () => {
     setEditingEmployee(null)
@@ -89,6 +299,7 @@ export const StaffEmployees = () => {
   }
 
   const handleEditEmployee = (employee) => {
+    setSelectedEmployee(null)
     setEditingEmployee(employee)
     setFormData({
       first_name: employee.first_name, last_name: employee.last_name, email: employee.email || '',
@@ -114,9 +325,9 @@ export const StaffEmployees = () => {
         toast.success('Employe cree')
       }
       setSheetOpen(false)
-      fetchEmployees()
+      fetchData()
     } catch (error) {
-      toast.error('Erreur lors de l\'enregistrement')
+      toast.error("Erreur lors de l'enregistrement")
     }
   }
 
@@ -125,7 +336,7 @@ export const StaffEmployees = () => {
     try {
       await api.delete(`/hotels/${currentHotel.id}/staff/employees/${employee.id}`)
       toast.success('Employe desactive')
-      fetchEmployees()
+      fetchData()
     } catch (error) {
       toast.error('Erreur lors de la desactivation')
     }
@@ -134,96 +345,215 @@ export const StaffEmployees = () => {
   return (
     <div className="h-full flex flex-col gap-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Employes</h1>
-          <p className="text-sm text-slate-500">{filteredEmployees.length} employes</p>
+      <div className="bg-white rounded-xl border border-slate-200 p-4">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          {/* Left: Title and Count */}
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-lg font-semibold text-slate-800">Personnel</h1>
+              <p className="text-sm text-slate-500">{filteredEmployees.length} collaborateurs</p>
+            </div>
+          </div>
+
+          {/* Center: View Toggle & Search & Filters */}
+          <div className="flex items-center gap-2 flex-1 justify-center max-w-2xl">
+            {/* View Toggle */}
+            <div className="flex items-center bg-slate-100 rounded-lg p-1">
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className={`h-8 gap-1.5 ${viewMode === 'list' ? 'bg-white shadow-sm' : ''}`}
+              >
+                <List className="w-4 h-4" />
+                Liste
+              </Button>
+              <Button
+                variant={viewMode === 'trombinoscope' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('trombinoscope')}
+                className={`h-8 gap-1.5 ${viewMode === 'trombinoscope' ? 'bg-white shadow-sm' : ''}`}
+              >
+                <LayoutGrid className="w-4 h-4" />
+                Trombinoscope
+              </Button>
+            </div>
+
+            {/* Search */}
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                placeholder="Rechercher..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 h-9"
+              />
+            </div>
+
+            {/* Filters */}
+            <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+              <SelectTrigger className="w-36 h-9">
+                <SelectValue placeholder="Service" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous</SelectItem>
+                {DEPARTMENTS.map(d => <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+
+            <Select value={contractFilter} onValueChange={setContractFilter}>
+              <SelectTrigger className="w-28 h-9">
+                <SelectValue placeholder="Contrat" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous</SelectItem>
+                {CONTRACT_TYPES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-28 h-9">
+                <SelectValue placeholder="Statut" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous</SelectItem>
+                <SelectItem value="active">Actif</SelectItem>
+                <SelectItem value="inactive">Inactif</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Right: Add Button */}
+          <Button className="bg-violet-600 hover:bg-violet-700" onClick={handleNewEmployee} data-testid="btn-new-employee">
+            <UserPlus className="w-4 h-4 mr-2" />
+            Ajouter
+          </Button>
         </div>
-        <Button className="bg-violet-600 hover:bg-violet-700" onClick={handleNewEmployee} data-testid="btn-new-employee">
-          <UserPlus className="w-4 h-4 mr-2" />Nouvel employe
-        </Button>
       </div>
 
-      {/* Filters */}
-      <div className="flex items-center gap-3 bg-white rounded-lg border border-slate-200 p-3">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input placeholder="Rechercher..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+      {/* Content */}
+      {loading ? (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-2 border-violet-600 border-t-transparent rounded-full spinner" />
+            <span className="text-sm text-slate-500">Chargement...</span>
+          </div>
         </div>
-        <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-          <SelectTrigger className="w-48"><SelectValue placeholder="Departement" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous les departements</SelectItem>
-            {DEPARTMENTS.map(d => <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Table */}
-      <div className="flex-1 bg-white rounded-lg border border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto h-full">
-          <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200 sticky top-0">
-              <tr>
-                <th className="text-left p-3 text-xs font-semibold text-slate-600">Employe</th>
-                <th className="text-left p-3 text-xs font-semibold text-slate-600">Poste</th>
-                <th className="text-left p-3 text-xs font-semibold text-slate-600">Departement</th>
-                <th className="text-left p-3 text-xs font-semibold text-slate-600">Contrat</th>
-                <th className="text-left p-3 text-xs font-semibold text-slate-600">Date embauche</th>
-                <th className="text-right p-3 text-xs font-semibold text-slate-600">Taux horaire</th>
-                <th className="w-12"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loading ? (
-                <tr><td colSpan={7} className="p-8 text-center"><div className="w-6 h-6 border-2 border-violet-600 border-t-transparent rounded-full spinner mx-auto" /></td></tr>
-              ) : filteredEmployees.length === 0 ? (
-                <tr><td colSpan={7} className="p-8 text-center text-slate-500">Aucun employe</td></tr>
-              ) : filteredEmployees.map(employee => (
-                <tr key={employee.id} className="table-row-hover">
-                  <td className="p-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-semibold text-slate-600">{employee.first_name?.charAt(0)}{employee.last_name?.charAt(0)}</span>
-                      </div>
-                      <div>
-                        <p className="font-medium text-slate-900">{employee.first_name} {employee.last_name}</p>
-                        {employee.email && <p className="text-xs text-slate-500">{employee.email}</p>}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="p-3 text-sm">{POSITIONS.find(p => p.value === employee.position)?.label || employee.position}</td>
-                  <td className="p-3">
-                    <Badge variant="outline">{DEPARTMENTS.find(d => d.value === employee.department)?.label || employee.department}</Badge>
-                  </td>
-                  <td className="p-3">
-                    <Badge className={employee.contract_type === 'cdi' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}>
-                      {CONTRACT_TYPES.find(c => c.value === employee.contract_type)?.label || employee.contract_type}
-                    </Badge>
-                  </td>
-                  <td className="p-3 text-sm">{format(new Date(employee.hire_date), 'dd/MM/yyyy')}</td>
-                  <td className="p-3 text-right font-mono text-sm">{employee.hourly_rate.toFixed(2)} EUR</td>
-                  <td className="p-3">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild><Button variant="ghost" size="sm"><MoreHorizontal className="w-4 h-4" /></Button></DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEditEmployee(employee)}><Edit className="w-4 h-4 mr-2" />Modifier</DropdownMenuItem>
-                        <DropdownMenuItem><FileText className="w-4 h-4 mr-2" />Voir contrat</DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(employee)}><Trash2 className="w-4 h-4 mr-2" />Desactiver</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </td>
-                </tr>
+      ) : viewMode === 'trombinoscope' ? (
+        /* Trombinoscope View */
+        <div className="flex-1 overflow-auto">
+          {filteredEmployees.length === 0 ? (
+            <div className="flex items-center justify-center h-full text-slate-500">
+              Aucun collaborateur trouve
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {filteredEmployees.map(employee => (
+                <EmployeeCard key={employee.id} employee={employee} onClick={setSelectedEmployee} />
               ))}
-            </tbody>
-          </table>
+            </div>
+          )}
         </div>
-      </div>
+      ) : (
+        /* List View */
+        <div className="flex-1 bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="overflow-x-auto h-full">
+            <table className="w-full">
+              <thead className="bg-slate-50 border-b border-slate-200 sticky top-0">
+                <tr>
+                  <th className="text-left p-3 text-xs font-semibold text-slate-500 uppercase">Collaborateur</th>
+                  <th className="text-left p-3 text-xs font-semibold text-slate-500 uppercase">Service</th>
+                  <th className="text-left p-3 text-xs font-semibold text-slate-500 uppercase">Poste</th>
+                  <th className="text-left p-3 text-xs font-semibold text-slate-500 uppercase">Contrat</th>
+                  <th className="text-left p-3 text-xs font-semibold text-slate-500 uppercase">Temps</th>
+                  <th className="text-left p-3 text-xs font-semibold text-slate-500 uppercase">Telephone</th>
+                  <th className="text-left p-3 text-xs font-semibold text-slate-500 uppercase">Email</th>
+                  <th className="text-left p-3 text-xs font-semibold text-slate-500 uppercase">Statut</th>
+                  <th className="w-12"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredEmployees.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="p-8 text-center text-slate-500">Aucun collaborateur trouve</td>
+                  </tr>
+                ) : filteredEmployees.map(employee => {
+                  const contractType = CONTRACT_TYPES.find(c => c.value === employee.contract_type)
+                  const position = POSITIONS.find(p => p.value === employee.position)
+                  const department = DEPARTMENTS.find(d => d.value === employee.department)
+                  
+                  return (
+                    <tr 
+                      key={employee.id} 
+                      className="table-row-hover cursor-pointer"
+                      onClick={() => setSelectedEmployee(employee)}
+                      data-testid={`employee-row-${employee.id}`}
+                    >
+                      <td className="p-3">
+                        <div className="flex items-center gap-3">
+                          <div className="employee-avatar-sm">
+                            {employee.first_name?.charAt(0)}{employee.last_name?.charAt(0)}
+                          </div>
+                          <span className="font-medium text-slate-800">{employee.first_name} {employee.last_name}</span>
+                        </div>
+                      </td>
+                      <td className="p-3 text-sm text-slate-600">{department?.label || employee.department}</td>
+                      <td className="p-3 text-sm text-slate-600">{position?.label || employee.position}</td>
+                      <td className="p-3">
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded ${contractType?.color || 'badge-cdi'}`}>
+                          {contractType?.label || employee.contract_type}
+                        </span>
+                      </td>
+                      <td className="p-3 text-sm text-slate-600">{employee.weekly_hours}h/sem</td>
+                      <td className="p-3 text-sm text-slate-600">{employee.phone || '-'}</td>
+                      <td className="p-3 text-sm text-slate-600">{employee.email || '-'}</td>
+                      <td className="p-3">
+                        <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${employee.is_active ? 'text-emerald-600' : 'text-slate-400'}`}>
+                          <span className={`w-2 h-2 rounded-full ${employee.is_active ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                          {employee.is_active ? 'Actif' : 'Inactif'}
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
+                            <Button variant="ghost" size="sm"><MoreHorizontal className="w-4 h-4" /></Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEditEmployee(employee); }}>
+                              <Edit className="w-4 h-4 mr-2" />Modifier
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={e => e.stopPropagation()}>
+                              <FileText className="w-4 h-4 mr-2" />Voir contrat
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-red-600" onClick={(e) => { e.stopPropagation(); handleDelete(employee); }}>
+                              <Trash2 className="w-4 h-4 mr-2" />Desactiver
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
-      {/* Sheet */}
+      {/* Employee Detail Modal */}
+      {selectedEmployee && (
+        <EmployeeDetailModal 
+          employee={selectedEmployee}
+          leaveBalance={getLeaveBalance(selectedEmployee.id)}
+          onClose={() => setSelectedEmployee(null)}
+          onEdit={handleEditEmployee}
+        />
+      )}
+
+      {/* Add/Edit Sheet */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent className="w-[600px] sm:max-w-[600px] overflow-y-auto">
-          <SheetHeader><SheetTitle>{editingEmployee ? 'Modifier l\'employe' : 'Nouvel employe'}</SheetTitle></SheetHeader>
+          <SheetHeader><SheetTitle>{editingEmployee ? 'Modifier le collaborateur' : 'Ajouter un collaborateur'}</SheetTitle></SheetHeader>
           <form onSubmit={handleSubmit} className="mt-6 space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2"><Label>Prenom *</Label><Input value={formData.first_name} onChange={e => setFormData({...formData, first_name: e.target.value})} required /></div>
@@ -240,7 +570,7 @@ export const StaffEmployees = () => {
                   <SelectContent>{POSITIONS.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2"><Label>Departement *</Label>
+              <div className="space-y-2"><Label>Service *</Label>
                 <Select value={formData.department} onValueChange={v => setFormData({...formData, department: v})}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{DEPARTMENTS.map(d => <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>)}</SelectContent>
