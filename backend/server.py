@@ -606,6 +606,9 @@ async def create_reservation(hotel_id: str, reservation: ReservationCreate, curr
         {"$inc": {"total_stays": 1, "total_revenue": reservation.total_amount}}
     )
     
+    # Auto-sync to CRM
+    await auto_sync_reservation_to_crm(reservation_doc)
+    
     return ReservationResponse(**reservation_doc)
 
 @api_router.get("/hotels/{hotel_id}/reservations", response_model=List[ReservationResponse])
@@ -4299,6 +4302,224 @@ async def crm_get_ltv_analytics(
     from crm.routes import get_ltv_analytics
     return await get_ltv_analytics(db, period_type, credentials)
 
+# ===================== CHANNEL MANAGER MODULE =====================
+from channel.models import (
+    ChannelConnectionCreate, ChannelConnectionUpdate,
+    RoomMappingCreate, RoomMappingUpdate,
+    InventoryUpdate, InventoryBulkUpdate,
+    RateUpdate, RateBulkUpdate
+)
+
+# Channel Connections
+@api_router.get("/hotels/{hotel_id}/channel/connections")
+async def channel_list_connections(hotel_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from channel.routes import list_channel_connections
+    return await list_channel_connections(db, hotel_id, credentials)
+
+@api_router.post("/hotels/{hotel_id}/channel/connections")
+async def channel_create_connection(hotel_id: str, connection: ChannelConnectionCreate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from channel.routes import create_channel_connection
+    return await create_channel_connection(hotel_id, connection, db, credentials)
+
+@api_router.put("/channel/connections/{connection_id}")
+async def channel_update_connection(connection_id: str, update: ChannelConnectionUpdate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from channel.routes import update_channel_connection
+    return await update_channel_connection(connection_id, update, db, credentials)
+
+@api_router.delete("/channel/connections/{connection_id}")
+async def channel_delete_connection(connection_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from channel.routes import delete_channel_connection
+    return await delete_channel_connection(connection_id, db, credentials)
+
+@api_router.post("/channel/connections/{connection_id}/test")
+async def channel_test_connection(connection_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from channel.routes import test_channel_connection
+    return await test_channel_connection(connection_id, db, credentials)
+
+# Channel Mappings
+@api_router.get("/hotels/{hotel_id}/channel/mappings")
+async def channel_list_mappings(hotel_id: str, channel_id: Optional[str] = None, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from channel.routes import list_room_mappings
+    return await list_room_mappings(db, hotel_id, channel_id, credentials)
+
+@api_router.post("/hotels/{hotel_id}/channel/mappings")
+async def channel_create_mapping(hotel_id: str, mapping: RoomMappingCreate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from channel.routes import create_room_mapping
+    return await create_room_mapping(hotel_id, mapping, db, credentials)
+
+@api_router.delete("/channel/mappings/{mapping_id}")
+async def channel_delete_mapping(mapping_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from channel.routes import delete_room_mapping
+    return await delete_room_mapping(mapping_id, db, credentials)
+
+# Channel Inventory
+@api_router.get("/hotels/{hotel_id}/channel/inventory")
+async def channel_get_inventory(hotel_id: str, start_date: str, end_date: str, room_type_id: Optional[str] = None, channel_id: Optional[str] = None, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from channel.routes import get_inventory
+    return await get_inventory(db, hotel_id, start_date, end_date, room_type_id, channel_id, credentials)
+
+@api_router.post("/hotels/{hotel_id}/channel/inventory/update")
+async def channel_update_inventory(hotel_id: str, update: InventoryUpdate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from channel.routes import update_inventory
+    return await update_inventory(hotel_id, update, db, credentials)
+
+@api_router.post("/hotels/{hotel_id}/channel/inventory/bulk-update")
+async def channel_bulk_update_inventory(hotel_id: str, bulk: InventoryBulkUpdate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from channel.routes import bulk_update_inventory
+    return await bulk_update_inventory(hotel_id, bulk, db, credentials)
+
+# Channel Rates
+@api_router.get("/hotels/{hotel_id}/channel/rates")
+async def channel_get_rates(hotel_id: str, start_date: str, end_date: str, room_type_id: Optional[str] = None, channel_id: Optional[str] = None, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from channel.routes import get_rates
+    return await get_rates(db, hotel_id, start_date, end_date, room_type_id, channel_id, credentials)
+
+@api_router.post("/hotels/{hotel_id}/channel/rates/update")
+async def channel_update_rate(hotel_id: str, update: RateUpdate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from channel.routes import update_rate
+    return await update_rate(hotel_id, update, db, credentials)
+
+# Channel Reservations
+@api_router.get("/hotels/{hotel_id}/channel/reservations")
+async def channel_list_reservations(hotel_id: str, start_date: Optional[str] = None, end_date: Optional[str] = None, channel_id: Optional[str] = None, status: Optional[str] = None, limit: int = 50, offset: int = 0, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from channel.routes import list_ota_reservations
+    return await list_ota_reservations(db, hotel_id, start_date, end_date, channel_id, status, limit, offset, credentials)
+
+@api_router.post("/hotels/{hotel_id}/channel/reservations/sync")
+async def channel_sync_reservations(hotel_id: str, channel_id: Optional[str] = None, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from channel.routes import sync_reservations
+    return await sync_reservations(hotel_id, channel_id, db, credentials)
+
+@api_router.post("/channel/reservations/{reservation_id}/sync-to-pms")
+async def channel_sync_to_pms(reservation_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from channel.routes import sync_reservation_to_pms
+    return await sync_reservation_to_pms(reservation_id, db, credentials)
+
+# Channel Sync Logs
+@api_router.get("/hotels/{hotel_id}/channel/sync-logs")
+async def channel_get_sync_logs(hotel_id: str, channel_id: Optional[str] = None, operation: Optional[str] = None, limit: int = 50, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from channel.routes import get_sync_logs
+    return await get_sync_logs(db, hotel_id, channel_id, operation, limit, credentials)
+
+# Rate Shopper
+@api_router.get("/hotels/{hotel_id}/channel/rate-shopper")
+async def channel_rate_shopper(hotel_id: str, date: str, room_type_id: Optional[str] = None, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from channel.routes import get_rate_shopper_data
+    return await get_rate_shopper_data(db, hotel_id, date, room_type_id, credentials)
+
+# ===================== OBJECT STORAGE MODULE =====================
+from fastapi import UploadFile, File, Query, Response, Header
+
+@api_router.post("/storage/upload")
+async def storage_upload(
+    file: UploadFile = File(...),
+    hotel_id: str = Query(...),
+    category: str = Query(...),
+    entity_type: Optional[str] = Query(None),
+    entity_id: Optional[str] = Query(None),
+    document_type: Optional[str] = Query(None),
+    description: Optional[str] = Query(None),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    from storage.routes import upload_document
+    return await upload_document(file, hotel_id, category, entity_type, entity_id, document_type, description, db, credentials)
+
+@api_router.get("/storage/files/{file_id}")
+async def storage_get_file(file_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from storage.routes import get_file_metadata
+    return await get_file_metadata(file_id, db, credentials)
+
+@api_router.get("/storage/files/{file_id}/download")
+async def storage_download(file_id: str, authorization: Optional[str] = Header(None), auth: Optional[str] = Query(None), credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)):
+    from storage.routes import download_document
+    return await download_document(file_id, db, authorization, auth, credentials)
+
+@api_router.get("/storage/files")
+async def storage_list_files(hotel_id: str, category: Optional[str] = None, entity_type: Optional[str] = None, entity_id: Optional[str] = None, limit: int = 50, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from storage.routes import list_files
+    return await list_files(hotel_id, category, entity_type, entity_id, limit, db, credentials)
+
+@api_router.delete("/storage/files/{file_id}")
+async def storage_delete_file(file_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from storage.routes import delete_file
+    return await delete_file(file_id, db, credentials)
+
+@api_router.get("/storage/entity/{entity_type}/{entity_id}/files")
+async def storage_entity_files(entity_type: str, entity_id: str, hotel_id: str = Query(...), credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from storage.routes import list_entity_files
+    return await list_entity_files(entity_type, entity_id, hotel_id, db, credentials)
+
+# ===================== PMS-CRM AUTO SYNC =====================
+# This function is called automatically when a new reservation is created
+
+async def auto_sync_reservation_to_crm(reservation: dict):
+    """Automatically sync new reservation to CRM"""
+    try:
+        # Support both guest_email and client_email field names
+        email = reservation.get("guest_email") or reservation.get("client_email")
+        if not email:
+            return
+        
+        now = datetime.now(timezone.utc).isoformat()
+        hotel_id = reservation.get("hotel_id")
+        
+        # Check if client exists
+        existing = await db.crm_clients.find_one({"email": email, "hotel_id": hotel_id})
+        
+        if existing:
+            # Update existing client
+            total_amount = reservation.get("total_amount", 0) or 0
+            await db.crm_clients.update_one(
+                {"email": email, "hotel_id": hotel_id},
+                {
+                    "$set": {
+                        "last_stay": reservation.get("check_out") or reservation.get("check_in"),
+                        "updated_at": now
+                    },
+                    "$inc": {
+                        "total_stays": 1,
+                        "total_spent": total_amount
+                    }
+                }
+            )
+            logger.info(f"CRM client updated: {email}")
+        else:
+            # Create new CRM client
+            guest_name = reservation.get("guest_name") or reservation.get("client_name", "")
+            parts = guest_name.split(" ", 1)
+            first_name = parts[0] if parts else ""
+            last_name = parts[1] if len(parts) > 1 else ""
+            
+            client = {
+                "id": str(uuid.uuid4()),
+                "hotel_id": hotel_id,
+                "first_name": first_name,
+                "last_name": last_name,
+                "email": email,
+                "phone": reservation.get("guest_phone"),
+                "country": "",
+                "language": "fr",
+                "client_type": "regular",
+                "status": "active",
+                "tags": [f"Source-{reservation.get('source', 'Direct')}"],
+                "preferences": {},
+                "loyalty_score": 50,
+                "total_stays": 1,
+                "total_spent": reservation.get("total_amount", 0) or 0,
+                "last_stay": reservation.get("check_out") or reservation.get("check_in"),
+                "notes": "",
+                "segment_ids": [],
+                "created_at": now,
+                "updated_at": now,
+                "created_by": "pms_auto_sync"
+            }
+            
+            await db.crm_clients.insert_one(client)
+            logger.info(f"CRM client created: {email}")
+            
+    except Exception as e:
+        logger.error(f"Error syncing reservation to CRM: {e}")
+
 # Include the router in the main app
 app.include_router(api_router)
 
@@ -4309,6 +4530,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Initialize object storage on startup
+@app.on_event("startup")
+async def startup_event():
+    try:
+        from storage.object_storage import init_storage
+        init_storage()
+        logger.info("Object Storage initialized")
+    except Exception as e:
+        logger.warning(f"Object Storage init skipped: {e}")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
