@@ -362,8 +362,8 @@ Build a modern, full-featured PMS with:
 - Password: test123
 
 ## Environment URLs
-- Preview: https://contract-signature.preview.emergentagent.com
-- Backend API: https://contract-signature.preview.emergentagent.com/api
+- Preview: https://hotel-crm-hub.preview.emergentagent.com
+- Backend API: https://hotel-crm-hub.preview.emergentagent.com/api
 
 ## Key Files
 - Backend: `/app/backend/server.py`

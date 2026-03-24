@@ -1,5 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
-import { mockGuests, mockSegments, mockCampaigns, mockWorkflows, mockConversations, mockAlerts, mockIntegrations, mockAutoReplies, Guest } from '../data/mockData';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { mockIntegrations, Guest } from '../data/mockData';
+import * as crmApi from '../services/crmApi';
+import type { CRMClient, CRMSegment, CRMCampaign, CRMWorkflow, CRMConversation, CRMAlert, CRMAutoReply } from '../services/crmApi';
 import KPICards from './KPICards';
 import GuestList from './GuestList';
 import GuestDetail from './GuestDetail';
@@ -21,6 +23,33 @@ import Marketplace from './crm/Marketplace';
 import VoiceConcierge from './crm/VoiceConcierge';
 import PredictiveHousekeeping from './crm/PredictiveHousekeeping';
 import Community from './crm/Community';
+
+// Convert API client to Guest format for compatibility
+function clientToGuest(client: CRMClient): Guest {
+  return {
+    id: client.id,
+    firstName: client.first_name,
+    lastName: client.last_name,
+    email: client.email,
+    phone: client.phone || '',
+    lastStay: client.last_stay || '',
+    loyaltyScore: client.loyalty_score,
+    tags: client.tags,
+    totalStays: client.total_stays,
+    totalRevenue: client.total_spent,
+    preferences: client.preferences as any,
+    stays: (client.stays || []).map(s => ({
+      id: s.id || '',
+      checkIn: s.check_in || '',
+      checkOut: s.check_out || '',
+      roomType: s.room_type || '',
+      rate: s.total_amount || 0,
+      channel: s.channel || 'Direct'
+    })),
+    communications: [],
+    reviews: []
+  };
+}
 
 type TabId = 'clients' | 'segments' | 'communications' | 'auto-replies' | 'workflows' | 'campaigns' | 'analytics' | 'connectors' | 'configuration' | 'copilot' | 'upsells' | 'loyalty' | 'feedback' | 'sustainability' | 'marketplace' | 'voice' | 'housekeeping' | 'community';
 type Language = 'fr' | 'en';
@@ -95,8 +124,121 @@ export default function CRMDashboard() {
   const [language, setLanguage] = useState<Language>('fr');
   const [showKPI, setShowKPI] = useState(true);
   const [innovationsOpen, setInnovationsOpen] = useState(false);
+  
+  // Data states - loaded from API
+  const [guests, setGuests] = useState<Guest[]>([]);
+  const [segments, setSegments] = useState<any[]>([]);
+  const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [workflows, setWorkflows] = useState<any[]>([]);
+  const [conversations, setConversations] = useState<any[]>([]);
+  const [alerts, setAlerts] = useState<any[]>([]);
+  const [autoReplies, setAutoReplies] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Load data from API
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      
+      // Load all data in parallel
+      const [
+        clientsRes,
+        segmentsRes,
+        campaignsRes,
+        workflowsRes,
+        conversationsRes,
+        alertsRes,
+        autoRepliesRes
+      ] = await Promise.all([
+        crmApi.getClients({ limit: 100 }).catch(() => ({ clients: [] })),
+        crmApi.getSegments().catch(() => []),
+        crmApi.getCampaigns().catch(() => []),
+        crmApi.getWorkflows().catch(() => []),
+        crmApi.getConversations().catch(() => []),
+        crmApi.getAlerts().catch(() => []),
+        crmApi.getAutoReplies().catch(() => [])
+      ]);
+      
+      // Convert clients to Guest format
+      setGuests((clientsRes.clients || []).map(clientToGuest));
+      
+      // Convert segments to expected format
+      setSegments((segmentsRes || []).map((s: CRMSegment) => ({
+        id: s.id,
+        name: s.name,
+        count: s.client_count,
+        description: s.description,
+        color: s.color
+      })));
+      
+      // Convert campaigns to expected format
+      setCampaigns((campaignsRes || []).map((c: CRMCampaign) => ({
+        id: c.id,
+        name: c.name,
+        channel: c.type as any,
+        segment: c.segment_ids?.[0] || '',
+        status: c.status as any,
+        stats: {
+          sent: c.sent_count,
+          opened: Math.round(c.sent_count * c.open_rate / 100),
+          clicked: Math.round(c.sent_count * c.click_rate / 100)
+        },
+        scheduledDate: c.scheduled_at
+      })));
+      
+      // Convert workflows to expected format
+      setWorkflows((workflowsRes || []).map((w: CRMWorkflow) => ({
+        id: w.id,
+        name: w.name,
+        trigger: w.trigger?.type || '',
+        action: w.actions?.[0]?.type || '',
+        isActive: w.status === 'active',
+        executions: w.executions_count
+      })));
+      
+      // Convert conversations to expected format
+      setConversations((conversationsRes || []).map((c: CRMConversation) => ({
+        id: c.id,
+        guestName: c.client_name || 'Client',
+        guestAvatar: (c.client_name || 'C').slice(0, 2).toUpperCase(),
+        channel: c.channel as any,
+        lastMessage: c.last_message,
+        date: c.last_message_at,
+        unread: c.unread_count > 0
+      })));
+      
+      // Convert alerts to expected format
+      setAlerts((alertsRes || []).map((a: CRMAlert) => ({
+        id: a.id,
+        type: a.priority === 'high' ? 'error' : a.priority === 'medium' ? 'warning' : 'info',
+        title: a.title,
+        message: a.message,
+        color: a.priority === 'high' ? '#EF4444' : a.priority === 'medium' ? '#F59E0B' : '#3B82F6'
+      })));
+      
+      // Convert auto-replies to expected format
+      setAutoReplies((autoRepliesRes || []).map((ar: CRMAutoReply) => ({
+        id: ar.id,
+        platform: ar.channel,
+        trigger: ar.name,
+        message: ar.response_template,
+        status: ar.is_active ? 'active' : 'inactive',
+        responseRate: ar.usage_count
+      })));
+      
+    } catch (error) {
+      console.error('Error loading CRM data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  
+  // Load data on mount
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const t = translations[language];
   const isInnovationActive = innovationTabIds.includes(activeTab);
@@ -171,7 +313,7 @@ export default function CRMDashboard() {
         <div className="mb-6">
           <KPICards language={language} />
           <div className="mt-4">
-            <Alerts alerts={mockAlerts} language={language} />
+            <Alerts alerts={alerts} language={language} />
           </div>
         </div>
       )}
@@ -250,28 +392,36 @@ export default function CRMDashboard() {
 
       {/* ── CONTENT AREA ── */}
       <div className="space-y-6">
-        {activeTab === 'clients' && (
-          selectedGuest
-            ? <GuestDetail guest={selectedGuest} onBack={() => setSelectedGuest(null)} />
-            : <GuestList guests={mockGuests} onSelectGuest={setSelectedGuest} />
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+          </div>
+        ) : (
+          <>
+            {activeTab === 'clients' && (
+              selectedGuest
+                ? <GuestDetail guest={selectedGuest} onBack={() => setSelectedGuest(null)} />
+                : <GuestList guests={guests} onSelectGuest={setSelectedGuest} />
+            )}
+            {activeTab === 'segments' && <Segmentation segments={segments} />}
+            {activeTab === 'communications' && <Communications conversations={conversations} language={language} />}
+            {activeTab === 'auto-replies' && <AutoReplies autoReplies={autoReplies} />}
+            {activeTab === 'workflows' && <Workflows workflows={workflows} />}
+            {activeTab === 'campaigns' && <Campaigns campaigns={campaigns} />}
+            {activeTab === 'analytics' && <Analytics />}
+            {activeTab === 'connectors' && <Integrations integrations={mockIntegrations} />}
+            {activeTab === 'configuration' && <Configuration />}
+            {activeTab === 'copilot' && <Copilot language={language} />}
+            {activeTab === 'upsells' && <UpsellEngine language={language} />}
+            {activeTab === 'loyalty' && <LoyaltyProgram language={language} />}
+            {activeTab === 'feedback' && <MicroFeedback language={language} />}
+            {activeTab === 'sustainability' && <Sustainability language={language} />}
+            {activeTab === 'marketplace' && <Marketplace language={language} />}
+            {activeTab === 'voice' && <VoiceConcierge language={language} />}
+            {activeTab === 'housekeeping' && <PredictiveHousekeeping language={language} />}
+            {activeTab === 'community' && <Community language={language} />}
+          </>
         )}
-        {activeTab === 'segments' && <Segmentation segments={mockSegments} />}
-        {activeTab === 'communications' && <Communications conversations={mockConversations} language={language} />}
-        {activeTab === 'auto-replies' && <AutoReplies autoReplies={mockAutoReplies} />}
-        {activeTab === 'workflows' && <Workflows workflows={mockWorkflows} />}
-        {activeTab === 'campaigns' && <Campaigns campaigns={mockCampaigns} />}
-        {activeTab === 'analytics' && <Analytics />}
-        {activeTab === 'connectors' && <Integrations integrations={mockIntegrations} />}
-        {activeTab === 'configuration' && <Configuration />}
-        {activeTab === 'copilot' && <Copilot language={language} />}
-        {activeTab === 'upsells' && <UpsellEngine language={language} />}
-        {activeTab === 'loyalty' && <LoyaltyProgram language={language} />}
-        {activeTab === 'feedback' && <MicroFeedback language={language} />}
-        {activeTab === 'sustainability' && <Sustainability language={language} />}
-        {activeTab === 'marketplace' && <Marketplace language={language} />}
-        {activeTab === 'voice' && <VoiceConcierge language={language} />}
-        {activeTab === 'housekeeping' && <PredictiveHousekeeping language={language} />}
-        {activeTab === 'community' && <Community language={language} />}
       </div>
 
       {/* ── FLOATING COPILOT BUTTON ── */}

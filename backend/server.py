@@ -4089,6 +4089,181 @@ async def sa_get_hotel_modules(hotel_id: str, credentials: HTTPAuthorizationCred
     from superadmin.hotel_config_routes import get_hotel_modules
     return await get_hotel_modules(hotel_id, db, credentials)
 
+# ===================== CRM MODULE =====================
+from crm.models import (
+    ClientCreate as CRMClientCreate, ClientUpdate as CRMClientUpdate,
+    SegmentCreate as CRMSegmentCreate, SegmentUpdate as CRMSegmentUpdate,
+    MessageCreate as CRMMessageCreate,
+    CampaignCreate as CRMCampaignCreate, CampaignUpdate as CRMCampaignUpdate,
+    WorkflowCreate as CRMWorkflowCreate, WorkflowUpdate as CRMWorkflowUpdate,
+    AutoReplyCreate as CRMAutoReplyCreate,
+    AlertCreate as CRMAlertCreate
+)
+
+# CRM Clients
+@api_router.get("/crm/clients")
+async def crm_list_clients(
+    search: Optional[str] = None,
+    client_type: Optional[str] = None,
+    status: Optional[str] = None,
+    segment_id: Optional[str] = None,
+    sort_by: str = "created_at",
+    sort_order: str = "desc",
+    limit: int = 50,
+    offset: int = 0,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    from crm.routes import list_clients
+    return await list_clients(db, search, client_type, status, segment_id, sort_by, sort_order, limit, offset, credentials)
+
+@api_router.get("/crm/clients/{client_id}")
+async def crm_get_client(client_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import get_client
+    return await get_client(client_id, db, credentials)
+
+@api_router.post("/crm/clients")
+async def crm_create_client(client: CRMClientCreate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import create_client
+    return await create_client(client, db, credentials)
+
+@api_router.put("/crm/clients/{client_id}")
+async def crm_update_client(client_id: str, client_update: CRMClientUpdate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import update_client
+    return await update_client(client_id, client_update, db, credentials)
+
+@api_router.delete("/crm/clients/{client_id}")
+async def crm_delete_client(client_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import delete_client
+    return await delete_client(client_id, db, credentials)
+
+# CRM Segments
+@api_router.get("/crm/segments")
+async def crm_list_segments(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import list_segments
+    return await list_segments(db, credentials)
+
+@api_router.post("/crm/segments")
+async def crm_create_segment(segment: CRMSegmentCreate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import create_segment
+    return await create_segment(segment, db, credentials)
+
+@api_router.put("/crm/segments/{segment_id}")
+async def crm_update_segment(segment_id: str, segment_update: CRMSegmentUpdate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import update_segment
+    return await update_segment(segment_id, segment_update, db, credentials)
+
+@api_router.delete("/crm/segments/{segment_id}")
+async def crm_delete_segment(segment_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import delete_segment
+    return await delete_segment(segment_id, db, credentials)
+
+# CRM Conversations & Messages
+@api_router.get("/crm/conversations")
+async def crm_list_conversations(status: Optional[str] = None, channel: Optional[str] = None, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import list_conversations
+    return await list_conversations(db, status, channel, credentials)
+
+@api_router.get("/crm/conversations/{conversation_id}/messages")
+async def crm_get_conversation_messages(conversation_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import get_conversation_messages
+    return await get_conversation_messages(conversation_id, db, credentials)
+
+@api_router.post("/crm/messages")
+async def crm_send_message(message: CRMMessageCreate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import send_message
+    return await send_message(message, db, credentials)
+
+# CRM Campaigns
+@api_router.get("/crm/campaigns")
+async def crm_list_campaigns(status: Optional[str] = None, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import list_campaigns
+    return await list_campaigns(db, status, credentials)
+
+@api_router.post("/crm/campaigns")
+async def crm_create_campaign(campaign: CRMCampaignCreate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import create_campaign
+    return await create_campaign(campaign, db, credentials)
+
+@api_router.put("/crm/campaigns/{campaign_id}")
+async def crm_update_campaign(campaign_id: str, campaign_update: CRMCampaignUpdate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import update_campaign
+    return await update_campaign(campaign_id, campaign_update, db, credentials)
+
+@api_router.post("/crm/campaigns/{campaign_id}/launch")
+async def crm_launch_campaign(campaign_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import launch_campaign
+    return await launch_campaign(campaign_id, db, credentials)
+
+# CRM Workflows
+@api_router.get("/crm/workflows")
+async def crm_list_workflows(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import list_workflows
+    return await list_workflows(db, credentials)
+
+@api_router.post("/crm/workflows")
+async def crm_create_workflow(workflow: CRMWorkflowCreate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import create_workflow
+    return await create_workflow(workflow, db, credentials)
+
+@api_router.put("/crm/workflows/{workflow_id}")
+async def crm_update_workflow(workflow_id: str, workflow_update: CRMWorkflowUpdate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import update_workflow
+    return await update_workflow(workflow_id, workflow_update, db, credentials)
+
+@api_router.post("/crm/workflows/{workflow_id}/toggle")
+async def crm_toggle_workflow(workflow_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import toggle_workflow
+    return await toggle_workflow(workflow_id, db, credentials)
+
+# CRM Auto-Replies
+@api_router.get("/crm/auto-replies")
+async def crm_list_auto_replies(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import list_auto_replies
+    return await list_auto_replies(db, credentials)
+
+@api_router.post("/crm/auto-replies")
+async def crm_create_auto_reply(auto_reply: CRMAutoReplyCreate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import create_auto_reply
+    return await create_auto_reply(auto_reply, db, credentials)
+
+@api_router.delete("/crm/auto-replies/{rule_id}")
+async def crm_delete_auto_reply(rule_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import delete_auto_reply
+    return await delete_auto_reply(rule_id, db, credentials)
+
+# CRM Alerts
+@api_router.get("/crm/alerts")
+async def crm_list_alerts(unread_only: bool = False, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import list_alerts
+    return await list_alerts(db, unread_only, credentials)
+
+@api_router.post("/crm/alerts")
+async def crm_create_alert(alert: CRMAlertCreate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import create_alert
+    return await create_alert(alert, db, credentials)
+
+@api_router.post("/crm/alerts/{alert_id}/read")
+async def crm_mark_alert_read(alert_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import mark_alert_read
+    return await mark_alert_read(alert_id, db, credentials)
+
+# CRM Analytics
+@api_router.get("/crm/analytics")
+async def crm_get_analytics(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import get_analytics
+    return await get_analytics(db, credentials)
+
+# CRM PMS Integration
+@api_router.post("/crm/sync-from-pms")
+async def crm_sync_from_pms(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import sync_clients_from_pms
+    return await sync_clients_from_pms(db, credentials)
+
+@api_router.get("/crm/client-by-email/{email}")
+async def crm_get_client_by_email(email: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from crm.routes import get_client_by_email
+    return await get_client_by_email(email, db, credentials)
+
 # Include the router in the main app
 app.include_router(api_router)
 

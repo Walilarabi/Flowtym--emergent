@@ -7,7 +7,7 @@ import requests
 import os
 import uuid
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://contract-signature.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://hotel-crm-hub.preview.emergentagent.com')
 
 # Test credentials
 SUPERADMIN_EMAIL = "superadmin@flowtym.com"
