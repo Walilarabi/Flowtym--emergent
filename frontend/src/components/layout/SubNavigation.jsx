@@ -16,7 +16,7 @@ const staffSubNav = [
   { label: 'Planning', icon: Calendar, path: '/staff/planning' },
   { label: 'Personnel', icon: UsersRound, path: '/staff/employees' },
   { label: 'Contrats', icon: FileText, path: '/staff/contracts' },
-  { label: 'Recrutement', icon: UserPlus, path: '/staff/recruitment', disabled: true },
+  { label: 'Recrutement', icon: UserPlus, path: '/staff/recruitment' },
   { label: 'Reporting', icon: PieChart, path: '/staff/reporting' },
   { label: 'Configuration', icon: Settings, path: '/staff/configuration' },
 ]

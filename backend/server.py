@@ -301,6 +301,16 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Token invalide")
 
+def verify_token(token: str):
+    """Simple token verification helper"""
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expiré")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Token invalide")
+
 # ===================== AUTH ROUTES =====================
 
 @api_router.post("/auth/register", response_model=dict)
@@ -3161,6 +3171,401 @@ async def get_staff_analytics(hotel_id: str, month: int, year: int, current_user
         },
         "employees": employee_stats,
         "hours_by_service": sorted(service_stats, key=lambda x: x["hours"], reverse=True)
+    }
+
+# ===================== RECRUITMENT MODULE =====================
+
+# ---- Models ----
+class JobOfferCreate(BaseModel):
+    title: str
+    department: str
+    contract_type: str  # CDI, CDD, Extra, Interim
+    location: str = ""
+    description: str = ""
+    requirements: List[str] = []
+    salary_min: Optional[float] = None
+    salary_max: Optional[float] = None
+    experience_years: int = 0
+    status: str = "draft"  # draft, published, closed
+
+class JobOfferResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    hotel_id: str
+    title: str
+    department: str
+    contract_type: str
+    location: str
+    description: str
+    requirements: List[str]
+    salary_min: Optional[float]
+    salary_max: Optional[float]
+    experience_years: int
+    status: str
+    applications_count: int = 0
+    created_at: str
+    published_at: Optional[str] = None
+
+class CandidateCreate(BaseModel):
+    first_name: str
+    last_name: str
+    email: EmailStr
+    phone: str = ""
+    job_offer_id: Optional[str] = None
+    source: str = "manual"  # manual, linkedin, indeed, spontaneous
+    cv_url: Optional[str] = None
+    cover_letter: str = ""
+    status: str = "new"  # new, screening, interview, offer, hired, rejected
+    notes: str = ""
+
+class CandidateResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    hotel_id: str
+    first_name: str
+    last_name: str
+    email: str
+    phone: str
+    job_offer_id: Optional[str]
+    job_title: Optional[str] = None
+    source: str
+    cv_url: Optional[str]
+    cover_letter: str
+    status: str
+    notes: str
+    rating: int = 0
+    interviews: List[Dict] = []
+    created_at: str
+    updated_at: str
+
+class InterviewCreate(BaseModel):
+    candidate_id: str
+    date: str
+    time: str
+    interviewer: str
+    type: str = "phone"  # phone, video, onsite
+    notes: str = ""
+    status: str = "scheduled"  # scheduled, completed, cancelled
+
+class AIJobOfferRequest(BaseModel):
+    title: str
+    department: str
+    contract_type: str
+    keywords: List[str] = []
+
+# ---- Job Offers Endpoints ----
+@api_router.get("/hotels/{hotel_id}/recruitment/job-offers", response_model=List[JobOfferResponse])
+async def get_job_offers(hotel_id: str, status: Optional[str] = None, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    verify_token(credentials.credentials)
+    
+    query = {"hotel_id": hotel_id}
+    if status:
+        query["status"] = status
+    
+    offers = await db.job_offers.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
+    
+    # Count applications for each offer
+    for offer in offers:
+        count = await db.candidates.count_documents({"job_offer_id": offer["id"]})
+        offer["applications_count"] = count
+    
+    return offers
+
+@api_router.post("/hotels/{hotel_id}/recruitment/job-offers", response_model=JobOfferResponse)
+async def create_job_offer(hotel_id: str, offer: JobOfferCreate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    verify_token(credentials.credentials)
+    
+    offer_doc = {
+        "id": str(uuid.uuid4()),
+        "hotel_id": hotel_id,
+        **offer.model_dump(),
+        "applications_count": 0,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "published_at": datetime.now(timezone.utc).isoformat() if offer.status == "published" else None
+    }
+    
+    await db.job_offers.insert_one(offer_doc)
+    del offer_doc["_id"]
+    return offer_doc
+
+@api_router.put("/hotels/{hotel_id}/recruitment/job-offers/{offer_id}", response_model=JobOfferResponse)
+async def update_job_offer(hotel_id: str, offer_id: str, offer: JobOfferCreate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    verify_token(credentials.credentials)
+    
+    existing = await db.job_offers.find_one({"id": offer_id, "hotel_id": hotel_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Job offer not found")
+    
+    update_data = offer.model_dump()
+    
+    # Set published_at if status changed to published
+    if offer.status == "published" and existing.get("status") != "published":
+        update_data["published_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.job_offers.update_one({"id": offer_id}, {"$set": update_data})
+    
+    updated = await db.job_offers.find_one({"id": offer_id}, {"_id": 0})
+    count = await db.candidates.count_documents({"job_offer_id": offer_id})
+    updated["applications_count"] = count
+    return updated
+
+@api_router.delete("/hotels/{hotel_id}/recruitment/job-offers/{offer_id}")
+async def delete_job_offer(hotel_id: str, offer_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    verify_token(credentials.credentials)
+    
+    result = await db.job_offers.delete_one({"id": offer_id, "hotel_id": hotel_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Job offer not found")
+    
+    return {"message": "Job offer deleted"}
+
+@api_router.post("/hotels/{hotel_id}/recruitment/job-offers/generate-ai")
+async def generate_ai_job_offer(hotel_id: str, request: AIJobOfferRequest, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """
+    MOCK AI Generation - Returns pre-filled example text for job offers
+    """
+    verify_token(credentials.credentials)
+    
+    # Mock AI-generated content based on department and contract type
+    templates = {
+        "front_office": {
+            "description": f"Nous recherchons un(e) {request.title} dynamique et passionné(e) pour rejoindre notre équipe de réception. Vous serez le premier point de contact de nos clients et veillerez à leur offrir une expérience exceptionnelle dès leur arrivée.\n\nVos missions principales :\n- Accueillir chaleureusement les clients et gérer les check-in/check-out\n- Répondre aux demandes et réclamations avec professionnalisme\n- Assurer la gestion des réservations (téléphone, email, OTA)\n- Coordonner avec les autres services (housekeeping, maintenance)\n- Promouvoir les services additionnels de l'établissement",
+            "requirements": [
+                "Formation en hôtellerie ou expérience équivalente",
+                "Maîtrise du français et anglais courant (3ème langue appréciée)",
+                "Excellentes qualités relationnelles et sens du service",
+                "Maîtrise des outils informatiques et PMS hôteliers",
+                "Disponibilité pour travail en horaires décalés (week-ends, jours fériés)"
+            ]
+        },
+        "housekeeping": {
+            "description": f"Nous recherchons un(e) {request.title} rigoureux(se) et organisé(e) pour garantir le confort et la propreté de notre établissement. Vous jouerez un rôle clé dans la satisfaction de nos clients.\n\nVos missions principales :\n- Assurer le nettoyage et la remise en état des chambres selon nos standards\n- Contrôler l'état des équipements et signaler les anomalies\n- Gérer le stock de linge et produits d'entretien\n- Respecter les protocoles d'hygiène et de sécurité\n- Collaborer avec la réception pour optimiser la rotation des chambres",
+            "requirements": [
+                "Expérience en hôtellerie souhaitée",
+                "Sens du détail et rigueur dans le travail",
+                "Capacité à travailler de manière autonome",
+                "Condition physique adaptée au poste",
+                "Discrétion et respect de la confidentialité"
+            ]
+        },
+        "food_beverage": {
+            "description": f"Nous recherchons un(e) {request.title} créatif(ve) et passionné(e) par la gastronomie pour rejoindre notre équipe de restauration. Vous contribuerez à offrir une expérience culinaire mémorable à nos clients.\n\nVos missions principales :\n- Préparer et dresser les plats selon les standards de qualité\n- Participer à l'élaboration des menus et suggestions du jour\n- Gérer les stocks et les commandes fournisseurs\n- Veiller au respect des normes HACCP\n- Encadrer et former les commis de cuisine",
+            "requirements": [
+                "CAP/BEP Cuisine ou formation équivalente",
+                "Expérience en restauration gastronomique appréciée",
+                "Créativité et sens du goût",
+                "Capacité à travailler sous pression",
+                "Connaissance des normes HACCP"
+            ]
+        },
+        "default": {
+            "description": f"Nous recherchons un(e) {request.title} motivé(e) pour rejoindre notre équipe au sein du service {request.department}. Vous contribuerez activement au bon fonctionnement de notre établissement et à la satisfaction de nos clients.\n\nVos missions principales :\n- Assurer les tâches quotidiennes liées à votre fonction\n- Collaborer avec les autres services de l'hôtel\n- Participer à l'amélioration continue de nos processus\n- Représenter l'image de l'établissement avec professionnalisme",
+            "requirements": [
+                "Formation ou expérience dans le domaine",
+                "Sens du service et du travail en équipe",
+                "Autonomie et capacité d'adaptation",
+                "Bonne présentation",
+                "Disponibilité et flexibilité horaire"
+            ]
+        }
+    }
+    
+    template = templates.get(request.department, templates["default"])
+    
+    # Add keywords to description if provided
+    keywords_text = ""
+    if request.keywords:
+        keywords_text = f"\n\nCompétences clés recherchées : {', '.join(request.keywords)}"
+    
+    # Salary suggestions based on contract type
+    salary_ranges = {
+        "CDI": {"min": 1800, "max": 2500},
+        "CDD": {"min": 1700, "max": 2300},
+        "Extra": {"min": 12, "max": 15},  # Hourly
+        "Interim": {"min": 13, "max": 18}  # Hourly
+    }
+    
+    salary = salary_ranges.get(request.contract_type, {"min": 1700, "max": 2200})
+    
+    return {
+        "generated": True,
+        "title": request.title,
+        "description": template["description"] + keywords_text,
+        "requirements": template["requirements"],
+        "salary_min": salary["min"],
+        "salary_max": salary["max"],
+        "note": "Contenu généré automatiquement - À personnaliser selon vos besoins"
+    }
+
+# ---- Candidates Endpoints ----
+@api_router.get("/hotels/{hotel_id}/recruitment/candidates", response_model=List[CandidateResponse])
+async def get_candidates(hotel_id: str, status: Optional[str] = None, job_offer_id: Optional[str] = None, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    verify_token(credentials.credentials)
+    
+    query = {"hotel_id": hotel_id}
+    if status:
+        query["status"] = status
+    if job_offer_id:
+        query["job_offer_id"] = job_offer_id
+    
+    candidates = await db.candidates.find(query, {"_id": 0}).sort("created_at", -1).to_list(200)
+    
+    # Add job title to each candidate
+    for c in candidates:
+        if c.get("job_offer_id"):
+            job = await db.job_offers.find_one({"id": c["job_offer_id"]}, {"_id": 0, "title": 1})
+            c["job_title"] = job["title"] if job else None
+    
+    return candidates
+
+@api_router.post("/hotels/{hotel_id}/recruitment/candidates", response_model=CandidateResponse)
+async def create_candidate(hotel_id: str, candidate: CandidateCreate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    verify_token(credentials.credentials)
+    
+    now = datetime.now(timezone.utc).isoformat()
+    candidate_doc = {
+        "id": str(uuid.uuid4()),
+        "hotel_id": hotel_id,
+        **candidate.model_dump(),
+        "rating": 0,
+        "interviews": [],
+        "created_at": now,
+        "updated_at": now
+    }
+    
+    await db.candidates.insert_one(candidate_doc)
+    del candidate_doc["_id"]
+    
+    # Add job title
+    if candidate.job_offer_id:
+        job = await db.job_offers.find_one({"id": candidate.job_offer_id}, {"_id": 0, "title": 1})
+        candidate_doc["job_title"] = job["title"] if job else None
+    
+    return candidate_doc
+
+@api_router.put("/hotels/{hotel_id}/recruitment/candidates/{candidate_id}", response_model=CandidateResponse)
+async def update_candidate(hotel_id: str, candidate_id: str, candidate: CandidateCreate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    verify_token(credentials.credentials)
+    
+    existing = await db.candidates.find_one({"id": candidate_id, "hotel_id": hotel_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    
+    update_data = candidate.model_dump()
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.candidates.update_one({"id": candidate_id}, {"$set": update_data})
+    
+    updated = await db.candidates.find_one({"id": candidate_id}, {"_id": 0})
+    
+    # Add job title
+    if updated.get("job_offer_id"):
+        job = await db.job_offers.find_one({"id": updated["job_offer_id"]}, {"_id": 0, "title": 1})
+        updated["job_title"] = job["title"] if job else None
+    
+    return updated
+
+@api_router.patch("/hotels/{hotel_id}/recruitment/candidates/{candidate_id}/status")
+async def update_candidate_status(hotel_id: str, candidate_id: str, status: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    verify_token(credentials.credentials)
+    
+    valid_statuses = ["new", "screening", "interview", "offer", "hired", "rejected"]
+    if status not in valid_statuses:
+        raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}")
+    
+    result = await db.candidates.update_one(
+        {"id": candidate_id, "hotel_id": hotel_id},
+        {"$set": {"status": status, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    
+    return {"message": "Status updated", "status": status}
+
+@api_router.patch("/hotels/{hotel_id}/recruitment/candidates/{candidate_id}/rating")
+async def update_candidate_rating(hotel_id: str, candidate_id: str, rating: int, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    verify_token(credentials.credentials)
+    
+    if rating < 0 or rating > 5:
+        raise HTTPException(status_code=400, detail="Rating must be between 0 and 5")
+    
+    result = await db.candidates.update_one(
+        {"id": candidate_id, "hotel_id": hotel_id},
+        {"$set": {"rating": rating, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    
+    return {"message": "Rating updated", "rating": rating}
+
+@api_router.delete("/hotels/{hotel_id}/recruitment/candidates/{candidate_id}")
+async def delete_candidate(hotel_id: str, candidate_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    verify_token(credentials.credentials)
+    
+    result = await db.candidates.delete_one({"id": candidate_id, "hotel_id": hotel_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    
+    return {"message": "Candidate deleted"}
+
+# ---- Interviews Endpoints ----
+@api_router.post("/hotels/{hotel_id}/recruitment/candidates/{candidate_id}/interviews")
+async def add_interview(hotel_id: str, candidate_id: str, interview: InterviewCreate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    verify_token(credentials.credentials)
+    
+    interview_doc = {
+        "id": str(uuid.uuid4()),
+        **interview.model_dump(exclude={"candidate_id"}),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    result = await db.candidates.update_one(
+        {"id": candidate_id, "hotel_id": hotel_id},
+        {
+            "$push": {"interviews": interview_doc},
+            "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}
+        }
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    
+    return {"message": "Interview scheduled", "interview": interview_doc}
+
+# ---- Pipeline Stats ----
+@api_router.get("/hotels/{hotel_id}/recruitment/pipeline-stats")
+async def get_pipeline_stats(hotel_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    verify_token(credentials.credentials)
+    
+    pipeline = [
+        {"$match": {"hotel_id": hotel_id}},
+        {"$group": {"_id": "$status", "count": {"$sum": 1}}}
+    ]
+    
+    results = await db.candidates.aggregate(pipeline).to_list(10)
+    
+    stats = {
+        "new": 0,
+        "screening": 0,
+        "interview": 0,
+        "offer": 0,
+        "hired": 0,
+        "rejected": 0
+    }
+    
+    for r in results:
+        if r["_id"] in stats:
+            stats[r["_id"]] = r["count"]
+    
+    # Active job offers count
+    active_offers = await db.job_offers.count_documents({"hotel_id": hotel_id, "status": "published"})
+    
+    return {
+        "pipeline": stats,
+        "total_candidates": sum(stats.values()),
+        "active_job_offers": active_offers
     }
 
 # ===================== ROOT & HEALTH =====================

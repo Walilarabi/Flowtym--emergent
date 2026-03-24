@@ -20,6 +20,7 @@ import { StaffContracts } from '@/pages/staff/StaffContracts'
 import { StaffPayroll } from '@/pages/staff/StaffPayroll'
 import { StaffReporting } from '@/pages/staff/StaffReporting'
 import { StaffConfiguration } from '@/pages/staff/StaffConfiguration'
+import { StaffRecruitment } from '@/pages/staff/StaffRecruitment'
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth()
@@ -72,6 +73,7 @@ const AppRoutes = () => {
                   <Route path="/staff/payroll" element={<StaffPayroll />} />
                   <Route path="/staff/reporting" element={<StaffReporting />} />
                   <Route path="/staff/configuration" element={<StaffConfiguration />} />
+                  <Route path="/staff/recruitment" element={<StaffRecruitment />} />
                   {/* Settings */}
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="*" element={<Navigate to="/pms/planning" replace />} />
