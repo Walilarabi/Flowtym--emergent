@@ -1250,6 +1250,13 @@ class LeaveBalanceResponse(BaseModel):
     last_accrual_date: Optional[str] = None
     created_at: str
     updated_at: str
+    
+    def __init__(self, **data):
+        # Round all float values to 2 decimal places
+        for key in ['cp_acquis', 'cp_pris', 'cp_restant', 'cp_n1', 'cp_n1_pris', 'cp_n1_restant', 'cp_total_disponible']:
+            if key in data and data[key] is not None:
+                data[key] = round(data[key], 2)
+        super().__init__(**data)
 
 class LeaveTransactionCreate(BaseModel):
     """Création d'une transaction de congé (prise ou acquisition)"""
