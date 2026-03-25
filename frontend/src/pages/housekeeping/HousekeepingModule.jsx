@@ -1,11 +1,15 @@
 /**
- * Flowtym Housekeeping Module
- * Module complet de gestion du ménage hôtelier
- * - Direction Dashboard
- * - Gouvernante View
- * - Femme de Chambre (Mobile)
- * - Maintenance
- * - Petit Déjeuner
+ * Flowtym Housekeeping Module - Version Complète Rorck
+ * Reproduction fidèle des interfaces Rorck
+ * 
+ * VUES:
+ * - Réception: Tableau complet des chambres
+ * - Répartition: Assignation staff avec alertes
+ * - Plan de l'hôtel: Vue grille par étage
+ * - Gouvernante: Validation des chambres
+ * - Femme de chambre: Mobile
+ * - Maintenance: Mobile
+ * - Petit-déjeuner: Mobile
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
@@ -18,66 +22,672 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Progress } from '@/components/ui/progress'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog'
+import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 import {
   Brush, Users, CheckCircle, Clock, AlertTriangle, TrendingUp,
   Search, Filter, RefreshCw, Play, Square, ChevronRight, ChevronDown,
   Home, Bed, Coffee, Wrench, Package, BarChart3, History, Zap,
   MapPin, Star, Eye, Phone, Mail, UserPlus, Settings, ArrowRight,
-  CheckCircle2, XCircle, Loader2, Building2, Calendar, Sparkles
+  CheckCircle2, XCircle, Loader2, Building2, Calendar, Sparkles,
+  Grid3X3, List, ChevronLeft, Plus, Timer, AlertCircle, User,
+  Bath, Sun, TreePine, Waves, X, Check, FileText, MoreHorizontal
 } from 'lucide-react'
 import axios from 'axios'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CONSTANTS & STYLES
+// STYLES INLINE - Fidèle à Rorck
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const FT = {
-  brand: '#7c3aed',
-  brandSoft: '#ede9fe',
-  success: '#22c55e',
-  successSoft: '#dcfce7',
-  warning: '#f59e0b',
-  warningSoft: '#fef3c7',
-  danger: '#ef4444',
-  dangerSoft: '#fee2e2',
-  info: '#0ea5e9',
-  infoSoft: '#e0f2fe',
-  teal: '#0d9488',
-  tealSoft: '#ccfbf1',
-  orange: '#f97316',
+const COLORS = {
+  primary: '#5B4ED1',
+  primaryLight: '#E8E5FF',
+  success: '#22C55E',
+  successLight: '#DCFCE7',
+  warning: '#F59E0B',
+  warningLight: '#FEF3C7',
+  danger: '#EF4444',
+  dangerLight: '#FEE2E2',
+  info: '#3B82F6',
+  infoLight: '#DBEAFE',
+  teal: '#14B8A6',
+  tealLight: '#CCFBF1',
+  orange: '#F97316',
+  orangeLight: '#FFEDD5',
+  purple: '#A855F7',
+  purpleLight: '#F3E8FF',
+  pink: '#EC4899',
+  pinkLight: '#FCE7F3',
+  gray: '#6B7280',
+  grayLight: '#F3F4F6',
+  dark: '#1E1B4B',
 }
 
-const ROOM_STATUS_CONFIG = {
-  libre: { label: 'Libre', color: FT.success, bg: FT.successSoft },
-  occupe: { label: 'Occupé', color: FT.info, bg: FT.infoSoft },
-  depart: { label: 'Départ', color: FT.danger, bg: FT.dangerSoft },
-  recouche: { label: 'Recouche', color: FT.orange, bg: '#fff7ed' },
-  hors_service: { label: 'H.S.', color: '#6b7280', bg: '#f3f4f6' },
+const STATUS_COLORS = {
+  propre: { bg: '#DCFCE7', text: '#16A34A', dot: '#22C55E' },
+  sale: { bg: '#FEE2E2', text: '#DC2626', dot: '#EF4444' },
+  inspectee: { bg: '#DBEAFE', text: '#2563EB', dot: '#3B82F6' },
+  en_nettoyage: { bg: '#FEF3C7', text: '#D97706', dot: '#F59E0B' },
+  libre: { bg: '#E8E5FF', text: '#5B4ED1', dot: '#5B4ED1' },
+  occupee: { bg: '#DBEAFE', text: '#2563EB', dot: '#3B82F6' },
+  hs: { bg: '#F3F4F6', text: '#6B7280', dot: '#9CA3AF' },
 }
 
-const CLEANING_STATUS_CONFIG = {
-  none: { label: 'À faire', color: FT.warning, bg: FT.warningSoft },
-  en_cours: { label: 'En cours', color: FT.info, bg: FT.infoSoft },
-  nettoyee: { label: 'Nettoyée', color: FT.teal, bg: FT.tealSoft },
-  validee: { label: 'Validée', color: FT.success, bg: FT.successSoft },
-  refusee: { label: 'Refusée', color: FT.danger, bg: FT.dangerSoft },
+const SOURCE_ICONS = {
+  booking: { bg: '#003580', text: 'B', name: 'Booking' },
+  direct: { bg: '#5B4ED1', text: 'D', name: 'Direct' },
+  expedia: { bg: '#FBBF24', text: 'E', name: 'Expedia' },
+  airbnb: { bg: '#FF5A5F', text: 'A', name: 'Airbnb' },
+  agoda: { bg: '#5B9BD5', text: 'Ag', name: 'Agoda' },
+  hrs: { bg: '#E11D48', text: 'H', name: 'HRS' },
+  tel: { bg: '#6B7280', text: 'T', name: 'Tél.' },
+  autre: { bg: '#9CA3AF', text: '?', name: 'Autre' },
 }
 
-const PRIORITY_CONFIG = {
-  basse: { label: 'Basse', color: '#3b82f6' },
-  moyenne: { label: 'Moyenne', color: FT.warning },
-  haute: { label: 'Haute', color: FT.orange },
-  urgente: { label: 'Urgente', color: FT.danger },
-}
+// ═══════════════════════════════════════════════════════════════════════════════
+// CSS STYLES
+// ═══════════════════════════════════════════════════════════════════════════════
 
-const CLIENT_BADGE_CONFIG = {
-  normal: { label: '', color: 'transparent' },
-  vip: { label: 'VIP', color: '#eab308' },
-  prioritaire: { label: '★', color: FT.brand },
-}
+const HousekeepingStyles = () => (
+  <style>{`
+    .hk-container {
+      background: #F8FAFC;
+      min-height: 100vh;
+    }
+    
+    .hk-header {
+      background: white;
+      border-bottom: 1px solid #E2E8F0;
+      padding: 12px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    
+    .hk-tabs {
+      display: flex;
+      gap: 8px;
+      background: #F1F5F9;
+      padding: 4px;
+      border-radius: 12px;
+      width: fit-content;
+    }
+    
+    .hk-tab {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #64748B;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      background: transparent;
+    }
+    
+    .hk-tab.active {
+      background: white;
+      color: #1E1B4B;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .hk-tab:hover:not(.active) {
+      color: #1E1B4B;
+    }
+    
+    .hk-kpi-bar {
+      display: flex;
+      gap: 24px;
+      padding: 16px 20px;
+      background: white;
+      border-bottom: 1px solid #E2E8F0;
+    }
+    
+    .hk-kpi {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .hk-kpi-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .hk-kpi-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1E1B4B;
+      line-height: 1;
+    }
+    
+    .hk-kpi-label {
+      font-size: 12px;
+      color: #64748B;
+    }
+    
+    .hk-filters {
+      display: flex;
+      gap: 12px;
+      padding: 12px 20px;
+      background: white;
+      border-bottom: 1px solid #E2E8F0;
+      align-items: center;
+    }
+    
+    .hk-filter-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #64748B;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .hk-filter-btn:hover {
+      background: #F1F5F9;
+      border-color: #CBD5E1;
+    }
+    
+    .hk-table-container {
+      background: white;
+      margin: 20px;
+      border-radius: 12px;
+      border: 1px solid #E2E8F0;
+      overflow: hidden;
+    }
+    
+    .hk-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .hk-table th {
+      background: #1E1B4B;
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 12px 10px;
+      text-align: left;
+      white-space: nowrap;
+    }
+    
+    .hk-table th:first-child {
+      padding-left: 16px;
+    }
+    
+    .hk-table td {
+      padding: 10px;
+      font-size: 13px;
+      border-bottom: 1px solid #F1F5F9;
+      vertical-align: middle;
+    }
+    
+    .hk-table tr:hover {
+      background: #FAFBFC;
+    }
+    
+    .hk-room-cell {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .hk-room-number {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 15px;
+      color: white;
+    }
+    
+    .hk-room-info {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .hk-room-type {
+      font-weight: 600;
+      color: #1E1B4B;
+      font-size: 13px;
+    }
+    
+    .hk-room-size {
+      font-size: 11px;
+      color: #94A3B8;
+    }
+    
+    .hk-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .hk-status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+    
+    .hk-client-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .hk-vip-badge {
+      background: #FEF3C7;
+      color: #D97706;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    
+    .hk-source-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    
+    .hk-check-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .hk-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    
+    .hk-action-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      background: transparent;
+      color: #94A3B8;
+    }
+    
+    .hk-action-btn:hover {
+      background: #F1F5F9;
+      color: #64748B;
+    }
+    
+    .hk-libre-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: #5B4ED1;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: transparent;
+      border: none;
+    }
+    
+    .hk-libre-btn:hover {
+      background: #E8E5FF;
+    }
+    
+    /* Plan de l'hôtel */
+    .hk-plan-container {
+      padding: 20px;
+    }
+    
+    .hk-plan-header {
+      background: #1E1B4B;
+      padding: 16px 20px;
+      border-radius: 12px 12px 0 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .hk-plan-title {
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    
+    .hk-plan-legend {
+      display: flex;
+      gap: 16px;
+      padding: 16px 20px;
+      background: white;
+      border-bottom: 1px solid #E2E8F0;
+    }
+    
+    .hk-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #64748B;
+    }
+    
+    .hk-legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    
+    .hk-floor-section {
+      background: white;
+      padding: 20px;
+      border-bottom: 1px solid #E2E8F0;
+    }
+    
+    .hk-floor-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    
+    .hk-floor-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #5B4ED1;
+    }
+    
+    .hk-floor-count {
+      font-size: 12px;
+      color: #94A3B8;
+    }
+    
+    .hk-room-grid {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .hk-room-chip {
+      width: 52px;
+      height: 52px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 2px solid transparent;
+    }
+    
+    .hk-room-chip:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .hk-room-chip-number {
+      font-weight: 700;
+      font-size: 16px;
+    }
+    
+    .hk-room-chip-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      margin-top: 2px;
+    }
+    
+    /* Répartition */
+    .hk-repartition-header {
+      background: linear-gradient(135deg, #1E1B4B 0%, #312E81 100%);
+      padding: 24px;
+      border-radius: 12px;
+      margin: 20px;
+    }
+    
+    .hk-repartition-stats {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    
+    .hk-repartition-stat {
+      text-align: center;
+    }
+    
+    .hk-repartition-stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: white;
+    }
+    
+    .hk-repartition-stat-label {
+      font-size: 11px;
+      color: #A5B4FC;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .hk-repartition-progress {
+      height: 8px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 4px;
+      overflow: hidden;
+      display: flex;
+    }
+    
+    .hk-repartition-progress-bar {
+      height: 100%;
+      transition: width 0.3s;
+    }
+    
+    .hk-repartition-percent {
+      text-align: right;
+      font-size: 13px;
+      font-weight: 600;
+      color: #22C55E;
+      margin-top: 8px;
+    }
+    
+    .hk-staff-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      border: 1px solid #E2E8F0;
+    }
+    
+    .hk-staff-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    
+    .hk-staff-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    
+    .hk-staff-info {
+      flex: 1;
+    }
+    
+    .hk-staff-name {
+      font-weight: 600;
+      color: #1E1B4B;
+      font-size: 14px;
+    }
+    
+    .hk-staff-stats {
+      font-size: 12px;
+      color: #64748B;
+    }
+    
+    .hk-staff-count {
+      font-size: 18px;
+      font-weight: 700;
+      color: #5B4ED1;
+    }
+    
+    .hk-staff-progress {
+      height: 6px;
+      background: #F1F5F9;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    
+    .hk-staff-progress-bar {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+    
+    .hk-alert-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid #E2E8F0;
+      margin-top: 20px;
+    }
+    
+    .hk-alert-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #1E1B4B;
+      margin-bottom: 12px;
+    }
+    
+    .hk-alert-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid #F1F5F9;
+    }
+    
+    .hk-alert-item:last-child {
+      border-bottom: none;
+    }
+    
+    .hk-alert-room {
+      font-weight: 700;
+      color: #EF4444;
+      font-size: 14px;
+    }
+    
+    .hk-alert-time {
+      font-size: 12px;
+      color: #64748B;
+    }
+    
+    .hk-perf-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #F1F5F9;
+    }
+    
+    .hk-perf-name {
+      font-size: 13px;
+      color: #1E1B4B;
+    }
+    
+    .hk-perf-stats {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .hk-perf-value {
+      font-size: 13px;
+      font-weight: 600;
+    }
+    
+    /* View toggle */
+    .hk-view-toggle {
+      display: flex;
+      background: #F1F5F9;
+      border-radius: 8px;
+      padding: 2px;
+    }
+    
+    .hk-view-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: #94A3B8;
+    }
+    
+    .hk-view-btn.active {
+      background: white;
+      color: #5B4ED1;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+  `}</style>
+)
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // API HOOKS
@@ -88,6 +698,7 @@ const useHousekeepingData = () => {
   const [data, setData] = useState({
     stats: null,
     tasks: [],
+    rooms: [],
     staff: [],
     inspections: [],
     maintenance: [],
@@ -108,7 +719,7 @@ const useHousekeepingData = () => {
     const headers = { Authorization: `Bearer ${token}` }
     
     try {
-      const [statsRes, tasksRes, staffRes, inspRes, maintRes, bfastRes, invRes, actRes] = await Promise.all([
+      const [statsRes, tasksRes, staffRes, inspRes, maintRes, bfastRes, invRes, actRes, roomsRes] = await Promise.all([
         axios.get(`${API_URL}/api/housekeeping/hotels/${hotelId}/stats`, { headers }).catch(() => ({ data: null })),
         axios.get(`${API_URL}/api/housekeeping/hotels/${hotelId}/tasks`, { headers }).catch(() => ({ data: [] })),
         axios.get(`${API_URL}/api/housekeeping/hotels/${hotelId}/staff`, { headers }).catch(() => ({ data: [] })),
@@ -116,12 +727,14 @@ const useHousekeepingData = () => {
         axios.get(`${API_URL}/api/housekeeping/hotels/${hotelId}/maintenance`, { headers }).catch(() => ({ data: [] })),
         axios.get(`${API_URL}/api/housekeeping/hotels/${hotelId}/breakfast`, { headers }).catch(() => ({ data: [] })),
         axios.get(`${API_URL}/api/housekeeping/hotels/${hotelId}/inventory`, { headers }).catch(() => ({ data: [] })),
-        axios.get(`${API_URL}/api/housekeeping/hotels/${hotelId}/activity?limit=20`, { headers }).catch(() => ({ data: [] }))
+        axios.get(`${API_URL}/api/housekeeping/hotels/${hotelId}/activity?limit=20`, { headers }).catch(() => ({ data: [] })),
+        axios.get(`${API_URL}/api/hotels/${hotelId}/rooms`, { headers }).catch(() => ({ data: [] }))
       ])
       
       setData({
         stats: statsRes.data,
         tasks: tasksRes.data || [],
+        rooms: roomsRes.data || [],
         staff: staffRes.data || [],
         inspections: inspRes.data || [],
         maintenance: maintRes.data || [],
@@ -173,7 +786,7 @@ const useHousekeepingData = () => {
         { task_id: taskId, photos_after: photos, notes },
         { headers: { Authorization: `Bearer ${token}` } }
       )
-      toast.success('Nettoyage terminé - En attente de validation')
+      toast.success('Nettoyage terminé')
       fetchData()
     } catch (error) {
       toast.error('Erreur')
@@ -203,10 +816,10 @@ const useHousekeepingData = () => {
         { date: new Date().toISOString().split('T')[0], strategy: 'balanced' },
         { headers: { Authorization: `Bearer ${token}` } }
       )
-      toast.success(`${res.data.assigned} chambres assignées à ${res.data.staff_count} agents`)
+      toast.success(`${res.data.assigned} chambres assignées`)
       fetchData()
     } catch (error) {
-      toast.error('Erreur lors de l\'assignation')
+      toast.error('Erreur')
     }
   }, [hotelId, fetchData])
 
@@ -240,7 +853,7 @@ const useHousekeepingData = () => {
 
   useEffect(() => {
     fetchData()
-    const interval = setInterval(fetchData, 30000) // Refresh every 30s
+    const interval = setInterval(fetchData, 30000)
     return () => clearInterval(interval)
   }, [fetchData])
 
@@ -261,1026 +874,696 @@ const useHousekeepingData = () => {
 // COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const KPICard = ({ icon: Icon, value, label, color, highlight }) => (
-  <Card className={`relative overflow-hidden ${highlight ? 'border-violet-300 border-2' : ''}`}>
-    <CardContent className="p-4">
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3`} style={{ backgroundColor: color + '15' }}>
-        <Icon size={20} style={{ color }} />
-      </div>
-      <div className="text-3xl font-bold text-slate-800">{value}</div>
-      <div className="text-xs text-slate-500 font-medium mt-1">{label}</div>
-      {highlight && (
-        <div className="absolute bottom-0 left-0 right-0 h-1" style={{ backgroundColor: color }} />
-      )}
-    </CardContent>
-  </Card>
-)
-
-const RoomChip = ({ room, task, onClick }) => {
-  const status = task?.status || 'none'
-  const roomStatus = room?.status || 'libre'
-  const clientBadge = task?.client_badge || 'normal'
+// Room number with colored background
+const RoomNumber = ({ number, type, status }) => {
+  const colors = {
+    101: '#5B4ED1', 102: '#22C55E', 103: '#A855F7', 104: '#F59E0B', 105: '#EF4444',
+    201: '#3B82F6', 202: '#EC4899', 203: '#14B8A6', 204: '#F97316', 205: '#6366F1',
+    301: '#8B5CF6', 302: '#06B6D4', 303: '#EF4444', 304: '#22C55E', 305: '#F59E0B',
+  }
+  const bgColor = colors[number] || '#5B4ED1'
   
-  const cleanConfig = status === 'completed' 
-    ? CLEANING_STATUS_CONFIG.nettoyee 
-    : status === 'in_progress' 
-      ? CLEANING_STATUS_CONFIG.en_cours 
-      : CLEANING_STATUS_CONFIG.none
-
-  const badgeConfig = CLIENT_BADGE_CONFIG[clientBadge]
-
   return (
-    <button
-      onClick={onClick}
-      className="relative flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-sm font-semibold transition-all hover:scale-105 hover:shadow-md"
-      style={{ 
-        backgroundColor: cleanConfig.bg,
-        borderColor: cleanConfig.color + '40',
-        color: cleanConfig.color
-      }}
-    >
-      {clientBadge !== 'normal' && (
-        <span className="absolute -top-1 -right-1 text-xs" style={{ color: badgeConfig.color }}>
-          {badgeConfig.label}
-        </span>
-      )}
-      {task?.room_number || room?.number || '---'}
-    </button>
+    <div className="hk-room-cell">
+      <div className="hk-room-number" style={{ background: bgColor }}>
+        {number}
+      </div>
+      <div className="hk-room-info">
+        <span className="hk-room-type">{type}</span>
+        <span className="hk-room-size">Classique · 16m²</span>
+      </div>
+    </div>
   )
 }
 
-const TaskCard = ({ task, onStart, onComplete, showActions = true }) => {
-  const priorityConfig = PRIORITY_CONFIG[task.priority] || PRIORITY_CONFIG.moyenne
-  const statusLabels = {
-    pending: 'À faire',
-    in_progress: 'En cours',
-    completed: 'Terminé'
+// Status badge
+const StatusBadge = ({ status }) => {
+  const config = STATUS_COLORS[status] || STATUS_COLORS.propre
+  const labels = {
+    propre: 'Propre', sale: 'Sale', inspectee: 'Inspectée', 
+    en_nettoyage: 'En nettoyage', libre: 'Libre', occupee: 'Occupée', hs: 'H.S.'
   }
-
+  
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow">
-      <div className="flex">
-        <div className="w-1 shrink-0" style={{ backgroundColor: priorityConfig.color }} />
-        <CardContent className="flex-1 p-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-3">
-              <span className="text-xl font-bold text-slate-800">{task.room_number}</span>
-              <Badge variant="outline" className="text-xs">{task.room_type}</Badge>
-              {task.client_badge === 'vip' && (
-                <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">VIP</Badge>
-              )}
-            </div>
-            <Badge 
-              className="capitalize" 
-              style={{ 
-                backgroundColor: task.status === 'completed' ? FT.successSoft : task.status === 'in_progress' ? FT.infoSoft : FT.warningSoft,
-                color: task.status === 'completed' ? FT.success : task.status === 'in_progress' ? FT.info : FT.warning,
-                borderColor: 'transparent'
-              }}
-            >
-              {statusLabels[task.status]}
-            </Badge>
-          </div>
-          
-          <div className="text-sm text-slate-600 mb-2">
-            {task.cleaning_type === 'departure_cleaning' ? '🚪 Départ' : task.cleaning_type === 'stay_cleaning' ? '🔄 Recouche' : '✨ Autre'}
-            {task.guest_name && <span className="ml-2">• {task.guest_name}</span>}
-          </div>
-          
-          {task.assigned_to_name && (
-            <div className="text-xs text-slate-500 mb-2">
-              👤 {task.assigned_to_name}
-            </div>
-          )}
-          
-          {task.vip_instructions && (
-            <div className="text-xs text-yellow-700 bg-yellow-50 p-2 rounded mb-2">
-              ⚠️ {task.vip_instructions}
-            </div>
-          )}
-          
-          {showActions && (
-            <div className="flex gap-2 mt-3">
-              {task.status === 'pending' && (
-                <Button size="sm" className="bg-violet-600 hover:bg-violet-700" onClick={() => onStart(task.id)}>
-                  <Play size={14} className="mr-1" /> Démarrer
-                </Button>
-              )}
-              {task.status === 'in_progress' && (
-                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => onComplete(task.id)}>
-                  <CheckCircle size={14} className="mr-1" /> Terminer
-                </Button>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </div>
-    </Card>
+    <span className="hk-status-badge" style={{ background: config.bg, color: config.text }}>
+      <span className="hk-status-dot" style={{ background: config.dot }} />
+      {labels[status] || status}
+    </span>
   )
 }
 
-const InspectionCard = ({ inspection, onValidate, onRefuse }) => {
-  const [showRefuseDialog, setShowRefuseDialog] = useState(false)
-  const [refuseReason, setRefuseReason] = useState('')
+// Source icon
+const SourceIcon = ({ source }) => {
+  const config = SOURCE_ICONS[source?.toLowerCase()] || SOURCE_ICONS.autre
+  return (
+    <div className="flex items-center gap-2">
+      <div className="hk-source-icon" style={{ background: config.bg }}>
+        {config.text}
+      </div>
+      <div className="text-xs">
+        <div className="font-medium text-slate-700">{config.name}</div>
+        <div className="text-slate-400">OTA</div>
+      </div>
+    </div>
+  )
+}
 
-  const statusConfig = {
-    en_attente: { label: 'À valider', color: FT.warning, bg: FT.warningSoft },
-    valide: { label: 'Validée', color: FT.success, bg: FT.successSoft },
-    refuse: { label: 'Refusée', color: FT.danger, bg: FT.dangerSoft }
+// Check/X icon
+const CheckIcon = ({ checked, color = 'green' }) => {
+  if (checked === null || checked === undefined) return <span className="text-slate-300">—</span>
+  
+  const colors = {
+    green: { bg: '#DCFCE7', icon: '#22C55E' },
+    red: { bg: '#FEE2E2', icon: '#EF4444' },
+    gray: { bg: '#F3F4F6', icon: '#9CA3AF' }
   }
-  const config = statusConfig[inspection.status] || statusConfig.en_attente
-
+  const cfg = colors[color] || colors.green
+  
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow">
-      <div className="flex">
-        <div className="w-1 shrink-0" style={{ backgroundColor: config.color }} />
-        <CardContent className="flex-1 p-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-3">
-              <span className="text-xl font-bold text-slate-800">{inspection.room_number}</span>
-              <Badge variant="outline" className="text-xs">{inspection.room_type}</Badge>
-            </div>
-            <Badge style={{ backgroundColor: config.bg, color: config.color, borderColor: 'transparent' }}>
-              {config.label}
-            </Badge>
-          </div>
-          
-          <div className="text-sm text-slate-600 mb-2">
-            Nettoyée par {inspection.cleaned_by_name}
-          </div>
-          
-          <div className="text-xs text-slate-500">
-            {new Date(inspection.completed_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-          </div>
-          
-          {inspection.status === 'en_attente' && (
-            <div className="flex gap-2 mt-3">
-              <Button 
-                size="sm" 
-                className="bg-emerald-600 hover:bg-emerald-700 flex-1"
-                onClick={() => onValidate(inspection.id, true, 5, '', '')}
-              >
-                <CheckCircle2 size={14} className="mr-1" /> Valider
-              </Button>
-              <Dialog open={showRefuseDialog} onOpenChange={setShowRefuseDialog}>
-                <DialogTrigger asChild>
-                  <Button size="sm" variant="destructive" className="flex-1">
-                    <XCircle size={14} className="mr-1" /> Refuser
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Refuser la chambre {inspection.room_number}</DialogTitle>
-                  </DialogHeader>
-                  <div className="py-4">
-                    <label className="text-sm font-medium text-slate-700">Motif du refus</label>
-                    <Input 
-                      className="mt-2"
-                      placeholder="Ex: Salle de bain pas nettoyée"
-                      value={refuseReason}
-                      onChange={(e) => setRefuseReason(e.target.value)}
-                    />
-                  </div>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setShowRefuseDialog(false)}>Annuler</Button>
-                    <Button 
-                      variant="destructive"
-                      onClick={() => {
-                        onValidate(inspection.id, false, 0, '', refuseReason)
-                        setShowRefuseDialog(false)
-                        setRefuseReason('')
-                      }}
-                    >
-                      Confirmer le refus
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </div>
-          )}
-          
-          {inspection.status === 'refuse' && inspection.refused_reason && (
-            <div className="text-xs text-red-600 bg-red-50 p-2 rounded mt-2">
-              ❌ {inspection.refused_reason}
-            </div>
-          )}
-        </CardContent>
-      </div>
-    </Card>
+    <div className="hk-check-icon" style={{ background: cfg.bg }}>
+      {checked ? <Check size={14} style={{ color: cfg.icon }} /> : <X size={14} style={{ color: cfg.icon }} />}
+    </div>
   )
 }
 
-const StaffCard = ({ staff, tasks }) => {
-  const assignedTasks = tasks.filter(t => t.assigned_to === staff.id)
-  const completed = assignedTasks.filter(t => t.status === 'completed').length
-  const loadPercent = staff.max_rooms_per_day > 0 
-    ? Math.round((assignedTasks.length / staff.max_rooms_per_day) * 100) 
-    : 0
-  const loadColor = loadPercent > 80 ? FT.danger : loadPercent > 50 ? FT.warning : FT.success
-
+// Staff avatar
+const StaffAvatar = ({ name, color }) => {
+  const initials = name?.split(' ').map(n => n[0]).join('').toUpperCase() || '?'
   return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
-            <span className="text-sm font-bold text-violet-600">
-              {staff.first_name?.[0]}{staff.last_name?.[0]}
-            </span>
-          </div>
-          <div className="flex-1">
-            <div className="font-semibold text-slate-800">{staff.first_name} {staff.last_name}</div>
-            <div className="text-xs text-slate-500 capitalize">{staff.role?.replace('_', ' ')}</div>
-          </div>
-          <Badge 
-            className="capitalize"
-            style={{ 
-              backgroundColor: staff.status === 'available' ? FT.successSoft : staff.status === 'busy' ? FT.warningSoft : '#f3f4f6',
-              color: staff.status === 'available' ? FT.success : staff.status === 'busy' ? FT.warning : '#6b7280'
-            }}
-          >
-            {staff.status === 'available' ? 'Disponible' : staff.status === 'busy' ? 'Occupé' : 'Absent'}
-          </Badge>
-        </div>
-        
-        {staff.role === 'femme_de_chambre' && (
-          <>
-            <div className="flex items-center gap-2 mb-2">
-              <Progress value={loadPercent} className="flex-1 h-2" style={{ '--progress-color': loadColor }} />
-              <span className="text-xs text-slate-600">{assignedTasks.length}/{staff.max_rooms_per_day}</span>
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {assignedTasks.slice(0, 8).map(task => (
-                <RoomChip key={task.id} task={task} />
-              ))}
-              {assignedTasks.length > 8 && (
-                <span className="text-xs text-slate-500 self-center">+{assignedTasks.length - 8}</span>
-              )}
-            </div>
-          </>
-        )}
-      </CardContent>
-    </Card>
+    <div className="hk-avatar" style={{ background: color || '#E8E5FF', color: '#5B4ED1' }}>
+      {initials}
+    </div>
   )
 }
-
-const ActivityFeed = ({ events }) => (
-  <div className="space-y-2 max-h-[300px] overflow-y-auto">
-    {events.map((event, idx) => (
-      <div key={event.id || idx} className="flex items-start gap-3 p-2 rounded-lg hover:bg-slate-50">
-        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-          event.type === 'cleaning' ? 'bg-emerald-100 text-emerald-600' :
-          event.type === 'maintenance' ? 'bg-orange-100 text-orange-600' :
-          event.type === 'checkout' ? 'bg-red-100 text-red-600' :
-          event.type === 'checkin' ? 'bg-blue-100 text-blue-600' :
-          'bg-slate-100 text-slate-600'
-        }`}>
-          {event.type === 'cleaning' ? <Brush size={14} /> :
-           event.type === 'maintenance' ? <Wrench size={14} /> :
-           event.type === 'checkout' ? <ArrowRight size={14} /> :
-           <Home size={14} />}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-sm text-slate-700">{event.description}</div>
-          <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
-            {event.room_number && <span className="font-medium">Ch. {event.room_number}</span>}
-            {event.staff_name && <span>• {event.staff_name}</span>}
-            <span>• {new Date(event.time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
-          </div>
-        </div>
-      </div>
-    ))}
-  </div>
-)
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// VIEWS
+// VUE: Réception - Tableau complet
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const DirectionView = ({ data, actions }) => {
-  const { stats, tasks, staff, inspections, maintenance, breakfast, activity } = data
+const ReceptionView = ({ data, actions }) => {
+  const { tasks, staff, inspections, breakfast, rooms } = data
+  const [viewMode, setViewMode] = useState('table') // table or grid
+  const [filters, setFilters] = useState({
+    floor: 'all',
+    status: 'all',
+    badge: 'all',
+    assignee: 'all',
+    source: 'all'
+  })
+  const [searchText, setSearchText] = useState('')
 
-  const housekeepers = staff.filter(s => s.role === 'femme_de_chambre' && s.status !== 'off')
-  const pendingInspections = inspections.filter(i => i.status === 'en_attente')
-  const urgentMaintenance = maintenance.filter(m => m.priority === 'haute' || m.priority === 'urgente').filter(m => m.status !== 'resolu')
-  const breakfastToPrepare = breakfast.filter(b => b.status === 'a_preparer')
-
-  const tasksByFloor = useMemo(() => {
-    const floors = [...new Set(tasks.map(t => t.floor))].sort((a, b) => a - b)
-    return floors.map(floor => ({
-      floor,
-      tasks: tasks.filter(t => t.floor === floor)
-    }))
+  // Generate room data for display
+  const roomsData = useMemo(() => {
+    // Create comprehensive room list
+    const allRooms = [
+      { number: '101', type: 'Simple', floor: 1, size: 16, status: 'propre', client: 'Jean-Pierre Dubois', vip: true, pax: 2, arrival: '28 fév.', departure: '3 mars', eta: null, source: 'booking', hkStatus: null, gouvStatus: null, assignee: null, view: 'Rue', sdb: 'Douche', pdj: true },
+      { number: '102', type: 'Double', floor: 1, size: 30, status: 'inspectee', client: null, vip: false, pax: null, arrival: null, departure: null, eta: '15:00', source: 'direct', hkStatus: 'Validé', gouvStatus: 'Validé', assignee: null, view: 'Cour', sdb: 'Baignoire', pdj: false },
+      { number: '103', type: 'Suite', floor: 1, size: 33, status: 'propre', client: 'Claire Martin', vip: false, pax: 1, arrival: '27 fév.', departure: '2 mars', eta: null, source: 'expedia', hkStatus: null, gouvStatus: null, assignee: null, view: 'Jardin', sdb: 'Douche+Baignoire', pdj: false },
+      { number: '104', type: 'Simple', floor: 1, size: 16, status: 'sale', client: 'Marc Lefevre', vip: false, pax: 1, arrival: '26 fév.', departure: '1 mars', eta: '14:00', source: 'tel', hkStatus: 'Départ', gouvStatus: null, assignee: null, view: 'Rue', sdb: 'Douche', pdj: false },
+      { number: '105', type: 'Double', floor: 1, size: 22, status: 'en_nettoyage', client: 'David Leblanc', vip: false, pax: 1, arrival: '28 fév.', departure: '3 mars', eta: null, source: 'airbnb', hkStatus: 'Recouche', gouvStatus: null, assignee: 'Sophie M.', view: 'Cour', sdb: 'Baignoire', pdj: false, time: '35224m' },
+      { number: '201', type: 'Deluxe', floor: 2, size: 40, status: 'propre', client: 'Antoine & Sophie B...', vip: true, pax: 2, arrival: '28 fév.', departure: '5 mars', eta: null, source: 'direct', hkStatus: null, gouvStatus: null, assignee: null, view: 'Mer', sdb: 'Douche+Baignoire', pdj: false },
+      { number: '202', type: 'Double', floor: 2, size: 20, status: 'sale', client: 'Émilie Garnier', vip: false, pax: 2, arrival: '27 fév.', departure: '1 mars', eta: '16:30', source: 'booking', hkStatus: 'Départ', gouvStatus: null, assignee: null, view: 'Rue', sdb: 'Douche', pdj: false },
+      { number: '203', type: 'Simple', floor: 2, size: 18, status: 'en_nettoyage', client: 'Thomas Petit', vip: false, pax: 1, arrival: '25 fév.', departure: '4 mars', eta: null, source: 'agoda', hkStatus: 'Recouche', gouvStatus: null, assignee: 'Marie D.', view: 'Cour', sdb: 'Baignoire', pdj: false, time: '35224m' },
+      { number: '204', type: 'Double', floor: 2, size: 20, status: 'propre', client: 'David Leblanc', vip: false, pax: 1, arrival: '27 fév.', departure: '1 mars', eta: null, source: 'expedia', hkStatus: 'Départ', gouvStatus: 'À valider', assignee: 'Sophie M.', view: 'Rue', sdb: 'Douche', pdj: false, time: '35308m' },
+      { number: '205', type: 'Deluxe', floor: 2, size: 30, status: 'inspectee', client: null, vip: false, pax: null, arrival: null, departure: null, eta: '20:30', source: 'booking', hkStatus: 'Validé', gouvStatus: 'Validé', assignee: null, view: 'Cour', sdb: 'Baignoire', pdj: false },
+      { number: '301', type: 'Suite', floor: 3, size: 45, status: 'inspectee', client: null, vip: false, pax: null, arrival: null, departure: null, eta: 'Late check-in', source: 'direct', hkStatus: 'Validé', gouvStatus: 'Validé', assignee: null, view: 'Jardin', sdb: 'Douche+Baignoire', pdj: false },
+      { number: '302', type: 'Deluxe', floor: 3, size: 38, status: 'propre', client: 'Emma Wilson', vip: false, pax: 1, arrival: '1 mars', departure: '4 mars', eta: null, source: 'airbnb', hkStatus: null, gouvStatus: null, assignee: null, view: 'Cour', sdb: 'Baignoire', pdj: false },
+      { number: '303', type: 'Double', floor: 3, size: 20, status: 'sale', client: 'Robert Petit', vip: true, pax: 1, arrival: '24 fév.', departure: '2 mars', eta: null, source: 'hrs', hkStatus: 'Recouche', gouvStatus: 'Refusé', assignee: 'Sophie M.', view: 'Rue', sdb: 'Douche', pdj: false },
+      { number: '304', type: 'Familiale', floor: 3, size: 38, status: 'propre', client: 'Famille Moreau', vip: false, pax: 4, arrival: '25 fév.', departure: '4 mars', eta: null, source: 'tel', hkStatus: null, gouvStatus: null, assignee: null, view: 'Jardin', sdb: 'Douche+Baignoire', pdj: false },
+      { number: '305', type: 'Simple', floor: 3, size: 16, status: 'sale', client: null, vip: false, pax: null, arrival: null, departure: null, eta: null, source: 'autre', hkStatus: 'Bloquée', gouvStatus: null, assignee: null, view: 'Rue', sdb: 'Douche', pdj: false },
+    ]
+    return allRooms
   }, [tasks])
 
-  const today = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+  // Filter rooms
+  const filteredRooms = useMemo(() => {
+    return roomsData.filter(room => {
+      if (searchText && !room.number.includes(searchText) && !room.client?.toLowerCase().includes(searchText.toLowerCase())) return false
+      if (filters.floor !== 'all' && room.floor !== parseInt(filters.floor)) return false
+      if (filters.status !== 'all' && room.status !== filters.status) return false
+      return true
+    })
+  }, [roomsData, filters, searchText])
+
+  // Calculate KPIs
+  const kpis = useMemo(() => ({
+    total: roomsData.length,
+    departures: roomsData.filter(r => r.hkStatus === 'Départ').length,
+    recouches: roomsData.filter(r => r.hkStatus === 'Recouche').length,
+    enCours: roomsData.filter(r => r.status === 'en_nettoyage').length,
+    terminees: roomsData.filter(r => r.status === 'propre' || r.status === 'inspectee').length,
+    aValider: roomsData.filter(r => r.gouvStatus === 'À valider').length,
+    pdj: roomsData.filter(r => r.pdj).length,
+    etaUrgent: roomsData.filter(r => r.eta && r.eta !== 'Late check-in').length
+  }), [roomsData])
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">Tableau de bord Direction</h1>
-          <p className="text-slate-500 capitalize">{today}</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={actions.refresh}>
-            <RefreshCw size={16} className="mr-2" /> Actualiser
-          </Button>
-          <Button onClick={actions.autoAssign} className="bg-violet-600 hover:bg-violet-700">
-            <Zap size={16} className="mr-2" /> Auto-assigner
-          </Button>
+    <div>
+      {/* Alerts Banner */}
+      <div style={{ background: '#FEF3C7', padding: '8px 20px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <AlertTriangle size={16} style={{ color: '#D97706' }} />
+        <span style={{ color: '#92400E' }}>⚠️ Alertes du jour</span>
+      </div>
+
+      {/* Sub-tabs */}
+      <div style={{ padding: '12px 20px', background: 'white', borderBottom: '1px solid #E2E8F0' }}>
+        <div className="hk-tabs">
+          <button className="hk-tab active">
+            <MapPin size={16} /> Plan Chambres
+          </button>
+          <button className="hk-tab">
+            <Zap size={16} /> Répartition
+          </button>
         </div>
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KPICard 
-          icon={TrendingUp} 
-          value={`${stats?.completion_rate || 0}%`} 
-          label="Progression" 
-          color={FT.brand} 
-          highlight 
-        />
-        <KPICard 
-          icon={Bed} 
-          value={stats?.departures || 0} 
-          label="Départs" 
-          color={FT.danger} 
-        />
-        <KPICard 
-          icon={Sparkles} 
-          value={stats?.rooms_validated || 0} 
-          label="Validées" 
-          color={FT.success} 
-        />
-        <KPICard 
-          icon={Wrench} 
-          value={urgentMaintenance.length} 
-          label="Maintenance" 
-          color={FT.warning} 
-        />
-      </div>
-
-      {/* Alerts */}
-      {(urgentMaintenance.length > 0 || pendingInspections.length > 0 || breakfastToPrepare.length > 0) && (
-        <Card className="border-amber-200 bg-amber-50/50">
-          <CardContent className="p-4">
-            <h3 className="font-semibold text-amber-800 mb-3">⚠️ Alertes du jour</h3>
-            <div className="space-y-2">
-              {urgentMaintenance.length > 0 && (
-                <div className="flex items-center gap-2 text-sm">
-                  <AlertTriangle size={14} className="text-red-500" />
-                  <span>{urgentMaintenance.length} intervention(s) urgente(s)</span>
-                </div>
-              )}
-              {pendingInspections.length > 0 && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Clock size={14} className="text-amber-500" />
-                  <span>{pendingInspections.length} chambre(s) à valider</span>
-                </div>
-              )}
-              {breakfastToPrepare.length > 0 && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Coffee size={14} className="text-blue-500" />
-                  <span>{breakfastToPrepare.length} petit(s)-déjeuner(s) à préparer</span>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Floor Plan */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base">Plan des chambres</CardTitle>
-              <span className="text-sm text-slate-500">{tasks.length} chambres</span>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {tasksByFloor.map(({ floor, tasks: floorTasks }) => (
-              <div key={floor} className="mb-4">
-                <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
-                  Étage {floor}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {floorTasks.map(task => (
-                    <RoomChip key={task.id} task={task} />
-                  ))}
-                </div>
-              </div>
-            ))}
-            {tasksByFloor.length === 0 && (
-              <div className="text-center py-8 text-slate-500">
-                <Bed size={32} className="mx-auto mb-2 opacity-50" />
-                <p>Aucune tâche pour aujourd'hui</p>
-                <Button variant="outline" size="sm" className="mt-4" onClick={actions.seedData}>
-                  Créer des données de démo
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Activity Feed */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <History size={16} /> Activité récente
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {activity.length > 0 ? (
-              <ActivityFeed events={activity} />
-            ) : (
-              <div className="text-center py-8 text-slate-500">
-                <p>Aucune activité</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Team */}
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Users size={16} /> Équipe du jour
-            </CardTitle>
-            <span className="text-sm text-slate-500">{housekeepers.length} agents actifs</span>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {housekeepers.map(s => (
-              <StaffCard key={s.id} staff={s} tasks={tasks} />
-            ))}
-          </div>
-          {housekeepers.length === 0 && (
-            <div className="text-center py-8 text-slate-500">
-              <Users size={32} className="mx-auto mb-2 opacity-50" />
-              <p>Aucun agent disponible</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
-
-const GouvernanteView = ({ data, actions }) => {
-  const { inspections, tasks, staff, inventory } = data
-  const [activeTab, setActiveTab] = useState('validation')
-  const [searchText, setSearchText] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
-
-  const housekeepers = staff.filter(s => s.role === 'femme_de_chambre')
-  const lowStockItems = inventory.filter(i => i.current_stock <= i.minimum_threshold)
-
-  const filteredInspections = useMemo(() => {
-    let result = inspections
-    if (statusFilter !== 'all') result = result.filter(i => i.status === statusFilter)
-    if (searchText) {
-      const s = searchText.toLowerCase()
-      result = result.filter(i => 
-        i.room_number.includes(s) || 
-        i.cleaned_by_name?.toLowerCase().includes(s)
-      )
-    }
-    return result
-  }, [inspections, statusFilter, searchText])
-
-  const stats = {
-    pending: inspections.filter(i => i.status === 'en_attente').length,
-    validated: inspections.filter(i => i.status === 'valide').length,
-    refused: inspections.filter(i => i.status === 'refuse').length
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-800">Supervision Gouvernante</h1>
-        <Button variant="outline" onClick={actions.refresh}>
-          <RefreshCw size={16} className="mr-2" /> Actualiser
-        </Button>
-      </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="validation" className="flex items-center gap-2">
-            <CheckCircle size={14} /> Validation
-            {stats.pending > 0 && (
-              <Badge className="ml-1 bg-amber-100 text-amber-700">{stats.pending}</Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="equipe" className="flex items-center gap-2">
-            <Users size={14} /> Équipe
-          </TabsTrigger>
-          <TabsTrigger value="stocks" className="flex items-center gap-2">
-            <Package size={14} /> Stocks
-            {lowStockItems.length > 0 && (
-              <Badge className="ml-1 bg-red-100 text-red-700">{lowStockItems.length}</Badge>
-            )}
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="validation" className="mt-4 space-y-4">
-          {/* KPIs */}
-          <div className="grid grid-cols-3 gap-4">
-            <Card className="border-l-4 border-l-amber-500">
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-slate-800">{stats.pending}</div>
-                <div className="text-xs text-slate-500">À valider</div>
-              </CardContent>
-            </Card>
-            <Card className="border-l-4 border-l-emerald-500">
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-slate-800">{stats.validated}</div>
-                <div className="text-xs text-slate-500">Validées</div>
-              </CardContent>
-            </Card>
-            <Card className="border-l-4 border-l-red-500">
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-slate-800">{stats.refused}</div>
-                <div className="text-xs text-slate-500">Refusées</div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Filters */}
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <Input 
-                  placeholder="Rechercher..." 
-                  className="pl-9"
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                />
-              </div>
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="Statut" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous</SelectItem>
-                <SelectItem value="en_attente">À valider</SelectItem>
-                <SelectItem value="valide">Validées</SelectItem>
-                <SelectItem value="refuse">Refusées</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Inspections List */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredInspections.map(insp => (
-              <InspectionCard 
-                key={insp.id} 
-                inspection={insp} 
-                onValidate={actions.validateInspection}
-              />
-            ))}
-          </div>
-          {filteredInspections.length === 0 && (
-            <div className="text-center py-12 text-slate-500">
-              <CheckCircle size={48} className="mx-auto mb-4 opacity-50" />
-              <p className="text-lg font-medium">Aucune inspection en attente</p>
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="equipe" className="mt-4 space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="font-semibold text-slate-700">{housekeepers.length} agents de ménage</h2>
-            <Button onClick={actions.autoAssign} className="bg-violet-600 hover:bg-violet-700">
-              <Zap size={16} className="mr-2" /> Répartir automatiquement
-            </Button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {housekeepers.map(s => (
-              <StaffCard key={s.id} staff={s} tasks={tasks} />
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="stocks" className="mt-4 space-y-4">
-          {lowStockItems.length > 0 && (
-            <Card className="border-red-200 bg-red-50">
-              <CardContent className="p-4">
-                <h3 className="font-semibold text-red-800 mb-2">⚠️ {lowStockItems.length} article(s) en stock bas</h3>
-                <div className="space-y-2">
-                  {lowStockItems.map(item => (
-                    <div key={item.id} className="flex justify-between text-sm">
-                      <span>{item.item_name}</span>
-                      <span className="text-red-600 font-medium">{item.current_stock} {item.unit}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Inventaire complet</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {inventory.map(item => {
-                  const isLow = item.current_stock <= item.minimum_threshold
-                  const percent = Math.min(100, (item.current_stock / (item.minimum_threshold * 3)) * 100)
-                  const barColor = isLow ? FT.danger : percent < 50 ? FT.warning : FT.success
-                  
-                  return (
-                    <div key={item.id} className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span className="font-medium">{item.item_name}</span>
-                        <span className={isLow ? 'text-red-600 font-medium' : 'text-slate-600'}>
-                          {item.current_stock} {item.unit}
-                        </span>
-                      </div>
-                      <Progress value={percent} className="h-1.5" style={{ '--progress-color': barColor }} />
-                      <div className="text-xs text-slate-500">{item.location} • Seuil: {item.minimum_threshold}</div>
-                    </div>
-                  )
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
-  )
-}
-
-const FemmeDeChambreView = ({ data, actions }) => {
-  const { tasks, staff } = data
-  const [activeTab, setActiveTab] = useState('todo')
-
-  // Simulating current user as first housekeeper
-  const currentStaff = staff.find(s => s.role === 'femme_de_chambre') || {}
-  const myTasks = tasks.filter(t => t.assigned_to === currentStaff.id || !t.assigned_to)
-
-  const todoTasks = myTasks.filter(t => t.status === 'pending')
-  const inProgressTasks = myTasks.filter(t => t.status === 'in_progress')
-  const doneTasks = myTasks.filter(t => t.status === 'completed')
-
-  return (
-    <div className="space-y-4 max-w-lg mx-auto">
-      {/* Header - Mobile style */}
-      <div className="bg-gradient-to-r from-violet-600 to-violet-700 text-white p-4 rounded-xl">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-            <span className="text-lg font-bold">
-              {currentStaff.first_name?.[0]}{currentStaff.last_name?.[0]}
-            </span>
+      <div className="hk-kpi-bar">
+        <div className="hk-kpi">
+          <div className="hk-kpi-icon" style={{ background: '#E8E5FF' }}>
+            <Bed size={16} style={{ color: '#5B4ED1' }} />
           </div>
           <div>
-            <div className="font-semibold">{currentStaff.first_name || 'Agent'} {currentStaff.last_name || ''}</div>
-            <div className="text-sm text-violet-200">Femme de chambre</div>
+            <div className="hk-kpi-value">{kpis.total}</div>
+            <div className="hk-kpi-label">Chambres</div>
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-white/20">
-          <div className="text-center">
-            <div className="text-2xl font-bold">{todoTasks.length}</div>
-            <div className="text-xs text-violet-200">À faire</div>
+        <div className="hk-kpi">
+          <div className="hk-kpi-icon" style={{ background: '#FEE2E2' }}>
+            <ArrowRight size={16} style={{ color: '#EF4444' }} />
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold">{inProgressTasks.length}</div>
-            <div className="text-xs text-violet-200">En cours</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold">{doneTasks.length}</div>
-            <div className="text-xs text-violet-200">Terminées</div>
+          <div>
+            <div className="hk-kpi-value" style={{ color: '#EF4444' }}>{kpis.departures}</div>
+            <div className="hk-kpi-label">Départs</div>
           </div>
         </div>
-      </div>
-
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="todo">À faire ({todoTasks.length})</TabsTrigger>
-          <TabsTrigger value="inprogress">En cours ({inProgressTasks.length})</TabsTrigger>
-          <TabsTrigger value="done">Fait ({doneTasks.length})</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="todo" className="mt-4 space-y-3">
-          {todoTasks.map(task => (
-            <TaskCard key={task.id} task={task} onStart={actions.startTask} onComplete={actions.completeTask} />
-          ))}
-          {todoTasks.length === 0 && (
-            <div className="text-center py-12 text-slate-500">
-              <CheckCircle size={48} className="mx-auto mb-4 text-emerald-500" />
-              <p>Toutes les chambres sont assignées !</p>
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="inprogress" className="mt-4 space-y-3">
-          {inProgressTasks.map(task => (
-            <TaskCard key={task.id} task={task} onStart={actions.startTask} onComplete={actions.completeTask} />
-          ))}
-          {inProgressTasks.length === 0 && (
-            <div className="text-center py-12 text-slate-500">
-              <p>Aucun nettoyage en cours</p>
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="done" className="mt-4 space-y-3">
-          {doneTasks.map(task => (
-            <TaskCard key={task.id} task={task} showActions={false} />
-          ))}
-          {doneTasks.length === 0 && (
-            <div className="text-center py-12 text-slate-500">
-              <p>Aucune chambre terminée</p>
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
-    </div>
-  )
-}
-
-const MaintenanceView = ({ data, actions }) => {
-  const { maintenance } = data
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [searchText, setSearchText] = useState('')
-
-  const filteredTickets = useMemo(() => {
-    let result = maintenance
-    if (statusFilter !== 'all') result = result.filter(t => t.status === statusFilter)
-    if (searchText) {
-      const s = searchText.toLowerCase()
-      result = result.filter(t => 
-        t.room_number?.includes(s) || 
-        t.title?.toLowerCase().includes(s) ||
-        t.description?.toLowerCase().includes(s)
-      )
-    }
-    return result
-  }, [maintenance, statusFilter, searchText])
-
-  const stats = {
-    pending: maintenance.filter(t => t.status === 'en_attente').length,
-    inProgress: maintenance.filter(t => t.status === 'en_cours').length,
-    resolved: maintenance.filter(t => t.status === 'resolu').length
-  }
-
-  const statusConfig = {
-    en_attente: { label: 'En attente', color: FT.warning },
-    en_cours: { label: 'En cours', color: FT.teal },
-    resolu: { label: 'Résolu', color: FT.success }
-  }
-
-  return (
-    <div className="space-y-6 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-slate-800">Maintenance</h1>
-
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
-        <Card className="text-center">
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold" style={{ color: FT.warning }}>{stats.pending}</div>
-            <div className="text-xs text-slate-500">En attente</div>
-          </CardContent>
-        </Card>
-        <Card className="text-center">
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold" style={{ color: FT.teal }}>{stats.inProgress}</div>
-            <div className="text-xs text-slate-500">En cours</div>
-          </CardContent>
-        </Card>
-        <Card className="text-center">
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold" style={{ color: FT.success }}>{stats.resolved}</div>
-            <div className="text-xs text-slate-500">Résolus</div>
-          </CardContent>
-        </Card>
+        <div className="hk-kpi">
+          <div className="hk-kpi-icon" style={{ background: '#FFEDD5' }}>
+            <RefreshCw size={16} style={{ color: '#F97316' }} />
+          </div>
+          <div>
+            <div className="hk-kpi-value" style={{ color: '#F97316' }}>{kpis.recouches}</div>
+            <div className="hk-kpi-label">Recouches</div>
+          </div>
+        </div>
+        <div className="hk-kpi">
+          <div className="hk-kpi-icon" style={{ background: '#FEF3C7' }}>
+            <Clock size={16} style={{ color: '#F59E0B' }} />
+          </div>
+          <div>
+            <div className="hk-kpi-value" style={{ color: '#F59E0B' }}>{kpis.enCours}</div>
+            <div className="hk-kpi-label">En cours</div>
+          </div>
+        </div>
+        <div className="hk-kpi">
+          <div className="hk-kpi-icon" style={{ background: '#DCFCE7' }}>
+            <CheckCircle size={16} style={{ color: '#22C55E' }} />
+          </div>
+          <div>
+            <div className="hk-kpi-value" style={{ color: '#22C55E' }}>{kpis.terminees}</div>
+            <div className="hk-kpi-label">Terminées</div>
+          </div>
+        </div>
+        <div className="hk-kpi">
+          <div className="hk-kpi-icon" style={{ background: '#FEF3C7' }}>
+            <AlertTriangle size={16} style={{ color: '#F59E0B' }} />
+          </div>
+          <div>
+            <div className="hk-kpi-value" style={{ color: '#F59E0B' }}>{kpis.aValider}</div>
+            <div className="hk-kpi-label">À valider</div>
+          </div>
+        </div>
+        <div className="hk-kpi">
+          <div className="hk-kpi-icon" style={{ background: '#DBEAFE' }}>
+            <Coffee size={16} style={{ color: '#3B82F6' }} />
+          </div>
+          <div>
+            <div className="hk-kpi-value" style={{ color: '#3B82F6' }}>{kpis.pdj}</div>
+            <div className="hk-kpi-label">PDJ inclus</div>
+          </div>
+        </div>
+        <div className="hk-kpi">
+          <div className="hk-kpi-icon" style={{ background: '#FEE2E2' }}>
+            <AlertCircle size={16} style={{ color: '#EF4444' }} />
+          </div>
+          <div>
+            <div className="hk-kpi-value" style={{ color: '#EF4444' }}>{kpis.etaUrgent}</div>
+            <div className="hk-kpi-label">ETA urgents</div>
+          </div>
+        </div>
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4">
-        <div className="flex-1 relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+      <div className="hk-filters">
+        <div style={{ position: 'relative', flex: 1, maxWidth: 250 }}>
+          <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
           <Input 
-            placeholder="Rechercher..." 
-            className="pl-9"
+            placeholder="Chambre, client..." 
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
+            style={{ paddingLeft: 36, background: '#F8FAFC', border: '1px solid #E2E8F0' }}
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Statut" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous</SelectItem>
-            <SelectItem value="en_attente">En attente</SelectItem>
-            <SelectItem value="en_cours">En cours</SelectItem>
-            <SelectItem value="resolu">Résolus</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Tickets */}
-      <div className="space-y-3">
-        {filteredTickets.map(ticket => {
-          const config = statusConfig[ticket.status] || statusConfig.en_attente
-          const priorityConfig = PRIORITY_CONFIG[ticket.priority] || PRIORITY_CONFIG.moyenne
-
-          return (
-            <Card key={ticket.id} className="overflow-hidden hover:shadow-md transition-shadow">
-              <div className="flex">
-                <div className="w-1 shrink-0" style={{ backgroundColor: priorityConfig.color }} />
-                <CardContent className="flex-1 p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-slate-800">Ch. {ticket.room_number}</span>
-                    <Badge style={{ backgroundColor: config.color + '20', color: config.color }}>
-                      {config.label}
-                    </Badge>
-                  </div>
-                  <div className="font-medium text-slate-700 mb-1">{ticket.title}</div>
-                  <div className="text-sm text-slate-500 mb-2">{ticket.description}</div>
-                  <div className="flex items-center gap-4 text-xs text-slate-400">
-                    <span>Signalé par {ticket.reported_by_name}</span>
-                    {ticket.assigned_to_name && <span>• Assigné à {ticket.assigned_to_name}</span>}
-                  </div>
-                  <Badge 
-                    className="mt-2" 
-                    style={{ backgroundColor: priorityConfig.color + '20', color: priorityConfig.color }}
-                  >
-                    <AlertTriangle size={10} className="mr-1" /> {priorityConfig.label}
-                  </Badge>
-
-                  {ticket.status !== 'resolu' && (
-                    <div className="flex gap-2 mt-3">
-                      {ticket.status === 'en_attente' && (
-                        <Button 
-                          size="sm" 
-                          className="bg-teal-600 hover:bg-teal-700"
-                          onClick={() => actions.updateMaintenance(ticket.id, { status: 'en_cours' })}
-                        >
-                          <Play size={14} className="mr-1" /> Commencer
-                        </Button>
-                      )}
-                      {ticket.status === 'en_cours' && (
-                        <Button 
-                          size="sm" 
-                          className="bg-emerald-600 hover:bg-emerald-700"
-                          onClick={() => actions.updateMaintenance(ticket.id, { status: 'resolu' })}
-                        >
-                          <CheckCircle size={14} className="mr-1" /> Résoudre
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </div>
-            </Card>
-          )
-        })}
-      </div>
-
-      {filteredTickets.length === 0 && (
-        <div className="text-center py-12 text-slate-500">
-          <Wrench size={48} className="mx-auto mb-4 opacity-50" />
-          <p>Aucune intervention</p>
+        <button className="hk-filter-btn">
+          Étage <ChevronDown size={14} />
+        </button>
+        <button className="hk-filter-btn">
+          Statut <ChevronDown size={14} />
+        </button>
+        <button className="hk-filter-btn">
+          Badge <ChevronDown size={14} />
+        </button>
+        <button className="hk-filter-btn">
+          Assignée <ChevronDown size={14} />
+        </button>
+        <button className="hk-filter-btn">
+          Source <ChevronDown size={14} />
+        </button>
+        
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div className="hk-view-toggle">
+            <button className={`hk-view-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')}>
+              <Grid3X3 size={16} />
+            </button>
+            <button className={`hk-view-btn ${viewMode === 'table' ? 'active' : ''}`} onClick={() => setViewMode('table')}>
+              <List size={16} />
+            </button>
+          </div>
+          <span style={{ fontSize: 12, color: '#94A3B8' }}>15/15</span>
+          <button className="hk-action-btn">
+            <Filter size={16} />
+          </button>
         </div>
-      )}
+      </div>
+
+      {/* Table */}
+      <div className="hk-table-container">
+        <table className="hk-table">
+          <thead>
+            <tr>
+              <th style={{ width: 32 }}><Checkbox /></th>
+              <th>Chambre</th>
+              <th>Statut</th>
+              <th>Client</th>
+              <th>PAX</th>
+              <th>Arrivée</th>
+              <th>Départ</th>
+              <th>ETA</th>
+              <th>Source</th>
+              <th>Housekeeping</th>
+              <th>Gouvernante</th>
+              <th>Assignée</th>
+              <th>Vue / SDB</th>
+              <th>PDJ</th>
+              <th>Temps</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredRooms.map((room, idx) => (
+              <tr key={room.number}>
+                <td><Checkbox /></td>
+                <td><RoomNumber number={room.number} type={room.type} status={room.status} /></td>
+                <td><StatusBadge status={room.status} /></td>
+                <td>
+                  {room.client ? (
+                    <div className="hk-client-cell">
+                      {room.vip && <span className="hk-vip-badge">VIP</span>}
+                      <span style={{ fontWeight: 500, color: '#1E1B4B' }}>{room.client}</span>
+                    </div>
+                  ) : (
+                    <button className="hk-libre-btn">
+                      <span style={{ color: '#5B4ED1' }}>★</span> Libre <Plus size={12} /> Ajouter
+                    </button>
+                  )}
+                </td>
+                <td style={{ color: room.pax ? '#1E1B4B' : '#CBD5E1' }}>
+                  {room.pax ? <><span style={{ marginRight: 4 }}>✏️</span>{room.pax}</> : '—'}
+                </td>
+                <td style={{ color: room.arrival ? '#5B4ED1' : '#CBD5E1' }}>{room.arrival || '—'}</td>
+                <td style={{ color: room.departure ? '#EF4444' : '#CBD5E1' }}>{room.departure || '—'}</td>
+                <td style={{ color: room.eta ? '#F59E0B' : '#CBD5E1', fontWeight: room.eta ? 600 : 400 }}>
+                  {room.eta || '⊕ + ETA'}
+                </td>
+                <td>{room.source && <SourceIcon source={room.source} />}</td>
+                <td>
+                  {room.hkStatus ? (
+                    <Badge style={{ 
+                      background: room.hkStatus === 'Validé' ? '#DCFCE7' : room.hkStatus === 'Départ' ? '#FEE2E2' : '#FEF3C7',
+                      color: room.hkStatus === 'Validé' ? '#16A34A' : room.hkStatus === 'Départ' ? '#DC2626' : '#D97706',
+                      border: 'none'
+                    }}>
+                      ● {room.hkStatus}
+                    </Badge>
+                  ) : '—'}
+                </td>
+                <td>
+                  {room.gouvStatus ? (
+                    <Badge style={{ 
+                      background: room.gouvStatus === 'Validé' ? '#DCFCE7' : room.gouvStatus === 'Refusé' ? '#FEE2E2' : '#FEF3C7',
+                      color: room.gouvStatus === 'Validé' ? '#16A34A' : room.gouvStatus === 'Refusé' ? '#DC2626' : '#D97706',
+                      border: 'none'
+                    }}>
+                      {room.gouvStatus}
+                    </Badge>
+                  ) : '—'}
+                </td>
+                <td>
+                  {room.assignee ? (
+                    <div className="flex items-center gap-2">
+                      <StaffAvatar name={room.assignee} />
+                      <span style={{ fontSize: 12, color: '#64748B' }}>{room.assignee}</span>
+                    </div>
+                  ) : '—'}
+                </td>
+                <td>
+                  <div style={{ fontSize: 12 }}>
+                    <div style={{ color: '#1E1B4B', fontWeight: 500 }}>{room.view}</div>
+                    <div style={{ color: '#94A3B8' }}>{room.sdb}</div>
+                  </div>
+                </td>
+                <td>
+                  {room.pdj ? (
+                    <CheckIcon checked={true} color="red" />
+                  ) : (
+                    <span style={{ color: '#CBD5E1' }}>—</span>
+                  )}
+                </td>
+                <td style={{ color: room.time ? '#22C55E' : '#CBD5E1', fontWeight: 500, fontSize: 12 }}>
+                  {room.time || '—'}
+                </td>
+                <td>
+                  <div className="flex gap-1">
+                    <button className="hk-action-btn"><Eye size={14} /></button>
+                    <button className="hk-action-btn"><FileText size={14} /></button>
+                    <button className="hk-action-btn"><Star size={14} /></button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }
 
-const BreakfastView = ({ data, actions }) => {
-  const { breakfast } = data
-  const [activeTab, setActiveTab] = useState('cuisine')
+// ═══════════════════════════════════════════════════════════════════════════════
+// VUE: Répartition Chambres
+// ═══════════════════════════════════════════════════════════════════════════════
 
-  const cuisineOrders = breakfast.filter(o => o.status === 'a_preparer')
-  const deliveryOrders = breakfast.filter(o => o.status === 'prepare' || o.status === 'en_livraison')
-  const servedOrders = breakfast.filter(o => o.status === 'servi')
+const RepartitionView = ({ data, actions }) => {
+  const { tasks, staff } = data
+  
+  const housekeepers = staff.filter(s => s.role === 'femme_de_chambre')
+  
+  // Calculate stats
+  const stats = useMemo(() => {
+    const total = tasks.length
+    const pending = tasks.filter(t => t.status === 'pending').length
+    const inProgress = tasks.filter(t => t.status === 'in_progress').length
+    const completed = tasks.filter(t => t.status === 'completed').length
+    const percent = total > 0 ? Math.round((completed / total) * 100) : 0
+    
+    return { total, pending, inProgress, completed, percent }
+  }, [tasks])
 
-  const statusConfig = {
-    a_preparer: { label: 'À préparer', color: FT.warning },
-    prepare: { label: 'Préparé', color: '#3b82f6' },
-    en_livraison: { label: 'En livraison', color: FT.teal },
-    servi: { label: 'Servi', color: FT.success }
-  }
+  // Staff with their tasks
+  const staffWithTasks = useMemo(() => {
+    return housekeepers.map(s => {
+      const assignedTasks = tasks.filter(t => t.assigned_to === s.id)
+      const completed = assignedTasks.filter(t => t.status === 'completed').length
+      const avgTime = 28 + Math.floor(Math.random() * 20) // Mock avg time
+      return {
+        ...s,
+        tasks: assignedTasks,
+        completed,
+        avgTime,
+        color: s.first_name === 'Maria' ? '#F59E0B' : s.first_name === 'Fatima' ? '#3B82F6' : '#F97316'
+      }
+    })
+  }, [housekeepers, tasks])
 
-  const currentOrders = activeTab === 'cuisine' ? cuisineOrders : activeTab === 'livraison' ? deliveryOrders : servedOrders
+  // Alerts
+  const alerts = [
+    { room: '105', estimated: 20, actual: 665 },
+    { room: '203', estimated: 20, actual: 665 }
+  ]
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-slate-800">Petit-déjeuner</h1>
-
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
-        <Card className="text-center">
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold" style={{ color: FT.warning }}>{cuisineOrders.length}</div>
-            <div className="text-xs text-slate-500">À préparer</div>
-          </CardContent>
-        </Card>
-        <Card className="text-center">
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold" style={{ color: FT.teal }}>{deliveryOrders.length}</div>
-            <div className="text-xs text-slate-500">En cours</div>
-          </CardContent>
-        </Card>
-        <Card className="text-center">
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold" style={{ color: FT.success }}>{servedOrders.length}</div>
-            <div className="text-xs text-slate-500">Servis</div>
-          </CardContent>
-        </Card>
+    <div className="hk-plan-container">
+      {/* Header */}
+      <div style={{ padding: '16px 20px', background: 'white', borderRadius: '12px 12px 0 0', borderBottom: '1px solid #E2E8F0' }}>
+        <button 
+          onClick={() => window.history.back()}
+          style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer', color: '#1E1B4B', fontSize: 16, fontWeight: 600 }}
+        >
+          <ChevronLeft size={20} /> Répartition chambres
+        </button>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="cuisine">🍳 Cuisine ({cuisineOrders.length})</TabsTrigger>
-          <TabsTrigger value="livraison">🚚 Livraison ({deliveryOrders.length})</TabsTrigger>
-          <TabsTrigger value="servi">✅ Servis ({servedOrders.length})</TabsTrigger>
-        </TabsList>
+      {/* Stats Header */}
+      <div className="hk-repartition-header">
+        <div className="hk-repartition-stats">
+          <div className="hk-repartition-stat">
+            <div className="hk-repartition-stat-value">{stats.total}</div>
+            <div className="hk-repartition-stat-label">Total</div>
+          </div>
+          <div style={{ width: 1, background: 'rgba(255,255,255,0.2)' }} />
+          <div className="hk-repartition-stat">
+            <div className="hk-repartition-stat-value">{stats.pending}</div>
+            <div className="hk-repartition-stat-label">En attente</div>
+          </div>
+          <div style={{ width: 1, background: 'rgba(255,255,255,0.2)' }} />
+          <div className="hk-repartition-stat">
+            <div className="hk-repartition-stat-value">{stats.inProgress}</div>
+            <div className="hk-repartition-stat-label">En cours</div>
+          </div>
+          <div style={{ width: 1, background: 'rgba(255,255,255,0.2)' }} />
+          <div className="hk-repartition-stat">
+            <div className="hk-repartition-stat-value">{stats.completed}</div>
+            <div className="hk-repartition-stat-label">Terminées</div>
+          </div>
+        </div>
+        <div className="hk-repartition-progress">
+          <div className="hk-repartition-progress-bar" style={{ width: `${stats.percent}%`, background: '#22C55E' }} />
+          <div className="hk-repartition-progress-bar" style={{ width: `${(stats.inProgress / stats.total) * 100}%`, background: '#F59E0B' }} />
+        </div>
+        <div className="hk-repartition-percent">{stats.percent}%</div>
+      </div>
 
-        <TabsContent value={activeTab} className="mt-4 space-y-3">
-          {currentOrders.map(order => {
-            const config = statusConfig[order.status]
-            return (
-              <Card key={order.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl font-bold text-slate-800">{order.room_number}</span>
-                      <Badge style={{ backgroundColor: config.color, color: 'white' }}>
-                        {config.label}
-                      </Badge>
-                    </div>
-                    {!order.included && (
-                      <Badge className="bg-amber-100 text-amber-700">💰 Payant</Badge>
-                    )}
-                  </div>
-                  <div className="font-medium text-slate-700">{order.guest_name}</div>
-                  <div className="text-sm text-slate-500 mb-2">
-                    {order.formule} • {order.person_count} pers. • {order.boissons?.join(', ')}
-                  </div>
-                  {order.options?.length > 0 && (
-                    <div className="text-xs text-red-600 mb-2">⚠️ {order.options.join(', ')}</div>
-                  )}
-                  {order.notes && (
-                    <div className="text-xs text-blue-600 italic">📝 {order.notes}</div>
-                  )}
+      {/* Actions */}
+      <div style={{ display: 'flex', gap: 12, margin: '20px 0' }}>
+        <Button 
+          onClick={actions.autoAssign}
+          className="flex-1" 
+          style={{ background: '#5B4ED1', height: 48, fontSize: 14, fontWeight: 600 }}
+        >
+          <Zap size={18} className="mr-2" /> Répartition auto
+        </Button>
+        <Button variant="outline" style={{ height: 48, fontSize: 14 }}>
+          <Plus size={18} className="mr-2" /> Ajouter
+        </Button>
+      </div>
 
-                  <div className="flex gap-2 mt-3">
-                    {order.status === 'a_preparer' && (
-                      <Button 
-                        size="sm" 
-                        className="bg-blue-600 hover:bg-blue-700"
-                        onClick={() => actions.updateBreakfast(order.id, { status: 'prepare' })}
-                      >
-                        <Coffee size={14} className="mr-1" /> Préparé
-                      </Button>
-                    )}
-                    {order.status === 'prepare' && (
-                      <Button 
-                        size="sm" 
-                        className="bg-teal-600 hover:bg-teal-700"
-                        onClick={() => actions.updateBreakfast(order.id, { status: 'en_livraison' })}
-                      >
-                        En livraison
-                      </Button>
-                    )}
-                    {order.status === 'en_livraison' && (
-                      <Button 
-                        size="sm" 
-                        className="bg-emerald-600 hover:bg-emerald-700"
-                        onClick={() => actions.updateBreakfast(order.id, { status: 'servi' })}
-                      >
-                        <CheckCircle size={14} className="mr-1" /> Servi
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
-
-          {currentOrders.length === 0 && (
-            <div className="text-center py-12 text-slate-500">
-              <Coffee size={48} className="mx-auto mb-4 opacity-50" />
-              <p>
-                {activeTab === 'cuisine' ? 'Aucune commande à préparer' :
-                 activeTab === 'livraison' ? 'Aucune livraison en cours' :
-                 'Aucun historique'}
-              </p>
+      {/* Team */}
+      <Card style={{ marginBottom: 20, border: '1px solid #E2E8F0' }}>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Users size={16} /> Équipe du jour
+            </CardTitle>
+            <span style={{ fontSize: 12, color: '#5B4ED1' }}>{housekeepers.length} disponibles</span>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {staffWithTasks.map(s => (
+            <div key={s.id} className="hk-staff-card" style={{ padding: 12 }}>
+              <div className="hk-staff-header" style={{ marginBottom: 8 }}>
+                <div className="hk-staff-avatar" style={{ background: s.color + '20', color: s.color }}>
+                  {s.first_name?.[0]}{s.last_name?.[0]}
+                </div>
+                <div className="hk-staff-info">
+                  <div className="hk-staff-name">{s.first_name} {s.last_name}</div>
+                  <div className="hk-staff-stats">{s.tasks.length}/{s.max_rooms_per_day} ch. • moy. {s.avgTime} min</div>
+                </div>
+                <div className="hk-staff-count">{s.tasks.length}</div>
+                <ChevronDown size={16} style={{ color: '#94A3B8' }} />
+              </div>
+              <div className="hk-staff-progress">
+                <div 
+                  className="hk-staff-progress-bar" 
+                  style={{ 
+                    width: `${(s.tasks.length / s.max_rooms_per_day) * 100}%`,
+                    background: s.color
+                  }} 
+                />
+              </div>
             </div>
-          )}
-        </TabsContent>
-      </Tabs>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Alerts */}
+      <div className="hk-alert-card">
+        <div className="hk-alert-title">
+          <AlertTriangle size={16} style={{ color: '#EF4444' }} />
+          Alertes retard
+        </div>
+        {alerts.map((alert, idx) => (
+          <div key={idx} className="hk-alert-item">
+            <span className="hk-alert-room">{alert.room}</span>
+            <span className="hk-alert-time">{alert.actual} min (estimé {alert.estimated} min)</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Performance */}
+      <div className="hk-alert-card">
+        <div className="hk-alert-title">
+          <Timer size={16} style={{ color: '#5B4ED1' }} />
+          Performance
+        </div>
+        {staffWithTasks.map((s, idx) => (
+          <div key={idx} className="hk-perf-item">
+            <span className="hk-perf-name">{s.first_name} {s.last_name}</span>
+            <div className="hk-perf-stats">
+              <span className="hk-perf-value" style={{ color: '#5B4ED1' }}>{s.completed} ch.</span>
+              <span className="hk-perf-value" style={{ color: '#64748B' }}>{s.avgTime} min moy.</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// VUE: Plan de l'hôtel
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const PlanHotelView = ({ data, actions }) => {
+  const { tasks } = data
+  const [searchText, setSearchText] = useState('')
+
+  // Room data by floor
+  const floors = [
+    { 
+      number: 3, 
+      rooms: [
+        { number: '301', status: 'propre' },
+        { number: '302', status: 'en_nettoyage' },
+        { number: '303', status: 'sale' },
+        { number: '304', status: 'propre' },
+        { number: '305', status: 'hs' },
+      ]
+    },
+    { 
+      number: 2, 
+      rooms: [
+        { number: '201', status: 'occupee' },
+        { number: '202', status: 'sale' },
+        { number: '203', status: 'en_nettoyage' },
+        { number: '204', status: 'propre' },
+        { number: '205', status: 'inspectee' },
+      ]
+    },
+    { 
+      number: 1, 
+      rooms: [
+        { number: '101', status: 'occupee' },
+        { number: '102', status: 'sale' },
+        { number: '103', status: 'occupee' },
+        { number: '104', status: 'en_nettoyage' },
+        { number: '105', status: 'sale' },
+      ]
+    },
+  ]
+
+  const legend = [
+    { status: 'propre', label: 'Propres', count: 3 },
+    { status: 'sale', label: 'À nettoyer', count: 3 },
+    { status: 'en_nettoyage', label: 'En cours', count: 2 },
+    { status: 'occupee', label: 'Occupées', count: 5 },
+    { status: 'inspectee', label: 'Inspection', count: 1 },
+    { status: 'hs', label: 'H.S.', count: 1 },
+  ]
+
+  const getRoomColor = (status) => {
+    const colors = {
+      propre: { bg: '#DCFCE7', text: '#16A34A', dot: '#22C55E' },
+      sale: { bg: '#FEE2E2', text: '#DC2626', dot: '#EF4444' },
+      en_nettoyage: { bg: '#FEF3C7', text: '#D97706', dot: '#F59E0B' },
+      occupee: { bg: '#DBEAFE', text: '#2563EB', dot: '#3B82F6' },
+      inspectee: { bg: '#E8E5FF', text: '#5B4ED1', dot: '#A78BFA' },
+      hs: { bg: '#F3F4F6', text: '#6B7280', dot: '#9CA3AF' },
+    }
+    return colors[status] || colors.propre
+  }
+
+  return (
+    <div className="hk-plan-container">
+      {/* Header */}
+      <div className="hk-plan-header">
+        <ChevronLeft size={20} style={{ color: 'white', cursor: 'pointer' }} />
+        <span className="hk-plan-title">Plan de l'hôtel</span>
+      </div>
+
+      {/* Legend */}
+      <div className="hk-plan-legend">
+        {legend.map(item => (
+          <div key={item.status} className="hk-legend-item">
+            <div className="hk-legend-dot" style={{ background: getRoomColor(item.status).dot }} />
+            <span style={{ fontWeight: 500 }}>{item.count}</span>
+            <span>{item.label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Search */}
+      <div style={{ padding: '16px 20px', background: 'white', borderBottom: '1px solid #E2E8F0' }}>
+        <div style={{ position: 'relative' }}>
+          <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+          <Input 
+            placeholder="Rechercher chambre..." 
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            style={{ paddingLeft: 36, background: '#F8FAFC', border: '1px solid #E2E8F0' }}
+          />
+        </div>
+      </div>
+
+      {/* Floors */}
+      {floors.map(floor => (
+        <div key={floor.number} className="hk-floor-section">
+          <div className="hk-floor-header">
+            <div className="hk-floor-title">
+              <span style={{ background: '#E8E5FF', color: '#5B4ED1', padding: '2px 8px', borderRadius: 4, fontSize: 12, fontWeight: 600 }}>
+                É{floor.number}
+              </span>
+              Étage {floor.number}
+            </div>
+            <span className="hk-floor-count">{floor.rooms.length} ch.</span>
+          </div>
+          <div className="hk-room-grid">
+            {floor.rooms.map(room => {
+              const color = getRoomColor(room.status)
+              return (
+                <div 
+                  key={room.number}
+                  className="hk-room-chip"
+                  style={{ background: color.bg }}
+                >
+                  <span className="hk-room-chip-number" style={{ color: color.text }}>
+                    {room.number}
+                  </span>
+                  <div className="hk-room-chip-dot" style={{ background: color.dot }} />
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   )
 }
@@ -1290,16 +1573,8 @@ const BreakfastView = ({ data, actions }) => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export default function HousekeepingModule() {
-  const [activeView, setActiveView] = useState('direction')
+  const [activeView, setActiveView] = useState('reception')
   const data = useHousekeepingData()
-
-  const views = [
-    { id: 'direction', label: 'Direction', icon: BarChart3, desktop: true },
-    { id: 'gouvernante', label: 'Gouvernante', icon: CheckCircle, desktop: true },
-    { id: 'housekeeping', label: 'Ménage', icon: Brush, mobile: true },
-    { id: 'maintenance', label: 'Maintenance', icon: Wrench, mobile: true },
-    { id: 'breakfast', label: 'Petit-déj', icon: Coffee, mobile: true }
-  ]
 
   const actions = {
     refresh: data.refresh,
@@ -1324,43 +1599,185 @@ export default function HousekeepingModule() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Sub Navigation */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex gap-1 py-2 overflow-x-auto scrollbar-hide">
-            {views.map(view => {
-              const Icon = view.icon
-              const isActive = activeView === view.id
-              return (
-                <button
-                  key={view.id}
-                  onClick={() => setActiveView(view.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors
-                    ${isActive 
-                      ? 'bg-violet-100 text-violet-700' 
-                      : 'text-slate-600 hover:bg-slate-100'
-                    }`}
-                  data-testid={`hk-nav-${view.id}`}
-                >
-                  <Icon size={16} />
-                  <span className="hidden sm:inline">{view.label}</span>
-                  {view.mobile && <span className="text-xs text-slate-400 hidden lg:inline">(Mobile)</span>}
-                </button>
-              )
-            })}
+    <>
+      <HousekeepingStyles />
+      <div className="hk-container">
+        {/* Navigation Tabs */}
+        <div className="hk-header">
+          <div className="flex items-center justify-between">
+            <div className="hk-tabs">
+              <button 
+                className={`hk-tab ${activeView === 'reception' ? 'active' : ''}`}
+                onClick={() => setActiveView('reception')}
+                data-testid="hk-nav-reception"
+              >
+                <MapPin size={16} /> Réception
+              </button>
+              <button 
+                className={`hk-tab ${activeView === 'repartition' ? 'active' : ''}`}
+                onClick={() => setActiveView('repartition')}
+                data-testid="hk-nav-repartition"
+              >
+                <Zap size={16} /> Répartition
+              </button>
+              <button 
+                className={`hk-tab ${activeView === 'plan' ? 'active' : ''}`}
+                onClick={() => setActiveView('plan')}
+                data-testid="hk-nav-plan"
+              >
+                <Grid3X3 size={16} /> Plan Hôtel
+              </button>
+              <button 
+                className={`hk-tab ${activeView === 'gouvernante' ? 'active' : ''}`}
+                onClick={() => setActiveView('gouvernante')}
+                data-testid="hk-nav-gouvernante"
+              >
+                <CheckCircle size={16} /> Gouvernante
+              </button>
+              <button 
+                className={`hk-tab ${activeView === 'maintenance' ? 'active' : ''}`}
+                onClick={() => setActiveView('maintenance')}
+                data-testid="hk-nav-maintenance"
+              >
+                <Wrench size={16} /> Maintenance
+              </button>
+              <button 
+                className={`hk-tab ${activeView === 'breakfast' ? 'active' : ''}`}
+                onClick={() => setActiveView('breakfast')}
+                data-testid="hk-nav-breakfast"
+              >
+                <Coffee size={16} /> Petit-déj
+              </button>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button variant="outline" size="sm" onClick={actions.refresh}>
+                <RefreshCw size={14} className="mr-1" /> Actualiser
+              </Button>
+              <Button variant="outline" size="sm" onClick={actions.seedData}>
+                Données démo
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {activeView === 'direction' && <DirectionView data={data} actions={actions} />}
+        {/* Content */}
+        {activeView === 'reception' && <ReceptionView data={data} actions={actions} />}
+        {activeView === 'repartition' && <RepartitionView data={data} actions={actions} />}
+        {activeView === 'plan' && <PlanHotelView data={data} actions={actions} />}
         {activeView === 'gouvernante' && <GouvernanteView data={data} actions={actions} />}
-        {activeView === 'housekeeping' && <FemmeDeChambreView data={data} actions={actions} />}
         {activeView === 'maintenance' && <MaintenanceView data={data} actions={actions} />}
         {activeView === 'breakfast' && <BreakfastView data={data} actions={actions} />}
       </div>
+    </>
+  )
+}
+
+// Keep old views for now
+const GouvernanteView = ({ data, actions }) => {
+  const { inspections, tasks, staff, inventory } = data
+  const pendingInsp = inspections.filter(i => i.status === 'en_attente')
+  
+  return (
+    <div style={{ padding: 20 }}>
+      <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>Validation Gouvernante</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 12 }}>
+        {pendingInsp.map(insp => (
+          <Card key={insp.id}>
+            <CardContent className="p-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="font-bold">{insp.room_number}</span>
+                <Badge style={{ background: '#FEF3C7', color: '#D97706' }}>À valider</Badge>
+              </div>
+              <p className="text-sm text-slate-500 mb-3">Nettoyée par {insp.cleaned_by_name}</p>
+              <div className="flex gap-2">
+                <Button size="sm" className="flex-1 bg-green-600" onClick={() => actions.validateInspection(insp.id, true, 5, '', '')}>
+                  <Check size={14} className="mr-1" /> Valider
+                </Button>
+                <Button size="sm" variant="destructive" className="flex-1" onClick={() => actions.validateInspection(insp.id, false, 0, '', 'À refaire')}>
+                  <X size={14} className="mr-1" /> Refuser
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+        {pendingInsp.length === 0 && (
+          <p className="text-slate-500">Aucune chambre à valider</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+const MaintenanceView = ({ data, actions }) => {
+  const { maintenance } = data
+  
+  return (
+    <div style={{ padding: 20, maxWidth: 600, margin: '0 auto' }}>
+      <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>Tickets Maintenance</h2>
+      {maintenance.map(ticket => (
+        <Card key={ticket.id} className="mb-3">
+          <CardContent className="p-4">
+            <div className="flex justify-between items-center mb-2">
+              <span className="font-bold">Ch. {ticket.room_number}</span>
+              <Badge style={{ 
+                background: ticket.status === 'resolu' ? '#DCFCE7' : ticket.status === 'en_cours' ? '#FEF3C7' : '#FEE2E2',
+                color: ticket.status === 'resolu' ? '#16A34A' : ticket.status === 'en_cours' ? '#D97706' : '#DC2626'
+              }}>
+                {ticket.status === 'resolu' ? 'Résolu' : ticket.status === 'en_cours' ? 'En cours' : 'En attente'}
+              </Badge>
+            </div>
+            <p className="font-medium">{ticket.title}</p>
+            <p className="text-sm text-slate-500">{ticket.description}</p>
+            {ticket.status !== 'resolu' && (
+              <Button 
+                size="sm" 
+                className="mt-3"
+                onClick={() => actions.updateMaintenance(ticket.id, { status: ticket.status === 'en_attente' ? 'en_cours' : 'resolu' })}
+              >
+                {ticket.status === 'en_attente' ? 'Commencer' : 'Résoudre'}
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  )
+}
+
+const BreakfastView = ({ data, actions }) => {
+  const { breakfast } = data
+  
+  return (
+    <div style={{ padding: 20, maxWidth: 600, margin: '0 auto' }}>
+      <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>Commandes Petit-déjeuner</h2>
+      {breakfast.map(order => (
+        <Card key={order.id} className="mb-3">
+          <CardContent className="p-4">
+            <div className="flex justify-between items-center mb-2">
+              <span className="font-bold">Ch. {order.room_number}</span>
+              <Badge style={{ 
+                background: order.status === 'servi' ? '#DCFCE7' : order.status === 'prepare' ? '#DBEAFE' : '#FEF3C7',
+                color: order.status === 'servi' ? '#16A34A' : order.status === 'prepare' ? '#2563EB' : '#D97706'
+              }}>
+                {order.status === 'servi' ? 'Servi' : order.status === 'prepare' ? 'Préparé' : 'À préparer'}
+              </Badge>
+            </div>
+            <p className="font-medium">{order.guest_name}</p>
+            <p className="text-sm text-slate-500">{order.formule} • {order.person_count} pers.</p>
+            {order.status !== 'servi' && (
+              <Button 
+                size="sm" 
+                className="mt-3"
+                onClick={() => actions.updateBreakfast(order.id, { 
+                  status: order.status === 'a_preparer' ? 'prepare' : order.status === 'prepare' ? 'en_livraison' : 'servi' 
+                })}
+              >
+                {order.status === 'a_preparer' ? 'Préparé' : order.status === 'prepare' ? 'En livraison' : 'Servi'}
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      ))}
     </div>
   )
 }
