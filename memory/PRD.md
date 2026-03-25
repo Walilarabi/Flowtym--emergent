@@ -182,13 +182,35 @@ The Configuration module serves as the **"Source of Truth"** for all hotel setti
 - `/app/test_reports/iteration_19.json` - Configuration Module (100%)
 - `/app/test_reports/iteration_20.json` - Configuration Integration (100%)
 - `/app/test_reports/iteration_21.json` - PMS & Booking Engine Integration (100%)
+- `/app/test_reports/iteration_22.json` - Housekeeping Module (100%)
+
+## Housekeeping Module (NEW - March 25, 2026)
+
+### Features Implemented
+- **Direction Dashboard**: KPIs (progression, départs, validées, maintenance), plan des chambres par étage, équipe active, alertes du jour, fil d'activité
+- **Gouvernante View**: Validation des inspections (valider/refuser), gestion équipe, inventaire stocks avec alertes
+- **Ménage Mobile**: Vue agent avec compteurs personnels, tâches par statut, actions démarrer/terminer
+- **Maintenance Mobile**: Tickets par priorité et statut, actions commencer/résoudre
+- **Petit-déjeuner Mobile**: Commandes par statut (cuisine/livraison/servis), flux de préparation
+
+### Backend API
+- `GET /api/housekeeping/hotels/{id}/stats` - Statistiques du jour
+- `GET /api/housekeeping/hotels/{id}/tasks` - Tâches de nettoyage
+- `GET /api/housekeeping/hotels/{id}/staff` - Personnel
+- `GET /api/housekeeping/hotels/{id}/inspections` - Inspections
+- `GET /api/housekeeping/hotels/{id}/maintenance` - Tickets maintenance
+- `GET /api/housekeeping/hotels/{id}/breakfast` - Commandes petit-déjeuner
+- `POST /api/housekeeping/hotels/{id}/tasks/{taskId}/start` - Démarrer nettoyage
+- `POST /api/housekeeping/hotels/{id}/tasks/{taskId}/complete` - Terminer nettoyage
+- `POST /api/housekeeping/hotels/{id}/inspections/{inspId}/validate` - Valider/Refuser
+- `POST /api/housekeeping/hotels/{id}/seed` - Créer données de démo
 
 ## File Structure
 ```
 /app/
 ├── backend/
 │   ├── server.py
-│   ├── shared/                 # NEW: Shared services
+│   ├── shared/                 # Shared services
 │   │   ├── __init__.py
 │   │   ├── config_service.py   # Central ConfigService
 │   │   └── routes.py           # Shared API routes
@@ -196,6 +218,11 @@ The Configuration module serves as the **"Source of Truth"** for all hotel setti
 │   │   ├── routes.py
 │   │   ├── models/
 │   │   └── services/
+│   ├── housekeeping/           # NEW: Housekeeping module
+│   │   ├── __init__.py
+│   │   ├── routes.py           # All API routes
+│   │   ├── models.py           # Pydantic models
+│   │   └── seed_data.py        # Demo data generator
 │   ├── datahub/                # Data Hub module
 │   │   └── routes.py           # +Integration endpoints
 │   └── rms/                    # RMS module
@@ -203,9 +230,11 @@ The Configuration module serves as the **"Source of Truth"** for all hotel setti
 ├── frontend/
 │   └── src/
 │       ├── hooks/
-│       │   └── useConfigData.js  # NEW: React hooks
+│       │   └── useConfigData.js  # React hooks
 │       └── pages/
 │           ├── config/
+│           ├── housekeeping/       # NEW
+│           │   └── HousekeepingModule.jsx
 │           └── datahub/
 └── memory/
     └── PRD.md
@@ -213,4 +242,4 @@ The Configuration module serves as the **"Source of Truth"** for all hotel setti
 
 ---
 *Last updated: March 25, 2026*
-*Version: 2.1 - Configuration Integration Complete (Phase A & B)*
+*Version: 3.0 - Housekeeping Module Complete*
