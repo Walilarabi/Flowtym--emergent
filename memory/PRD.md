@@ -42,6 +42,14 @@ The **Flowtym Data Hub** is the central nervous system of the Flowtym ecosystem.
   - `/api/datahub/hotels/{id}/events` - Event bus (preview)
   - `/api/datahub/hotels/{id}/market/*` - Market intelligence
 
+- **Frontend Module** (6 pages, 100% tested - 2026-03-25)
+  - `/datahub` - Vue d'ensemble avec KPIs, répartition par canal, activité temps réel
+  - `/datahub/connectors` - Gestion des 5 connecteurs (Test/Sync/Config)
+  - `/datahub/sync` - Historique des synchronisations, déclenchement manuel
+  - `/datahub/data` - Données unifiées (réservations, clients, tarifs)
+  - `/datahub/api` - Gestion des clés API, préparation Marketplace
+  - `/datahub/monitoring` - Event stream terminal, graphiques d'activité
+
 ### Phase 2 - UPCOMING
 - Priority Engine (conflict resolution between sources)
 - Data Quality Engine (validation and scoring)
