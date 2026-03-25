@@ -144,6 +144,16 @@ The Configuration module serves as the **"Source of Truth"** for all hotel setti
   - [x] RMS ↔ Configuration integration
   - [x] Data Hub ↔ Configuration integration
   - [x] React hooks for frontend modules
+- [x] **PMS ↔ Configuration integration** (COMPLETED March 25, 2026)
+  - [x] Backend: create_reservation auto-calculates prices from ConfigService
+  - [x] Backend: Supports room_type_code and rate_plan_code parameters
+  - [x] Backend: Fallback to room base_price if ConfigService unavailable
+- [x] **Booking Engine ↔ Configuration integration** (COMPLETED March 25, 2026)
+  - [x] Backend: GET /api/hotels/{id}/booking-engine/config (public endpoint)
+  - [x] Backend: GET /api/hotels/{id}/booking-engine/availability (public endpoint)
+  - [x] Frontend: Booking tab shows room types with 'DEPUIS CONFIG' badge
+  - [x] Frontend: Meta Search tab shows direct price with 'VIA CONFIG' badge
+  - [x] Frontend: OTA comparison prices dynamically calculated
 
 ### Test Data Created
 - 4 Room Types: STD (120€), SUP (160€), DLX (220€), STE (350€)
@@ -153,9 +163,12 @@ The Configuration module serves as the **"Source of Truth"** for all hotel setti
 - 1 Payment Policy: PAY_ARR
 - 1 User: Marie Dupont (Reception)
 
-### In Progress / Upcoming (P1)
-- [ ] PMS ↔ Configuration integration
-- [ ] Booking Engine ↔ Configuration integration
+### In Progress / Upcoming (P0)
+- [ ] **Import Excel Parser**: Implement real parsing logic in excel_import.py
+
+### Upcoming Tasks (P1)
+- [ ] CRM ↔ Configuration integration
+- [ ] Channel Manager ↔ Configuration integration
 - [ ] Data Hub - Phase 2 (Event Orchestration, Smart Caching)
 
 ### Future Tasks (P2)
@@ -168,6 +181,7 @@ The Configuration module serves as the **"Source of Truth"** for all hotel setti
 - `/app/test_reports/iteration_18.json` - Data Hub Frontend
 - `/app/test_reports/iteration_19.json` - Configuration Module (100%)
 - `/app/test_reports/iteration_20.json` - Configuration Integration (100%)
+- `/app/test_reports/iteration_21.json` - PMS & Booking Engine Integration (100%)
 
 ## File Structure
 ```
