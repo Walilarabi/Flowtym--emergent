@@ -1,0 +1,108 @@
+{
+  "summary": "Completed testing of Booking Engine Integration with ConfigService. Backend: 15/15 tests passed (100%). Frontend: All features verified - room types, rate plans, pricing from Configuration displayed correctly with 'DEPUIS CONFIG' and 'VIA CONFIG' badges. Fixed a bug in nights calculation for reservations.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "passed_tests": [
+    "Backend: GET /api/hotels/{hotel_id}/booking-engine/config - Returns 200",
+    "Backend: GET /api/hotels/{hotel_id}/booking-engine/config - Contains room types (STD, SUP, DLX, STE)",
+    "Backend: GET /api/hotels/{hotel_id}/booking-engine/config - Contains rate plans (BAR, NRF)",
+    "Backend: GET /api/hotels/{hotel_id}/booking-engine/config - Contains pricing matrix",
+    "Backend: GET /api/hotels/{hotel_id}/booking-engine/config - Source is 'config_service'",
+    "Backend: GET /api/hotels/{hotel_id}/booking-engine/availability - Returns 200",
+    "Backend: GET /api/hotels/{hotel_id}/booking-engine/availability - Contains room types with pricing",
+    "Backend: GET /api/hotels/{hotel_id}/booking-engine/availability - Calculates nights correctly",
+    "Backend: GET /api/hotels/{hotel_id}/booking-engine/availability - Contains hotel info",
+    "Backend: GET /api/hotels/{hotel_id}/booking-engine/availability - Contains rate plans",
+    "Backend: POST /api/hotels/{hotel_id}/reservations - Auto-calculates price from ConfigService (120€/night for STD BAR)",
+    "Backend: POST /api/hotels/{hotel_id}/reservations - Uses provided price when explicitly given",
+    "Backend: POST /api/hotels/{hotel_id}/reservations - NRF rate plan applies -10% discount (108€)",
+    "Backend: booking-engine/config accessible without auth (public endpoint)",
+    "Backend: booking-engine/availability accessible without auth (public endpoint)",
+    "Frontend: Booking tab displays room types from Configuration with 'DEPUIS CONFIG' badge",
+    "Frontend: Booking tab shows all 4 room types: STD (120€), SUP (160€), DLX (220€), STE (350€)",
+    "Frontend: Booking tab shows BAR FLEX and NON REMBOURSABLE rates",
+    "Frontend: Booking tab shows hotel info from config (Grand Hôtel Paris, EUR, Check-in 15:00, Check-out 11:00)",
+    "Frontend: Meta Search tab displays direct price with 'VIA CONFIG' badge",
+    "Frontend: Meta Search tab shows €120 direct price from configuration",
+    "Frontend: Meta Search tab shows OTA comparison prices dynamically calculated",
+    "Frontend: Dashboard shows Direct price 120€ in price comparator"
+  ],
+  "bugs_fixed": [
+    {
+      "file": "/app/backend/server.py",
+      "line": 627,
+      "issue": "Nights calculation was using datetime difference instead of date difference",
+      "fix": "Changed from (check_out - check_in).days to (check_out.date() - check_in.date()).days",
+      "impact": "Reservations with check-in at 14:00 and check-out at 11:00 were calculating 1 night instead of 2 nights"
+    }
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_booking_engine_integration.py",
+    "/app/test_reports/pytest/pytest_booking_engine.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Booking Engine endpoints correctly integrate with ConfigService for real-time pricing",
+    "Public endpoints (booking-engine/config and booking-engine/availability) work without authentication - good for booking widget",
+    "Reservation auto-pricing from ConfigService works correctly when room_rate/total_amount not provided",
+    "Frontend correctly displays 'DEPUIS CONFIG' and 'VIA CONFIG' badges to indicate data source",
+    "OTA comparison prices are dynamically calculated from the base config price"
+  ],
+  "updated_files": [
+    "/app/backend/server.py (fixed nights calculation bug)",
+    "/app/backend/tests/test_booking_engine_integration.py (new test file)"
+  ],
+  "success_rate": {
+    "backend": "100% (15/15 tests passed)",
+    "frontend": "100% (All features verified)"
+  },
+  "test_credentials": {
+    "login": "admin@flowtym.com / admin123",
+    "hotel_id": "4f02769a-5f63-4121-bb97-a7061563d934"
+  },
+  "seed_data_creation": "Using existing test data from Configuration module",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Booking Engine Integration with ConfigService fully tested. New endpoints: GET /api/hotels/{id}/booking-engine/config (returns room_types, rate_plans, pricing_matrix from ConfigService), GET /api/hotels/{id}/booking-engine/availability (returns available rooms with pricing for date range). POST /api/hotels/{id}/reservations now auto-calculates prices from ConfigService when room_rate/total_amount not provided. Frontend Booking tab shows room types with 'DEPUIS CONFIG' badge, Meta Search tab shows direct price with 'VIA CONFIG' badge. Fixed bug: nights calculation now uses date difference instead of datetime difference.",
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  },
+  "features_verified": {
+    "booking_engine_config_endpoint": {
+      "endpoint": "GET /api/hotels/{hotel_id}/booking-engine/config",
+      "returns": "hotel, room_types, rate_plans, pricing_matrix, policies, settings, currency",
+      "source": "config_service",
+      "auth_required": false
+    },
+    "booking_engine_availability_endpoint": {
+      "endpoint": "GET /api/hotels/{hotel_id}/booking-engine/availability",
+      "params": "check_in, check_out, adults, children",
+      "returns": "hotel info, room_types with pricing per rate plan, rate_plans, policies",
+      "auth_required": false
+    },
+    "reservation_auto_pricing": {
+      "endpoint": "POST /api/hotels/{hotel_id}/reservations",
+      "behavior": "Auto-calculates room_rate and total_amount from ConfigService pricing_matrix when not provided",
+      "uses": "room_type_code and rate_plan_code to lookup price",
+      "fallback": "Uses room.base_price if ConfigService unavailable"
+    },
+    "frontend_booking_tab": {
+      "displays": "Room types from Configuration with 'DEPUIS CONFIG' badge",
+      "shows": "CODE, NOM, CAPACITE, PRIX BASE, BAR FLEX, NON REMBOURSABLE, CHAMBRES",
+      "hotel_info": "Etablissement, Devise, Check-in, Check-out from Configuration"
+    },
+    "frontend_meta_search_tab": {
+      "displays": "Direct price with 'VIA CONFIG' badge",
+      "shows": "€120 / nuit · Chambre Standard · PMS synchronise",
+      "ota_comparison": "Booking.com, Expedia, Trivago, Google Hotels, Airbnb with dynamic pricing"
+    }
+  }
+}

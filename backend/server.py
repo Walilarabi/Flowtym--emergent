@@ -13,6 +13,9 @@ from datetime import datetime, timezone, timedelta
 import jwt
 import bcrypt
 
+# Import ConfigService for PMS integration
+from shared.config_service import get_config_service, ConfigService
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
@@ -155,11 +158,13 @@ class ReservationCreate(BaseModel):
     children: int = 0
     channel: str = "direct"  # direct, booking_com, expedia, airbnb, other
     rate_type: str = "standard"  # standard, flex, non_refundable, corporate
-    room_rate: float
-    total_amount: float
+    room_rate: Optional[float] = None  # Optional: Will be calculated from ConfigService if not provided
+    total_amount: Optional[float] = None  # Optional: Will be calculated from ConfigService if not provided
     notes: Optional[str] = None
     special_requests: Optional[str] = None
     source: Optional[str] = None  # website, phone, walk-in, ota
+    room_type_code: Optional[str] = None  # Room type from Configuration (STD, DLX, STE, etc.)
+    rate_plan_code: Optional[str] = None  # Rate plan from Configuration (BAR, NRF, etc.)
 
 class ReservationUpdate(BaseModel):
     room_id: Optional[str] = None
@@ -554,6 +559,10 @@ async def update_client(hotel_id: str, client_id: str, client: ClientCreate, cur
 
 @api_router.post("/hotels/{hotel_id}/reservations", response_model=ReservationResponse)
 async def create_reservation(hotel_id: str, reservation: ReservationCreate, current_user: dict = Depends(get_current_user)):
+    """
+    Create a new reservation.
+    Integrates with ConfigService for room type validation and pricing.
+    """
     # Validate client exists
     client = await db.clients.find_one({"id": reservation.client_id, "hotel_id": hotel_id}, {"_id": 0})
     if not client:
@@ -564,11 +573,65 @@ async def create_reservation(hotel_id: str, reservation: ReservationCreate, curr
     if not room:
         raise HTTPException(status_code=404, detail="Chambre non trouvée")
     
-    # Check availability
+    # ═══════════════════════════════════════════════════════════════════════════════
+    # INTEGRATION ConfigService - Validate room type and get pricing
+    # ═══════════════════════════════════════════════════════════════════════════════
+    config_service = None
+    room_type_config = None
+    rate_plan_config = None
+    calculated_rate = None
+    
+    try:
+        config_service = get_config_service()
+        
+        # Get room type from Configuration module if code provided
+        if reservation.room_type_code:
+            room_type_config = await config_service.get_room_type_by_code(hotel_id, reservation.room_type_code)
+            if not room_type_config:
+                logger.warning(f"Room type code '{reservation.room_type_code}' not found in config, using room data")
+        
+        # Get rate plan from Configuration if code provided
+        if reservation.rate_plan_code:
+            rate_plan_config = await config_service.get_rate_plan_by_code(hotel_id, reservation.rate_plan_code)
+            if not rate_plan_config:
+                logger.warning(f"Rate plan code '{reservation.rate_plan_code}' not found in config")
+        
+        # Calculate price from pricing matrix if not provided
+        if reservation.room_rate is None or reservation.total_amount is None:
+            pricing_matrix = await config_service.get_pricing_matrix(hotel_id)
+            
+            # Determine room type code
+            rt_code = reservation.room_type_code or room.get("room_type", "STD").upper()
+            rp_code = reservation.rate_plan_code or "BAR"
+            
+            # Get price from matrix
+            if rp_code in pricing_matrix and rt_code in pricing_matrix[rp_code]:
+                calculated_rate = pricing_matrix[rp_code][rt_code]
+                logger.info(f"Got price from ConfigService: {rp_code}/{rt_code} = {calculated_rate}€")
+            elif room_type_config:
+                calculated_rate = room_type_config.get("base_price", 100)
+                logger.info(f"Using base_price from room_type config: {calculated_rate}€")
+            else:
+                calculated_rate = room.get("base_price", 100)
+                logger.info(f"Using room base_price: {calculated_rate}€")
+                
+    except Exception as e:
+        logger.warning(f"ConfigService not available or error: {e}. Using room base_price.")
+        calculated_rate = room.get("base_price", 100)
+    
+    # ═══════════════════════════════════════════════════════════════════════════════
+    # Calculate final pricing
+    # ═══════════════════════════════════════════════════════════════════════════════
     check_in = datetime.fromisoformat(reservation.check_in.replace('Z', '+00:00'))
     check_out = datetime.fromisoformat(reservation.check_out.replace('Z', '+00:00'))
-    nights = (check_out - check_in).days
+    # Use date() to calculate calendar nights (not time-based difference)
+    nights = (check_out.date() - check_in.date()).days
     
+    # Use provided rate or calculated rate
+    final_room_rate = reservation.room_rate if reservation.room_rate is not None else calculated_rate
+    final_total_amount = reservation.total_amount if reservation.total_amount is not None else (final_room_rate * nights)
+    
+    # Check availability
     conflict = await db.reservations.find_one({
         "room_id": reservation.room_id,
         "status": {"$nin": ["cancelled", "no_show"]},
@@ -581,35 +644,259 @@ async def create_reservation(hotel_id: str, reservation: ReservationCreate, curr
     if conflict:
         raise HTTPException(status_code=400, detail="La chambre n'est pas disponible pour ces dates")
     
+    # Determine room type name from config or room data
+    room_type_name = room_type_config.get("name") if room_type_config else room.get("room_type", "Standard")
+    
     reservation_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
     reservation_doc = {
         "id": reservation_id,
         "hotel_id": hotel_id,
-        **reservation.model_dump(),
+        "client_id": reservation.client_id,
+        "room_id": reservation.room_id,
+        "check_in": reservation.check_in,
+        "check_out": reservation.check_out,
+        "adults": reservation.adults,
+        "children": reservation.children,
+        "channel": reservation.channel,
+        "rate_type": reservation.rate_type,
+        "room_rate": final_room_rate,
+        "total_amount": final_total_amount,
+        "notes": reservation.notes,
+        "special_requests": reservation.special_requests,
+        "source": reservation.source,
         "client_name": f"{client['first_name']} {client['last_name']}",
         "client_email": client.get("email"),
         "room_number": room["number"],
-        "room_type": room["room_type"],
+        "room_type": room_type_name,
+        "room_type_code": reservation.room_type_code or room.get("room_type", "STD").upper()[:3],
+        "rate_plan_code": reservation.rate_plan_code or "BAR",
         "nights": nights,
         "status": "confirmed",
         "paid_amount": 0.0,
-        "balance": reservation.total_amount,
+        "balance": final_total_amount,
         "created_at": now,
-        "updated_at": now
+        "updated_at": now,
+        # Metadata from ConfigService
+        "pricing_source": "config_service" if config_service else "room_default",
+        "config_room_type_id": room_type_config.get("id") if room_type_config else None,
+        "config_rate_plan_id": rate_plan_config.get("id") if rate_plan_config else None,
     }
     await db.reservations.insert_one(reservation_doc)
     
     # Update client stats
     await db.clients.update_one(
         {"id": reservation.client_id},
-        {"$inc": {"total_stays": 1, "total_revenue": reservation.total_amount}}
+        {"$inc": {"total_stays": 1, "total_revenue": final_total_amount}}
     )
     
     # Auto-sync to CRM
     await auto_sync_reservation_to_crm(reservation_doc)
     
+    logger.info(f"Reservation created: {reservation_id} with rate {final_room_rate}€/night (source: {reservation_doc['pricing_source']})")
+    
     return ReservationResponse(**reservation_doc)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# BOOKING ENGINE INTEGRATION - Public endpoint for booking widget
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@api_router.get("/hotels/{hotel_id}/booking-engine/availability")
+async def get_booking_engine_availability(
+    hotel_id: str,
+    check_in: str,
+    check_out: str,
+    adults: int = 2,
+    children: int = 0
+):
+    """
+    Public endpoint for the Booking Engine to get available room types with pricing.
+    Uses ConfigService for real-time room types and pricing data.
+    """
+    try:
+        config_service = get_config_service()
+        
+        # Get hotel profile
+        hotel = await config_service.get_hotel_profile(hotel_id)
+        if not hotel:
+            raise HTTPException(status_code=404, detail="Hôtel non trouvé")
+        
+        # Get room types from Configuration
+        room_types = await config_service.get_room_types(hotel_id, include_room_count=True)
+        
+        # Get pricing matrix
+        pricing_matrix = await config_service.get_pricing_matrix(hotel_id)
+        
+        # Get rate plans
+        rate_plans = await config_service.get_rate_plans(hotel_id)
+        
+        # Get policies
+        policies = await config_service.get_default_policies(hotel_id)
+        
+        # Get check-in/out times
+        check_times = await config_service.get_check_times(hotel_id)
+        
+        # Calculate nights
+        check_in_dt = datetime.fromisoformat(check_in.replace('Z', '+00:00'))
+        check_out_dt = datetime.fromisoformat(check_out.replace('Z', '+00:00'))
+        nights = (check_out_dt - check_in_dt).days
+        
+        # Build availability response
+        available_rooms = []
+        for rt in room_types:
+            # Check occupancy compatibility
+            max_occ = rt.get("max_occupancy", 2)
+            if adults + children > max_occ:
+                continue
+            
+            # Get room count
+            room_count = rt.get("room_count", 0)
+            
+            # Get pricing for different rate plans
+            pricing = {}
+            for rp in rate_plans:
+                rate_code = rp.get("code", "BAR")
+                if rate_code in pricing_matrix and rt.get("code") in pricing_matrix[rate_code]:
+                    price_per_night = pricing_matrix[rate_code][rt["code"]]
+                    pricing[rate_code] = {
+                        "rate_plan_id": rp.get("id"),
+                        "rate_plan_name": rp.get("name", rate_code),
+                        "meal_plan": rp.get("meal_plan", "room_only"),
+                        "price_per_night": price_per_night,
+                        "total_price": price_per_night * nights,
+                        "is_refundable": not rp.get("is_non_refundable", False),
+                        "cancellation_policy_id": rp.get("cancellation_policy_id")
+                    }
+            
+            # Build room type response
+            available_rooms.append({
+                "id": rt.get("id"),
+                "code": rt.get("code"),
+                "name": rt.get("name", "Chambre Standard"),
+                "name_en": rt.get("name_en"),
+                "description": rt.get("description", ""),
+                "category": rt.get("category", "standard"),
+                "max_occupancy": max_occ,
+                "max_adults": rt.get("max_adults", 2),
+                "max_children": rt.get("max_children", 2),
+                "size_sqm": rt.get("size_sqm"),
+                "view": rt.get("view"),
+                "equipment": rt.get("equipment", []),
+                "images": rt.get("images", []),
+                "available_rooms": room_count,
+                "base_price": rt.get("base_price", 100),
+                "pricing": pricing
+            })
+        
+        return {
+            "hotel": {
+                "id": hotel_id,
+                "name": hotel.get("name", ""),
+                "stars": hotel.get("stars", 3),
+                "currency": hotel.get("currency", "EUR"),
+                "check_in_time": check_times.get("check_in", "15:00"),
+                "check_out_time": check_times.get("check_out", "11:00")
+            },
+            "search": {
+                "check_in": check_in,
+                "check_out": check_out,
+                "nights": nights,
+                "adults": adults,
+                "children": children
+            },
+            "room_types": available_rooms,
+            "rate_plans": [
+                {
+                    "id": rp.get("id"),
+                    "code": rp.get("code"),
+                    "name": rp.get("name"),
+                    "meal_plan": rp.get("meal_plan", "room_only"),
+                    "is_derived": rp.get("is_derived", False)
+                }
+                for rp in rate_plans
+            ],
+            "policies": {
+                "cancellation": policies.get("cancellation"),
+                "payment": policies.get("payment")
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Booking Engine availability error: {e}")
+        # Fallback to legacy room data
+        rooms = await db.rooms.find(
+            {"hotel_id": hotel_id, "status": "available"},
+            {"_id": 0}
+        ).to_list(100)
+        
+        return {
+            "hotel": {"id": hotel_id, "name": "Hôtel", "currency": "EUR"},
+            "search": {"check_in": check_in, "check_out": check_out, "nights": 1, "adults": adults, "children": children},
+            "room_types": [
+                {
+                    "id": r.get("id"),
+                    "code": r.get("room_type", "STD").upper()[:3],
+                    "name": r.get("room_type", "Standard"),
+                    "base_price": r.get("base_price", 100),
+                    "pricing": {}
+                }
+                for r in rooms
+            ],
+            "rate_plans": [],
+            "policies": {},
+            "source": "legacy_fallback"
+        }
+
+
+@api_router.get("/hotels/{hotel_id}/booking-engine/config")
+async def get_booking_engine_config(hotel_id: str):
+    """
+    Get full configuration for Booking Engine initialization.
+    """
+    try:
+        config_service = get_config_service()
+        
+        hotel = await config_service.get_hotel_profile(hotel_id)
+        room_types = await config_service.get_room_types(hotel_id, include_room_count=True)
+        rate_plans = await config_service.get_rate_plans(hotel_id)
+        pricing_matrix = await config_service.get_pricing_matrix(hotel_id)
+        policies = await config_service.get_default_policies(hotel_id)
+        settings = await config_service.get_advanced_settings(hotel_id)
+        check_times = await config_service.get_check_times(hotel_id)
+        
+        return {
+            "hotel": hotel,
+            "room_types": room_types,
+            "rate_plans": rate_plans,
+            "pricing_matrix": pricing_matrix,
+            "policies": policies,
+            "settings": {
+                "min_booking_advance_hours": settings.get("min_booking_advance_hours", 0),
+                "max_booking_advance_days": settings.get("max_booking_advance_days", 365),
+                "allow_same_day_booking": settings.get("allow_same_day_booking", True),
+                "check_in_time": check_times.get("check_in", "15:00"),
+                "check_out_time": check_times.get("check_out", "11:00")
+            },
+            "currency": hotel.get("currency", "EUR") if hotel else "EUR",
+            "source": "config_service"
+        }
+        
+    except Exception as e:
+        logger.error(f"Booking Engine config error: {e}")
+        return {
+            "hotel": None,
+            "room_types": [],
+            "rate_plans": [],
+            "pricing_matrix": {},
+            "policies": {},
+            "settings": {},
+            "currency": "EUR",
+            "source": "error",
+            "error": str(e)
+        }
+
+
 
 @api_router.get("/hotels/{hotel_id}/reservations", response_model=List[ReservationResponse])
 async def get_reservations(

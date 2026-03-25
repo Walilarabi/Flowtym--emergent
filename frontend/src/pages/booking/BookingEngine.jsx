@@ -8,8 +8,13 @@ import {
   Send, Filter, Calendar, Clock, Tag, Gift, CreditCard, Smartphone,
   PieChart, Activity, Map, MessageSquare, ThumbsUp, Shield, Repeat,
   Layers, Cpu, Radio, ExternalLink, MoreHorizontal, LogOut, LayoutGrid,
-  List, Sliders, BrainCircuit, Rocket, BadgeCheck, Sparkles, Hotel
+  List, Sliders, BrainCircuit, Rocket, BadgeCheck, Sparkles, Hotel, Bed, Loader2
 } from "lucide-react";
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONFIGURATION INTEGRATION - Import hook for real config data
+// ═══════════════════════════════════════════════════════════════════════════════
+import { useConfigData, usePricingMatrix, useRoomTypes } from "../../hooks/useConfigData";
 
 /* ══════════════════════════════════════════════════════════════════════════
    DESIGN TOKENS & GLOBAL CSS
@@ -470,7 +475,6 @@ const UPSELLS_INIT = [
 export function BookingEngine() {
   const [tab,        setTab]       = useState("dashboard");
   const [innerTab,   setInnerTab]  = useState("google");
-  const [price,      setPrice]     = useState(112);
   const [camps,      setCamps]     = useState(INIT_CAMPS);
   const [applied,    setApplied]   = useState([]);
   const [campOn,     setCampOn]    = useState(true);
@@ -484,6 +488,43 @@ export function BookingEngine() {
   const [newOffre,   setNewOffre]  = useState({ name: "", code: "", discount: "", type: "pct" });
   const [offres,     setOffres]    = useState(OFFRES);
   const toastId = useRef(0);
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // CONFIGURATION INTEGRATION - Load real config data
+  // ═══════════════════════════════════════════════════════════════════════════════
+  const { 
+    hotel: configHotel, 
+    roomTypes: configRoomTypes, 
+    ratePlans: configRatePlans,
+    pricingMatrix: configPricingMatrix,
+    loading: configLoading, 
+    error: configError,
+    refresh: refreshConfig 
+  } = useConfigData();
+
+  // Derive price from configuration (use first room type's BAR price or default)
+  const [price, setPrice] = useState(112);
+  
+  // Update price when config loads
+  useEffect(() => {
+    if (configRoomTypes?.length > 0 && configPricingMatrix?.BAR) {
+      // Get the first room type code (usually STD)
+      const firstRoomCode = configRoomTypes[0]?.code || 'STD';
+      const basePrice = configPricingMatrix.BAR?.[firstRoomCode] || configRoomTypes[0]?.base_price || 120;
+      setPrice(basePrice);
+    }
+  }, [configRoomTypes, configPricingMatrix]);
+
+  // Build dynamic OTA comparison prices from config
+  const metaPrices = configRoomTypes?.length > 0 
+    ? [
+        { ch: "Booking.com", ota: Math.round(price * 1.12) }, // +12%
+        { ch: "Expedia", ota: Math.round(price * 1.08) },     // +8%
+        { ch: "Trivago", ota: Math.round(price * 1.15) },     // +15%
+        { ch: "Google Hotels", ota: Math.round(price * 1.05) }, // +5%
+        { ch: "Airbnb", ota: Math.round(price * 1.02) },      // +2%
+      ]
+    : META_PRICES;
 
   const toast = useCallback((msg, type = "success") => {
     const id = ++toastId.current;
@@ -834,13 +875,20 @@ export function BookingEngine() {
             {/* Autres onglets omis pour brièveté - voir composant complet */}
             {tab === "metasearch" && (
               <div className="fade">
-                <div className="pg-hd"><h1>Meta Search & Parite tarifaire</h1><p>Synchronise PMS · RMS · Channel Manager — Prix mis a jour en temps reel</p></div>
+                <div className="pg-hd"><h1>Meta Search & Parite tarifaire</h1><p>Synchronise PMS · RMS · Channel Manager — Prix mis a jour en temps reel depuis Configuration</p></div>
                 <div className="g2" style={{ marginBottom: 14 }}>
                   <div className="card">
-                    <div className="card-ttl"><DollarSign size={13} />Tarif direct actuel</div>
+                    <div className="card-ttl">
+                      <DollarSign size={13} />Tarif direct actuel
+                      {configRoomTypes?.length > 0 && (
+                        <span style={{ fontSize: 10, background: 'var(--gnb)', color: 'var(--gn)', padding: '2px 8px', borderRadius: 10, marginLeft: 8, fontWeight: 600 }}>
+                          VIA CONFIG
+                        </span>
+                      )}
+                    </div>
                     <div style={{ textAlign: "center", padding: "14px 0" }}>
                       <div style={{ fontSize: 52, fontWeight: 600, color: "var(--p)", letterSpacing: "-.06em", lineHeight: 1 }}>€{price}</div>
-                      <div style={{ fontSize: 12, color: "var(--t3)", marginTop: 5 }}>/ nuit · Chambre Standard · PMS synchronise</div>
+                      <div style={{ fontSize: 12, color: "var(--t3)", marginTop: 5 }}>/ nuit · {configRoomTypes?.[0]?.name || 'Chambre Standard'} · PMS synchronise</div>
                       <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 14 }}>
                         {[-10, -5, +5, +10].map(d => (
                           <button key={d} className="px-cbtn" style={{ padding: "6px 14px", fontSize: 13 }}
@@ -853,7 +901,7 @@ export function BookingEngine() {
                   </div>
                   <div className="card">
                     <div className="card-ttl"><BarChart3 size={13} />Parite OTA en direct</div>
-                    {META_PRICES.map((m, i) => {
+                    {metaPrices.map((m, i) => {
                       const diff = Math.round((price - m.ota) / m.ota * 100);
                       const st = diff < -2 ? "under" : diff > 2 ? "above" : "parity";
                       return (
@@ -873,7 +921,111 @@ export function BookingEngine() {
 
             {tab === "booking" && (
               <div className="fade">
-                <div className="pg-hd"><h1>Booking Engine Direct</h1><p>Reservations directes · Upsell automatique · Paiement securise · Sync PMS</p></div>
+                <div className="pg-hd"><h1>Booking Engine Direct</h1><p>Reservations directes · Upsell automatique · Paiement securise · Sync PMS · Connecte a Configuration</p></div>
+                
+                {/* ═══════════════════════════════════════════════════════════════════════════════
+                    CONFIGURATION DATA SECTION - Room Types & Pricing from ConfigService
+                ═══════════════════════════════════════════════════════════════════════════════ */}
+                <div className="card" style={{ marginBottom: 14 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                    <div className="card-ttl" style={{ marginBottom: 0 }}>
+                      <Bed size={13} />Types de chambres & Tarifs
+                      <span style={{ 
+                        fontSize: 10, 
+                        background: configLoading ? 'var(--amb)' : configError ? 'var(--rdb)' : 'var(--gnb)', 
+                        color: configLoading ? 'var(--am)' : configError ? 'var(--rd)' : 'var(--gn)',
+                        padding: '2px 8px', 
+                        borderRadius: 10, 
+                        marginLeft: 8,
+                        fontWeight: 600
+                      }}>
+                        {configLoading ? 'CHARGEMENT...' : configError ? 'ERREUR' : 'DEPUIS CONFIG'}
+                      </span>
+                    </div>
+                    <button className="btn-s" style={{ fontSize: 11, padding: "5px 11px" }} onClick={() => { refreshConfig(); toast("Configuration actualisee", "sync"); }}>
+                      <RefreshCw size={12} className={configLoading ? "spin" : ""} />Sync
+                    </button>
+                  </div>
+                  
+                  {configLoading && (
+                    <div style={{ padding: 20, textAlign: 'center', color: 'var(--t3)' }}>
+                      <Loader2 size={24} className="spin" style={{ marginBottom: 8 }} />
+                      <div>Chargement depuis Configuration...</div>
+                    </div>
+                  )}
+                  
+                  {!configLoading && configRoomTypes?.length > 0 && (
+                    <table className="tbl">
+                      <thead>
+                        <tr>
+                          <th>Code</th>
+                          <th>Nom</th>
+                          <th>Capacite</th>
+                          <th>Prix Base</th>
+                          {configRatePlans?.map(rp => (
+                            <th key={rp.id || rp.code}>{rp.name || rp.code}</th>
+                          ))}
+                          <th>Chambres</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {configRoomTypes.map((rt, i) => (
+                          <tr key={rt.id || i}>
+                            <td style={{ fontWeight: 600, color: 'var(--p)' }}>{rt.code}</td>
+                            <td className="tn">{rt.name}</td>
+                            <td>{rt.max_occupancy || rt.max_adults || 2} pers.</td>
+                            <td style={{ fontWeight: 600, color: 'var(--tx)' }}>{rt.base_price?.toFixed(0) || '—'}€</td>
+                            {configRatePlans?.map(rp => (
+                              <td key={rp.id || rp.code} style={{ fontWeight: 500 }}>
+                                {configPricingMatrix?.[rp.code]?.[rt.code]?.toFixed(0) || '—'}€
+                              </td>
+                            ))}
+                            <td>
+                              <span className="bdg-a" style={{ background: rt.room_count > 0 ? 'var(--gnb)' : 'var(--amb)', color: rt.room_count > 0 ? 'var(--gn)' : 'var(--am)' }}>
+                                {rt.room_count || 0}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                  
+                  {!configLoading && (!configRoomTypes || configRoomTypes.length === 0) && (
+                    <div style={{ padding: 20, textAlign: 'center', color: 'var(--t3)' }}>
+                      <AlertTriangle size={24} style={{ marginBottom: 8, color: 'var(--am)' }} />
+                      <div style={{ fontWeight: 600, color: 'var(--tx)', marginBottom: 4 }}>Aucun type de chambre configuré</div>
+                      <div>Configurez vos chambres dans le module Configuration</div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Hotel Info from Config */}
+                {configHotel && (
+                  <div className="card" style={{ marginBottom: 14 }}>
+                    <div className="card-ttl"><Hotel size={13} />Informations Hôtel (depuis Configuration)</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+                      <div className="info-row" style={{ flexDirection: 'column', alignItems: 'flex-start', borderBottom: 'none' }}>
+                        <div className="info-l">Établissement</div>
+                        <div className="info-v">{configHotel.name?.replace('TEST_', '')}</div>
+                      </div>
+                      <div className="info-row" style={{ flexDirection: 'column', alignItems: 'flex-start', borderBottom: 'none' }}>
+                        <div className="info-l">Devise</div>
+                        <div className="info-v">{configHotel.currency || 'EUR'}</div>
+                      </div>
+                      <div className="info-row" style={{ flexDirection: 'column', alignItems: 'flex-start', borderBottom: 'none' }}>
+                        <div className="info-l">Check-in</div>
+                        <div className="info-v">{configHotel.check_in_time || '15:00'}</div>
+                      </div>
+                      <div className="info-row" style={{ flexDirection: 'column', alignItems: 'flex-start', borderBottom: 'none' }}>
+                        <div className="info-l">Check-out</div>
+                        <div className="info-v">{configHotel.check_out_time || '11:00'}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Original content: Offers & Upsells */}
                 <div className="g2" style={{ marginBottom: 14 }}>
                   <div className="card">
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
