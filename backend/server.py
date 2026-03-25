@@ -4585,6 +4585,11 @@ from rms.routes import router as rms_router, set_db as set_rms_db
 set_rms_db(db)  # Initialize RMS module with database
 api_router.include_router(rms_router)
 
+# Include Configuration Module router
+from config.routes import config_router, set_db as set_config_db
+set_config_db(db)  # Initialize Config module with database
+api_router.include_router(config_router)
+
 # Include the router in the main app
 app.include_router(api_router)
 

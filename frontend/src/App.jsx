@@ -32,6 +32,7 @@ import DataHubSync from '@/pages/datahub/DataHubSync'
 import DataHubData from '@/pages/datahub/DataHubData'
 import DataHubAPI from '@/pages/datahub/DataHubAPI'
 import DataHubMonitoring from '@/pages/datahub/DataHubMonitoring'
+import ConfigurationPage from '@/pages/config/ConfigurationPage'
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth()
@@ -108,6 +109,9 @@ const AppRoutes = () => {
                   <Route path="/datahub/data/*" element={<DataHubData />} />
                   <Route path="/datahub/api" element={<DataHubAPI />} />
                   <Route path="/datahub/monitoring" element={<DataHubMonitoring />} />
+                  {/* Configuration Module Routes */}
+                  <Route path="/config" element={<ConfigurationPage />} />
+                  <Route path="/config/*" element={<ConfigurationPage />} />
                   {/* Settings */}
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="*" element={<Navigate to="/pms/planning" replace />} />
