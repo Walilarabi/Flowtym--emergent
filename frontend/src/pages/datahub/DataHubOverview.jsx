@@ -12,11 +12,15 @@ import {
   TrendUp,
   TrendDown,
   CaretRight,
-  Lightning
+  Lightning,
+  Gear,
+  Bed,
+  Tag
 } from '@phosphor-icons/react';
 import { DataHubNav, DataHubBreadcrumb } from '../../components/datahub/DataHubNav';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
+import { useDataHubConfigData } from '../../hooks/useConfigData';
 
 const API_URL = import.meta.env.VITE_API_URL || import.meta.env.REACT_APP_BACKEND_URL || '';
 const HOTEL_ID = 'test-hotel-001';
@@ -26,6 +30,9 @@ export default function DataHubOverview() {
   const [connectors, setConnectors] = useState([]);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Get configuration data from central Configuration module
+  const { data: configData, loading: configLoading } = useDataHubConfigData();
 
   const fetchData = useCallback(async () => {
     try {
@@ -348,6 +355,95 @@ export default function DataHubOverview() {
             </CardContent>
           </Card>
         )}
+
+        {/* Configuration Integration Section */}
+        <Card className="mt-6 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-lg font-semibold flex items-center gap-2">
+              <Gear size={18} weight="duotone" className="text-violet-500" />
+              Données de Configuration
+            </CardTitle>
+            <Link 
+              to="/config"
+              className="text-sm text-violet-600 hover:text-violet-700 flex items-center gap-1"
+            >
+              Gérer <CaretRight size={14} />
+            </Link>
+          </CardHeader>
+          <CardContent>
+            {configLoading ? (
+              <div className="text-center py-8 text-slate-500">Chargement...</div>
+            ) : configData ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Room Types from Config */}
+                <div className="space-y-3">
+                  <h4 className="font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                    <Bed size={16} className="text-blue-500" />
+                    Types de chambres ({configData.room_types?.length || 0})
+                  </h4>
+                  <div className="space-y-2">
+                    {configData.room_types?.slice(0, 4).map((rt) => (
+                      <div key={rt.id} className="flex items-center justify-between text-sm p-2 rounded bg-slate-50 dark:bg-slate-800">
+                        <span className="font-medium">{rt.code}</span>
+                        <span className="text-slate-500">{rt.name}</span>
+                        <Badge variant="outline">{rt.base_price}€</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Rate Plans from Config */}
+                <div className="space-y-3">
+                  <h4 className="font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                    <Tag size={16} className="text-emerald-500" />
+                    Plans tarifaires ({configData.rate_plans?.length || 0})
+                  </h4>
+                  <div className="space-y-2">
+                    {configData.rate_plans?.slice(0, 4).map((rp) => (
+                      <div key={rp.id} className="flex items-center justify-between text-sm p-2 rounded bg-slate-50 dark:bg-slate-800">
+                        <span className="font-medium">{rp.code}</span>
+                        <span className="text-slate-500">{rp.name}</span>
+                        <Badge variant={rp.is_public ? 'default' : 'secondary'}>
+                          {rp.is_public ? 'Public' : 'Privé'}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Hotel Info */}
+                <div className="space-y-3">
+                  <h4 className="font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                    <Gear size={16} className="text-amber-500" />
+                    Paramètres
+                  </h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between p-2 rounded bg-slate-50 dark:bg-slate-800">
+                      <span className="text-slate-500">Devise</span>
+                      <span className="font-medium">{configData.currency || 'EUR'}</span>
+                    </div>
+                    <div className="flex justify-between p-2 rounded bg-slate-50 dark:bg-slate-800">
+                      <span className="text-slate-500">Fuseau</span>
+                      <span className="font-medium">{configData.timezone || 'Europe/Paris'}</span>
+                    </div>
+                    <div className="flex justify-between p-2 rounded bg-slate-50 dark:bg-slate-800">
+                      <span className="text-slate-500">Check-in</span>
+                      <span className="font-medium">{configData.check_in_time || '15:00'}</span>
+                    </div>
+                    <div className="flex justify-between p-2 rounded bg-slate-50 dark:bg-slate-800">
+                      <span className="text-slate-500">Check-out</span>
+                      <span className="font-medium">{configData.check_out_time || '11:00'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-slate-500 text-center py-8">
+                Configuration non disponible
+              </p>
+            )}
+          </CardContent>
+        </Card>
       </main>
     </div>
   );

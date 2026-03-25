@@ -4590,6 +4590,12 @@ from config.routes import config_router, set_db as set_config_db
 set_config_db(db)  # Initialize Config module with database
 api_router.include_router(config_router)
 
+# Include Shared Configuration Service router
+from shared.config_service import init_config_service
+from shared.routes import shared_router
+init_config_service(db)  # Initialize shared ConfigService
+api_router.include_router(shared_router)
+
 # Include the router in the main app
 app.include_router(api_router)
 

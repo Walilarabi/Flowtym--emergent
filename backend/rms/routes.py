@@ -22,6 +22,13 @@ from .integrations.flowtym_connectors import (
     create_pms_connector, create_channel_manager_connector, create_booking_engine_connector
 )
 
+# Import shared ConfigService for Configuration integration
+try:
+    from shared.config_service import get_config_service
+    HAS_CONFIG_SERVICE = True
+except ImportError:
+    HAS_CONFIG_SERVICE = False
+
 router = APIRouter(prefix="/rms", tags=["RMS - Revenue Management"])
 
 
@@ -878,6 +885,226 @@ async def update_connector_config(
     )
     
     return {"status": "success", "connector": connector, "updated_fields": list(config_update.keys())}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CONFIGURATION INTEGRATION ENDPOINTS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/hotels/{hotel_id}/config-integration")
+async def get_config_integration_data(
+    hotel_id: str,
+    db=Depends(get_db)
+):
+    """
+    Get configuration data from the central Configuration module.
+    
+    This endpoint fetches:
+    - Room types with base prices (from Configuration)
+    - Rate plans with derivation rules (from Configuration)
+    - Inventory summary (from Configuration)
+    - Tax rules and settings (from Configuration)
+    
+    This data is used by RMS for:
+    - Price calculations
+    - Occupancy forecasting
+    - Revenue optimization
+    """
+    if not HAS_CONFIG_SERVICE:
+        raise HTTPException(
+            status_code=501, 
+            detail="Configuration service not available"
+        )
+    
+    try:
+        config_service = get_config_service()
+        
+        # Get all configuration data needed for RMS
+        room_types = await config_service.get_room_types(hotel_id, include_room_count=True)
+        rate_plans = await config_service.get_rate_plans(hotel_id)
+        inventory = await config_service.get_inventory_summary(hotel_id)
+        pricing_matrix = await config_service.get_pricing_matrix(hotel_id)
+        settings = await config_service.get_advanced_settings(hotel_id)
+        hotel_profile = await config_service.get_hotel_profile(hotel_id)
+        
+        return {
+            "hotel_id": hotel_id,
+            "source": "configuration_module",
+            "hotel": {
+                "name": hotel_profile.get("name") if hotel_profile else None,
+                "currency": hotel_profile.get("currency", "EUR") if hotel_profile else "EUR",
+                "timezone": hotel_profile.get("timezone", "Europe/Paris") if hotel_profile else "Europe/Paris"
+            },
+            "room_types": [
+                {
+                    "id": rt["id"],
+                    "code": rt["code"],
+                    "name": rt["name"],
+                    "category": rt.get("category"),
+                    "base_price": rt.get("base_price", 100),
+                    "max_occupancy": rt.get("max_occupancy", 2),
+                    "room_count": rt.get("room_count", 0)
+                }
+                for rt in room_types
+            ],
+            "rate_plans": [
+                {
+                    "id": rp["id"],
+                    "code": rp["code"],
+                    "name": rp["name"],
+                    "rate_type": rp.get("rate_type"),
+                    "is_derived": rp.get("is_derived", False),
+                    "parent_rate_id": rp.get("parent_rate_id"),
+                    "derivation_rule": rp.get("derivation_rule"),
+                    "reference_price": rp.get("reference_price")
+                }
+                for rp in rate_plans
+            ],
+            "inventory": inventory,
+            "pricing_matrix": pricing_matrix,
+            "settings": {
+                "overbooking_allowed": settings.get("overbooking_allowed", False),
+                "overbooking_percentage": settings.get("overbooking_percentage", 0),
+                "min_price_floor": settings.get("min_price_floor", 0),
+                "round_prices_to": settings.get("round_prices_to", 1)
+            },
+            "synced_at": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get configuration: {str(e)}")
+
+
+@router.post("/hotels/{hotel_id}/sync-from-config")
+async def sync_from_configuration(
+    hotel_id: str,
+    db=Depends(get_db)
+):
+    """
+    Synchronize RMS with the latest Configuration data.
+    
+    This will:
+    1. Update room type reference prices in RMS
+    2. Update the pricing calendar base prices
+    3. Apply any new rate plan derivation rules
+    
+    Call this after making changes in the Configuration module.
+    """
+    if not HAS_CONFIG_SERVICE:
+        raise HTTPException(
+            status_code=501, 
+            detail="Configuration service not available"
+        )
+    
+    try:
+        config_service = get_config_service()
+        
+        # Get configuration data
+        room_types = await config_service.get_room_types(hotel_id)
+        pricing_matrix = await config_service.get_pricing_matrix(hotel_id)
+        settings = await config_service.get_advanced_settings(hotel_id)
+        
+        # Build room type price map
+        room_type_prices = {rt["code"]: rt.get("base_price", 100) for rt in room_types}
+        
+        # Calculate new base ADR (average of all room type base prices)
+        if room_type_prices:
+            new_base_adr = sum(room_type_prices.values()) / len(room_type_prices)
+        else:
+            new_base_adr = 150  # Default
+        
+        # Update RMS config with new base ADR and settings
+        await db.rms_config.update_one(
+            {"hotel_id": hotel_id},
+            {"$set": {
+                "base_adr": new_base_adr,
+                "room_type_prices": room_type_prices,
+                "pricing_matrix": pricing_matrix,
+                "overbooking_config": {
+                    "allowed": settings.get("overbooking_allowed", False),
+                    "max_percentage": settings.get("overbooking_percentage", 0)
+                },
+                "price_settings": {
+                    "min_floor": settings.get("min_price_floor", 0),
+                    "round_to": settings.get("round_prices_to", 1)
+                },
+                "config_synced_at": datetime.utcnow().isoformat()
+            }},
+            upsert=True
+        )
+        
+        # Update pricing calendar with new base prices
+        calendar = await db.rms_pricing_calendar.find_one({"hotel_id": hotel_id})
+        if calendar and calendar.get("days"):
+            updates = {}
+            for date_str, day_data in calendar["days"].items():
+                if not day_data.get("is_manually_locked"):
+                    # Update base price (but keep the manual final price if set)
+                    updates[f"days.{date_str}.base_price"] = new_base_adr
+            
+            if updates:
+                await db.rms_pricing_calendar.update_one(
+                    {"hotel_id": hotel_id},
+                    {"$set": updates}
+                )
+        
+        return {
+            "status": "success",
+            "message": "RMS synchronized with Configuration module",
+            "updates": {
+                "base_adr": new_base_adr,
+                "room_types_synced": len(room_type_prices),
+                "rate_plans_in_matrix": len(pricing_matrix)
+            },
+            "synced_at": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Sync failed: {str(e)}")
+
+
+@router.get("/hotels/{hotel_id}/room-types-from-config")
+async def get_room_types_from_config(
+    hotel_id: str,
+    db=Depends(get_db)
+):
+    """
+    Get room types directly from Configuration module.
+    Use this for dropdowns and selection lists in RMS UI.
+    """
+    if not HAS_CONFIG_SERVICE:
+        # Fallback to hardcoded room types
+        return {
+            "hotel_id": hotel_id,
+            "source": "fallback",
+            "room_types": [
+                {"code": "STD", "name": "Standard", "base_price": 120},
+                {"code": "SUP", "name": "Supérieure", "base_price": 160},
+                {"code": "DLX", "name": "Deluxe", "base_price": 220},
+                {"code": "STE", "name": "Suite", "base_price": 350}
+            ]
+        }
+    
+    try:
+        config_service = get_config_service()
+        room_types = await config_service.get_room_types(hotel_id, include_room_count=True)
+        
+        return {
+            "hotel_id": hotel_id,
+            "source": "configuration_module",
+            "room_types": [
+                {
+                    "id": rt["id"],
+                    "code": rt["code"],
+                    "name": rt["name"],
+                    "base_price": rt.get("base_price", 100),
+                    "room_count": rt.get("room_count", 0)
+                }
+                for rt in room_types
+            ]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

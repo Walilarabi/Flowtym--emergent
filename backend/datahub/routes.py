@@ -12,6 +12,7 @@ Endpoints:
 - /api/datahub/rates - Unified rate access
 - /api/datahub/availability - Unified availability access
 - /api/datahub/sync - Trigger sync operations
+- /api/datahub/config-integration - Configuration module integration
 """
 from fastapi import APIRouter, HTTPException, Depends, Query
 from typing import List, Optional, Dict, Any
@@ -46,6 +47,13 @@ from .connectors import (
     LighthouseConnector,
 )
 from .engines import get_normalization_engine
+
+# Import shared ConfigService for Configuration integration
+try:
+    from shared.config_service import get_config_service
+    HAS_CONFIG_SERVICE = True
+except ImportError:
+    HAS_CONFIG_SERVICE = False
 
 
 logger = logging.getLogger(__name__)
@@ -706,3 +714,260 @@ async def get_rate_parity(hotel_id: str):
     
     result = await connector.fetch_rate_parity()
     return result
+
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CONFIGURATION INTEGRATION ENDPOINTS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/hotels/{hotel_id}/config-integration")
+async def get_config_integration_data(hotel_id: str):
+    """
+    Get configuration data from the central Configuration module.
+    
+    This provides Data Hub with:
+    - Room types (for OTA mapping)
+    - Rate plans (for distribution)
+    - Hotel profile (name, timezone, currency)
+    - Check-in/out times
+    
+    Use this data when:
+    - Setting up connector mappings
+    - Normalizing external reservations
+    - Distributing rates to channels
+    """
+    if not HAS_CONFIG_SERVICE:
+        raise HTTPException(
+            status_code=501, 
+            detail="Configuration service not available"
+        )
+    
+    try:
+        config_service = get_config_service()
+        
+        # Get configuration data needed for Data Hub
+        hotel_profile = await config_service.get_hotel_profile(hotel_id)
+        room_types = await config_service.get_room_types(hotel_id)
+        rate_plans = await config_service.get_rate_plans(hotel_id)
+        check_times = await config_service.get_check_times(hotel_id)
+        
+        return {
+            "hotel_id": hotel_id,
+            "source": "configuration_module",
+            "hotel": {
+                "name": hotel_profile.get("name") if hotel_profile else None,
+                "currency": hotel_profile.get("currency", "EUR") if hotel_profile else "EUR",
+                "timezone": hotel_profile.get("timezone", "Europe/Paris") if hotel_profile else "Europe/Paris"
+            },
+            "check_times": check_times,
+            "room_types": [
+                {
+                    "id": rt["id"],
+                    "code": rt["code"],
+                    "name": rt["name"],
+                    "name_en": rt.get("name_en"),
+                    "category": rt.get("category"),
+                    "max_occupancy": rt.get("max_occupancy", 2),
+                    "base_price": rt.get("base_price", 100),
+                    "ota_mappings": rt.get("ota_mappings", {})
+                }
+                for rt in room_types
+            ],
+            "rate_plans": [
+                {
+                    "id": rp["id"],
+                    "code": rp["code"],
+                    "name": rp["name"],
+                    "rate_type": rp.get("rate_type"),
+                    "meal_plan": rp.get("meal_plan"),
+                    "channels": rp.get("channels", []),
+                    "is_public": rp.get("is_public", True),
+                    "ota_mappings": rp.get("ota_mappings", {})
+                }
+                for rp in rate_plans
+            ],
+            "synced_at": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get configuration: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get configuration: {str(e)}")
+
+
+@router.get("/hotels/{hotel_id}/room-type-mapping/{ota_code}")
+async def get_room_type_ota_mapping(hotel_id: str, ota_code: str):
+    """
+    Get room type mappings for a specific OTA/connector.
+    
+    Args:
+        hotel_id: Hotel tenant ID
+        ota_code: OTA identifier (e.g., 'booking_com', 'expedia', 'mews')
+    
+    Returns:
+        Mapping of internal room type IDs to OTA room type codes
+    """
+    if not HAS_CONFIG_SERVICE:
+        # Return empty mapping if service not available
+        return {
+            "hotel_id": hotel_id,
+            "ota_code": ota_code,
+            "source": "fallback",
+            "mapping": {}
+        }
+    
+    try:
+        config_service = get_config_service()
+        mapping = await config_service.get_ota_room_type_mapping(hotel_id, ota_code)
+        
+        return {
+            "hotel_id": hotel_id,
+            "ota_code": ota_code,
+            "source": "configuration_module",
+            "mapping": mapping
+        }
+    except Exception as e:
+        logger.error(f"Failed to get OTA mapping: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/hotels/{hotel_id}/rate-plan-mapping/{ota_code}")
+async def get_rate_plan_ota_mapping(hotel_id: str, ota_code: str):
+    """
+    Get rate plan mappings for a specific OTA/connector.
+    
+    Args:
+        hotel_id: Hotel tenant ID
+        ota_code: OTA identifier
+    
+    Returns:
+        Mapping of internal rate plan IDs to OTA rate codes
+    """
+    if not HAS_CONFIG_SERVICE:
+        return {
+            "hotel_id": hotel_id,
+            "ota_code": ota_code,
+            "source": "fallback",
+            "mapping": {}
+        }
+    
+    try:
+        config_service = get_config_service()
+        mapping = await config_service.get_ota_rate_plan_mapping(hotel_id, ota_code)
+        
+        return {
+            "hotel_id": hotel_id,
+            "ota_code": ota_code,
+            "source": "configuration_module",
+            "mapping": mapping
+        }
+    except Exception as e:
+        logger.error(f"Failed to get rate plan mapping: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/hotels/{hotel_id}/sync-room-type-mapping")
+async def sync_room_type_mapping(
+    hotel_id: str,
+    ota_code: str,
+    mapping: Dict[str, str]
+):
+    """
+    Sync room type OTA mapping back to Configuration module.
+    
+    This allows Data Hub to update the room type OTA mappings
+    after configuring a connector.
+    
+    Args:
+        hotel_id: Hotel tenant ID
+        ota_code: OTA identifier
+        mapping: {room_type_id: ota_room_code}
+    """
+    if not HAS_CONFIG_SERVICE:
+        raise HTTPException(status_code=501, detail="Configuration service not available")
+    
+    try:
+        config_service = get_config_service()
+        
+        # Update each room type's OTA mapping
+        for room_type_id, ota_room_code in mapping.items():
+            await config_service.db.config_room_types.update_one(
+                {"id": room_type_id, "tenant_id": hotel_id},
+                {"$set": {f"ota_mappings.{ota_code}": ota_room_code}}
+            )
+        
+        return {
+            "status": "success",
+            "hotel_id": hotel_id,
+            "ota_code": ota_code,
+            "mappings_updated": len(mapping)
+        }
+    except Exception as e:
+        logger.error(f"Failed to sync mapping: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/hotels/{hotel_id}/pricing-for-distribution")
+async def get_pricing_for_distribution(hotel_id: str):
+    """
+    Get complete pricing data for channel distribution.
+    
+    This combines Configuration data with the pricing matrix
+    to provide all information needed for pushing rates to OTAs.
+    
+    Returns:
+        Room types, rate plans, and calculated prices per room type/rate
+    """
+    if not HAS_CONFIG_SERVICE:
+        raise HTTPException(status_code=501, detail="Configuration service not available")
+    
+    try:
+        config_service = get_config_service()
+        
+        room_types = await config_service.get_room_types(hotel_id)
+        rate_plans = await config_service.get_rate_plans(hotel_id)
+        pricing_matrix = await config_service.get_pricing_matrix(hotel_id)
+        hotel_profile = await config_service.get_hotel_profile(hotel_id)
+        
+        # Build distribution-ready data
+        distribution_data = []
+        
+        for rt in room_types:
+            rt_data = {
+                "room_type_id": rt["id"],
+                "room_type_code": rt["code"],
+                "room_type_name": rt["name"],
+                "base_price": rt.get("base_price", 100),
+                "rates": []
+            }
+            
+            for rp in rate_plans:
+                # Only include public rates for distribution
+                if not rp.get("is_public", True):
+                    continue
+                
+                price = pricing_matrix.get(rp["code"], {}).get(rt["code"], rt.get("base_price", 100))
+                
+                rt_data["rates"].append({
+                    "rate_plan_id": rp["id"],
+                    "rate_plan_code": rp["code"],
+                    "rate_plan_name": rp["name"],
+                    "meal_plan": rp.get("meal_plan", "room_only"),
+                    "price": price,
+                    "currency": hotel_profile.get("currency", "EUR") if hotel_profile else "EUR"
+                })
+            
+            distribution_data.append(rt_data)
+        
+        return {
+            "hotel_id": hotel_id,
+            "currency": hotel_profile.get("currency", "EUR") if hotel_profile else "EUR",
+            "room_types_count": len(room_types),
+            "rate_plans_count": len(rate_plans),
+            "distribution_data": distribution_data,
+            "generated_at": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get pricing for distribution: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
