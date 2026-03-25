@@ -4,7 +4,7 @@ import { useHotel } from '@/context/HotelContext'
 import {
   LayoutDashboard, Building2, Network, TrendingUp, Star, Users, CalendarCheck,
   Brush, UsersRound, Wrench, Receipt, BarChart3, Code, Bell, Moon, ChevronDown,
-  LogOut, Settings, User, Check,
+  LogOut, Settings, User, Check, Database, Cog
 } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -19,10 +19,9 @@ const modules = [
   { id: 'booking', label: 'Booking', icon: CalendarCheck, path: '/booking', disabled: false },
   { id: 'housekeeping', label: 'Housekeeping', icon: Brush, path: '/housekeeping', disabled: true },
   { id: 'staff', label: 'Staff', icon: UsersRound, path: '/staff', disabled: false },
-  { id: 'maintenance', label: 'Maintenance', icon: Wrench, path: '/maintenance', disabled: true },
-  { id: 'finance', label: 'Finance', icon: Receipt, path: '/finance', disabled: true },
   { id: 'rapports', label: 'Rapports', icon: BarChart3, path: '/pms/reports', disabled: false },
-  { id: 'datahub', label: 'Data Hub', icon: Code, path: '/datahub', disabled: false },
+  { id: 'datahub', label: 'Data Hub', icon: Database, path: '/datahub', disabled: false },
+  { id: 'config', label: 'Configuration', icon: Cog, path: '/config', disabled: false },
 ]
 
 export const TopNavigation = () => {
@@ -38,6 +37,7 @@ export const TopNavigation = () => {
     if (path === '/booking') return location.pathname.startsWith('/booking')
     if (path === '/rms') return location.pathname.startsWith('/rms')
     if (path === '/datahub') return location.pathname.startsWith('/datahub')
+    if (path === '/config') return location.pathname.startsWith('/config')
     return location.pathname.startsWith(path)
   }
 
