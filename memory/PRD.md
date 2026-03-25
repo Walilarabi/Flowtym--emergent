@@ -3,6 +3,60 @@
 ## Overview
 Flowtym is a modular and interoperable hotel Property Management System (PMS) SaaS designed for the French hospitality market.
 
+---
+
+## 🚀 Flowtym Data Hub (NEW - Phase 1 Completed 2026-03-25)
+
+### Vision
+The **Flowtym Data Hub** is the central nervous system of the Flowtym ecosystem. It provides unified data access, plug-and-play connector system for external integrations, data normalization to a Universal Data Model, and event-driven synchronization.
+
+### Phase 1 - COMPLETED ✅
+- **Universal Data Models** (production-ready, versioned)
+  - `UniversalReservation` - Normalized reservations from all sources
+  - `UniversalGuest` - Customer profiles with full traceability
+  - `UniversalRate` - Pricing and availability
+  - `UniversalRoom` - Room inventory
+  - `UniversalTransaction` - Payment transactions
+  - `UniversalMarketData` - Competitive intelligence
+  
+- **5 Mocked Connectors** (plug-and-play architecture)
+  - **Mews PMS** - Property management (reservations, guests, rooms)
+  - **Booking.com OTA** - Online travel agency bookings
+  - **D-EDGE Channel Manager** - Multi-channel distribution
+  - **Stripe Payment** - Payment processing
+  - **Lighthouse Rate Shopper** - Competitor intelligence
+  
+- **Normalization Engine** 
+  - Field mapping and transformation
+  - Data type conversion
+  - Value normalization (statuses, channels, meal plans)
+  - Audit logging (transformation_log on every entity)
+  
+- **Internal APIs** (18 endpoints, 100% tested)
+  - `/api/datahub/connectors/available` - List registered connectors
+  - `/api/datahub/hotels/{id}/connectors/{name}/test` - Test connection
+  - `/api/datahub/hotels/{id}/sync` - Trigger sync operations
+  - `/api/datahub/hotels/{id}/reservations` - Unified reservation access
+  - `/api/datahub/hotels/{id}/guests` - Unified guest access
+  - `/api/datahub/hotels/{id}/stats` - Statistics dashboard
+  - `/api/datahub/hotels/{id}/events` - Event bus (preview)
+  - `/api/datahub/hotels/{id}/market/*` - Market intelligence
+
+### Phase 2 - UPCOMING
+- Priority Engine (conflict resolution between sources)
+- Data Quality Engine (validation and scoring)
+- Event Bus (real-time synchronization)
+- Smart Caching
+- MongoDB persistence
+
+### Phase 3 - FUTURE
+- External API (Marketplace)
+- Billing & Usage tracking
+- Sandbox environment
+- OAuth2 security
+
+---
+
 ## Core Problem Statement
 Build a modern, full-featured PMS with:
 - Visual Planning and Reservations management
