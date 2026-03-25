@@ -15,7 +15,7 @@ import os
 from datetime import datetime, timedelta
 
 # Use the public URL for testing
-BASE_URL = os.environ.get('VITE_BACKEND_URL', 'https://rate-manager-7.preview.emergentagent.com')
+BASE_URL = os.environ.get('VITE_BACKEND_URL', 'https://reservation-core.preview.emergentagent.com')
 
 # Test credentials
 TEST_EMAIL = "test.cp@hotel.com"
