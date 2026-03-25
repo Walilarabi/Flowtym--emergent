@@ -274,27 +274,95 @@ Build a modern, full-featured PMS with:
 - [x] Note: Uses **MOCKED DATA** - no backend API integration
 
 ### Hoptym RMS Module (2026-03-24) - NEW
-- [x] **Complete Revenue Management System UI** injected from user-provided PDF code
-- [x] Navigation link labeled "Hoptym" in TopNavigation
+- [x] **Complete Hoptym RMS Backend & Frontend**
+- [x] Navigation link "Hoptym" in TopNavigation
 - [x] Accessible via `/rms` route
-- [x] Internal navbar with "Hoptym YIELD · RMS" branding
-- [x] **3 Main Menus**:
-  - Revenue: Dashboard, Calendrier, Grille tarifaire, Analytics
-  - Intelligence: Recommandations, Concurrence, Prévisions, Événements
-  - Configuration: Stratégie, Pondération, Autopilot, Connecteurs
+
+#### Backend Architecture
+- [x] **MongoDB Collections**:
+  - `rms_config`: Complete RMS configuration per hotel
+  - `rms_recommendations`: AI-generated pricing recommendations
+  - `rms_engine_runs`: Engine execution history
+  - `rms_pricing_calendar`: 90-day pricing calendar
+  - `rms_market_data`: Cached market data
+  - `rms_recommendation_history`: Applied/dismissed recommendations
+
+- [x] **6-Layer Pricing Engine** (`/app/backend/rms/engine.py`):
+  - Layer 1: Base Price (historical ADR + seasonality + day of week)
+  - Layer 2: Demand Adjustment (market demand signals)
+  - Layer 3: Competition Adjustment (competitor rates intelligence)
+  - Layer 4: Event Adjustment (special events, holidays)
+  - Layer 5: Pickup/Booking Pace Adjustment
+  - Layer 6: Optimization & Constraints (floor/ceiling)
+
+- [x] **4 Pricing Strategies**:
+  - Conservateur (Conservative): Stability-focused
+  - Équilibré (Balanced): Optimal revenue/occupancy balance
+  - Agressif (Aggressive): RevPAR maximization
+  - Dynamique (Dynamic): AI-adaptive real-time
+
+- [x] **5 Configurable Weight Factors**:
+  - Demande (Demand): 25%
+  - Concurrence (Competition): 20%
+  - Événements (Events): 15%
+  - Saisonnalité (Seasonality): 20%
+  - Historique (Historical): 20%
+
+- [x] **Autopilot Mode**:
+  - Configurable confidence threshold (default 75%)
+  - Max price change limit (default 15%)
+  - Auto-apply recommendations above threshold
+
+#### API Endpoints (19 endpoints)
+- `GET /api/rms/hotels/{hotel_id}/config` - Complete RMS config
+- `PUT /api/rms/hotels/{hotel_id}/config` - Update config
+- `GET/PUT /api/rms/hotels/{hotel_id}/strategy` - Strategy management
+- `GET/PUT /api/rms/hotels/{hotel_id}/weights` - Weight factors
+- `GET /api/rms/hotels/{hotel_id}/recommendations` - Get recommendations
+- `POST /api/rms/hotels/{hotel_id}/recommendations/{id}/apply` - Apply recommendation
+- `POST /api/rms/hotels/{hotel_id}/recommendations/{id}/dismiss` - Dismiss recommendation
+- `GET /api/rms/hotels/{hotel_id}/calendar` - Pricing calendar
+- `PUT /api/rms/hotels/{hotel_id}/calendar/{date}` - Update date price
+- `POST /api/rms/hotels/{hotel_id}/engine/run` - Run pricing engine
+- `GET /api/rms/hotels/{hotel_id}/engine/status` - Engine status
+- `GET /api/rms/hotels/{hotel_id}/kpis` - Current KPIs
+- `GET /api/rms/hotels/{hotel_id}/market-data` - Market data
+- `GET /api/rms/hotels/{hotel_id}/competitors` - Competitor rates
+- `GET /api/rms/hotels/{hotel_id}/connectors/status` - All connector statuses
+- `POST /api/rms/hotels/{hotel_id}/connectors/{connector}/sync` - Sync connector
+- `PUT /api/rms/hotels/{hotel_id}/connectors/{connector}/config` - Update connector config
+- `POST /api/rms/webhooks/receive` - Receive external webhooks
+
+#### External Integrations (MOCKED)
+- [x] **Lighthouse Connector** (`/app/backend/rms/integrations/lighthouse.py`):
+  - Competitor rate shopping
+  - Market demand forecasting
+  - Hotel rankings & reviews
+  - NOTE: Requires real API token for production
+  
+- [x] **D-EDGE Connector** (`/app/backend/rms/integrations/dedge.py`):
+  - Channel performance analytics
+  - Rate parity monitoring
+  - Rate distribution push
+  - NOTE: Requires real API key for production
+
+#### Internal Flowtym Integrations
+- [x] **PMS Connector**: Occupancy, reservations, historical data
+- [x] **Channel Manager Connector**: Rate distribution, channel sync
+- [x] **Booking Engine Connector**: Direct booking metrics, website analytics
+
+#### Frontend Features
+- [x] **3 Main Navigation Tabs**: Revenue, Intelligence, Configuration
+- [x] **Sub-navigation** per tab
 - [x] **KPI Cards**: RevPAR, ADR, Occupation, Revenu Total (with % change)
-- [x] **Dashboard Features**:
-  - Weekly calendar preview with prices/occupancy
-  - AI Recommendations with impact estimates
-  - Competitor benchmark table
-  - Engine status indicator (RMS Live)
-- [x] **Strategy Selection**: 4 strategies (Conservateur, Équilibré, Agressif, Dynamique)
-- [x] **Weight Factors**: Configurable sliders for Demande, Concurrence, Événements, Saisonnalité, Historique
-- [x] **Autopilot Mode**: Toggle for automatic recommendation application
-- [x] **Connections Page**: PMS, Channel Manager, Rate Shopper connector cards
-- [x] **Recalculate Button**: Triggers engine recalculation with loading state
-- [x] Note: Uses **MOCKED DATA** - all data comes from hardcoded constants in the component
-- [x] **File Location**: `/app/frontend/src/pages/rms/RMS.jsx`
+- [x] **Dashboard**: Weekly calendar preview, recommendations, competitor benchmark
+- [x] **Calendar Page**: 31-day pricing grid
+- [x] **Recommendations Page**: Apply/dismiss recommendations with impact estimates
+- [x] **Competitors Page**: Real-time rate comparison table
+- [x] **Strategy Page**: 4 clickable strategy cards
+- [x] **Weights Page**: 5 sliders with total validation
+- [x] **Autopilot Page**: Toggle with stats display
+- [x] **Connections Page**: 5 connector cards with sync buttons
 
 ### CRM Advanced Analytics (2026-03-24) - NEW
 - [x] **Advanced Analytics API** (`/api/crm/analytics/advanced`)
@@ -487,13 +555,14 @@ Build a modern, full-featured PMS with:
 - [x] **CRM Module** (clients, segmentation, communications, workflows, campaigns, analytics, AI intelligence)
 
 ## P1 Features (Upcoming)
+- [ ] **Connect Lighthouse to Real API** — requires user API token (currently mocked)
+- [ ] **Connect D-EDGE to Real API** — requires user API key (currently mocked)
 - [ ] **Intégrer envoi email réel** pour les rapports de paie (Resend/SendGrid - actuellement MOCKÉ)
 - [ ] Document storage integration (upload employee documents to cloud via Object Storage API)
 - [ ] Background scheduler for automated monthly CP accrual (CRON)
 - [ ] Leave calendar visualization
 - [ ] Super Admin: Stripe integration for real payment processing
 - [ ] Connect Channel Manager to real OTA APIs (D-EDGE, SiteMinder)
-- [ ] Connect Hoptym RMS module to backend API (currently uses mocked data)
 - [ ] Connect Booking Engine module to backend API (currently uses mocked data)
 
 ## P2 Features (Future)
@@ -516,7 +585,8 @@ Build a modern, full-featured PMS with:
 
 ## Key Files
 - Backend: `/app/backend/server.py`
-- **Hoptym RMS Module**: `/app/frontend/src/pages/rms/RMS.jsx`
+- **Hoptym RMS Backend Module**: `/app/backend/rms/` (routes.py, engine.py, models.py, integrations/)
+- **Hoptym RMS Frontend**: `/app/frontend/src/pages/rms/RMS.jsx`
 - **Booking Engine Module**: `/app/frontend/src/pages/booking/BookingEngine.jsx`
 - **Super Admin Backend**: `/app/backend/superadmin/routes.py`, `/app/backend/superadmin/models.py`, `/app/backend/superadmin/pdf_generator.py`
 - Frontend Entry: `/app/frontend/src/App.jsx`
@@ -541,7 +611,8 @@ Build a modern, full-featured PMS with:
 - **Document Storage**: Employee documents in wizard are stored in form state only, not persisted to backend storage. Needs integration with object storage service.
 - **Payment Webhooks**: Stripe/Adyen/PayPal endpoints are scaffolded but lack production event handling.
 - **Electronic Signature**: Contract/SEPA signature is manual (PDF download). DocuSign/HelloSign integration pending user API key.
-- **Hoptym RMS Module**: All KPIs, recommendations, competitors, calendar data are hardcoded mock constants. No backend API integration.
+- **Lighthouse Integration**: RMS module's Lighthouse connector generates realistic mock competitor/demand data. Requires real API token for production.
+- **D-EDGE Integration**: RMS module's D-EDGE connector generates mock channel performance data. Requires real API key for production.
 - **Booking Engine Module**: All data is hardcoded in the component. No backend API integration.
 - **Payroll Email Service**: `/app/backend/payroll_reporting/email_service.py` simulates email sending, does not connect to real SMTP.
 
