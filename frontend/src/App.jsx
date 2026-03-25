@@ -26,6 +26,12 @@ import CRMPage from '@/pages/crm/index'
 import { ChannelView } from '@/pages/channel/ChannelManager'
 import { BookingEngine } from '@/pages/booking/BookingEngine'
 import { RMS } from '@/pages/rms/RMS'
+import DataHubOverview from '@/pages/datahub/DataHubOverview'
+import DataHubConnectors from '@/pages/datahub/DataHubConnectors'
+import DataHubSync from '@/pages/datahub/DataHubSync'
+import DataHubData from '@/pages/datahub/DataHubData'
+import DataHubAPI from '@/pages/datahub/DataHubAPI'
+import DataHubMonitoring from '@/pages/datahub/DataHubMonitoring'
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth()
@@ -94,6 +100,14 @@ const AppRoutes = () => {
                   {/* Hoptym RMS Routes */}
                   <Route path="/rms" element={<RMS />} />
                   <Route path="/rms/*" element={<RMS />} />
+                  {/* Data Hub Routes */}
+                  <Route path="/datahub" element={<DataHubOverview />} />
+                  <Route path="/datahub/connectors" element={<DataHubConnectors />} />
+                  <Route path="/datahub/sync" element={<DataHubSync />} />
+                  <Route path="/datahub/data" element={<DataHubData />} />
+                  <Route path="/datahub/data/*" element={<DataHubData />} />
+                  <Route path="/datahub/api" element={<DataHubAPI />} />
+                  <Route path="/datahub/monitoring" element={<DataHubMonitoring />} />
                   {/* Settings */}
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="*" element={<Navigate to="/pms/planning" replace />} />

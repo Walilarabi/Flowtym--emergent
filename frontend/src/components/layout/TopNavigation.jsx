@@ -22,7 +22,7 @@ const modules = [
   { id: 'maintenance', label: 'Maintenance', icon: Wrench, path: '/maintenance', disabled: true },
   { id: 'finance', label: 'Finance', icon: Receipt, path: '/finance', disabled: true },
   { id: 'rapports', label: 'Rapports', icon: BarChart3, path: '/pms/reports', disabled: false },
-  { id: 'api', label: 'API', icon: Code, path: '/api', disabled: true },
+  { id: 'datahub', label: 'Data Hub', icon: Code, path: '/datahub', disabled: false },
 ]
 
 export const TopNavigation = () => {
@@ -37,6 +37,7 @@ export const TopNavigation = () => {
     if (path === '/channel') return location.pathname.startsWith('/channel')
     if (path === '/booking') return location.pathname.startsWith('/booking')
     if (path === '/rms') return location.pathname.startsWith('/rms')
+    if (path === '/datahub') return location.pathname.startsWith('/datahub')
     return location.pathname.startsWith(path)
   }
 
