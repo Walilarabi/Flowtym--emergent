@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 
 class FlowtymAPITester:
-    def __init__(self, base_url: str = "https://reservation-core.preview.emergentagent.com"):
+    def __init__(self, base_url: str = "https://reception-suite-1.preview.emergentagent.com"):
         self.base_url = base_url
         self.token = None
         self.user_id = None

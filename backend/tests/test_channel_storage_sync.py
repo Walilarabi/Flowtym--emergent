@@ -16,7 +16,7 @@ import io
 # Get BASE_URL from environment
 BASE_URL = os.environ.get('VITE_BACKEND_URL', '').rstrip('/')
 if not BASE_URL:
-    BASE_URL = "https://reservation-core.preview.emergentagent.com"
+    BASE_URL = "https://reception-suite-1.preview.emergentagent.com"
 
 # Test credentials
 TEST_EMAIL = "admin@flowtym.com"
