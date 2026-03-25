@@ -4883,6 +4883,19 @@ from shared.routes import shared_router
 init_config_service(db)  # Initialize shared ConfigService
 api_router.include_router(shared_router)
 
+# Include Housekeeping Module router
+from housekeeping.routes import housekeeping_router, init_housekeeping_db
+from housekeeping.seed_data import seed_housekeeping_data
+init_housekeeping_db(db)  # Initialize Housekeeping module with database
+api_router.include_router(housekeeping_router)
+
+# Housekeeping Seed Data Endpoint
+@api_router.post("/housekeeping/hotels/{hotel_id}/seed")
+async def seed_hk_data(hotel_id: str, current_user: dict = Depends(get_current_user)):
+    """Seed demo data for housekeeping module"""
+    result = await seed_housekeeping_data(db, hotel_id)
+    return result
+
 # Include the router in the main app
 app.include_router(api_router)
 

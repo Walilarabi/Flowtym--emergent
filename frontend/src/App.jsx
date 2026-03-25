@@ -33,6 +33,7 @@ import DataHubData from '@/pages/datahub/DataHubData'
 import DataHubAPI from '@/pages/datahub/DataHubAPI'
 import DataHubMonitoring from '@/pages/datahub/DataHubMonitoring'
 import ConfigurationPage from '@/pages/config/ConfigurationPage'
+import HousekeepingModule from '@/pages/housekeeping/HousekeepingModule'
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth()
@@ -112,6 +113,9 @@ const AppRoutes = () => {
                   {/* Configuration Module Routes */}
                   <Route path="/config" element={<ConfigurationPage />} />
                   <Route path="/config/*" element={<ConfigurationPage />} />
+                  {/* Housekeeping Module Routes */}
+                  <Route path="/housekeeping" element={<HousekeepingModule />} />
+                  <Route path="/housekeeping/*" element={<HousekeepingModule />} />
                   {/* Settings */}
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="*" element={<Navigate to="/pms/planning" replace />} />
