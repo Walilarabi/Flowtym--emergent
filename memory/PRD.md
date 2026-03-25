@@ -1,245 +1,273 @@
 # Flowtym PMS - Product Requirements Document
 
 ## Overview
-Flowtym is a next-generation SaaS hotel property management system (PMS) built for modern hoteliers. It integrates multiple modules: PMS core, Revenue Management (RMS), Channel Manager, CRM, Booking Engine, Data Hub, and Configuration.
+Flowtym is a comprehensive Hotel Property Management System (PMS) SaaS platform designed for modern hotel operations. The system provides tools for reservations, revenue management, distribution, and guest experience management in a unified platform.
+
+## Core Problem Statement
+Hotels need an integrated solution for managing all aspects of their operations including:
+- Property management and room inventory
+- Booking and reservation management
+- Channel distribution (OTAs integration)
+- Housekeeping and maintenance operations
+- Guest communication and experience
+- Revenue optimization and reporting
 
 ## User Personas
-- **Hotel Admin**: Full access to all modules, configuration, and user management
-- **Reception**: Daily operations, check-in/out, reservations
-- **Revenue Manager**: Rate management, yield optimization, forecasting
-- **Housekeeping**: Room status management
-- **Super Admin**: Multi-property oversight, system administration
 
-## Architecture Overview
+### Super Admin
+- Manages multiple hotels/properties
+- Access to all system features
+- User and role management
+- System configuration
 
-### Central Configuration Module
-The Configuration module serves as the **"Source of Truth"** for all hotel settings. All other modules access configuration through the centralized `ConfigService`.
+### Hotel Admin/Reception
+- Daily operations management
+- Check-in/check-out processes
+- Reservation handling
+- Guest communication
 
+### Housekeeping Staff
+- Room cleaning assignments
+- Status updates and reporting
+- Mobile-first workflow
+- QR code scanning for room identification
+
+### Direction/Management
+- Dashboard analytics
+- KPI monitoring
+- Staff supervision
+- Strategic oversight
+
+---
+
+## Completed Features
+
+### Phase 1: Foundation (Completed)
+- [x] User authentication (JWT-based)
+- [x] Multi-hotel support
+- [x] Role-based access control
+- [x] Basic hotel configuration
+- [x] Room management
+
+### Phase 2: PMS Core (Completed)
+- [x] Reservation management
+- [x] Guest profiles
+- [x] Check-in/check-out workflow
+- [x] Planning board (Gantt-style)
+- [x] Flowboard view
+
+### Phase 3: Booking Engine (Completed)
+- [x] Public booking widget
+- [x] Room availability display
+- [x] Rate management
+- [x] Online payment integration ready
+- [x] Booking confirmation emails
+
+### Phase 4: Configuration Module (Completed)
+- [x] Hotel settings management
+- [x] Room type configuration
+- [x] Rate plans
+- [x] Tax settings
+- [x] Channel mapping
+- [x] Integration with PMS and Booking Engine
+
+### Phase 5: Housekeeping Module V2 (Completed - March 25, 2026)
+Based on Rorck React Native design with 100% visual fidelity.
+
+#### 5.1 Reception View (Desktop)
+- [x] Interactive room table with 16 columns
+- [x] Checkbox selection for bulk operations
+- [x] Bulk assignment button (appears when rooms selected)
+- [x] Staff selection dialog
+- [x] KPIs strip (Chambres, Départs, Recouches, En cours, Terminées, À valider, PDJ inclus, ETA urgents)
+- [x] Advanced filters (Étage, Statut, Badge, Assignée, Source)
+- [x] Color-coded room numbers
+- [x] Status badges (Propre, Sale, Inspectée, En nettoyage, Libre, Occupée, H.S.)
+- [x] Source icons (Booking, Direct, Expedia, Airbnb, Agoda, HRS, Tel)
+- [x] VIP badges
+
+#### 5.2 Direction View (Desktop)
+- [x] Welcome message with current date
+- [x] Quick navigation strip (Centre de contrôle, Plan Chambres, Répartition, Historique, Maintenance, Statistiques, Rapports)
+- [x] KPI cards (Occupation %, Départs, Propreté %, Maintenance count)
+- [x] Alerts card (Interventions urgentes, Chambres à valider, Petit-déj à préparer)
+- [x] Room status summary with colored dots
+- [x] Floor plan with room chips by floor
+- [x] Team card with workload progress bars
+- [x] Breakfast & Economat stats
+
+#### 5.3 Gouvernante View (Desktop)
+- [x] 3 tabs: Validation, Équipe, Stocks
+- [x] Validation tab:
+  - Search and filters (Étage, Statut)
+  - KPIs (À valider, Validées, Refusées)
+  - Inspection cards with Valider/Refuser buttons
+- [x] Équipe tab:
+  - Team supervision cards with workload bars
+  - Assigned rooms per staff member
+  - Quick action buttons (Réassigner, Valider chambres, Assigner, Historique)
+  - KPIs sidebar
+- [x] Stocks tab:
+  - Link to full Économat
+  - Low stock alerts
+  - Inventory list with progress bars
+
+#### 5.4 Mobile Housekeeping View (Femme de chambre)
+- [x] Purple gradient header with welcome message
+- [x] Room count summary card with progress bar
+- [x] Stats: Terminées, Départs, Recouches, En cours
+- [x] **QR Scanner button** with modal:
+  - Room number input field
+  - Filtered room list
+  - Démarrer/Terminer actions
+- [x] Swipe hint for actions
+- [x] Room cards grouped by floor:
+  - Status bar indicator
+  - Room number and type
+  - Priority/VIP badges
+  - Démarrer/Terminer buttons
+  - Live timer for in-progress rooms
+
+#### 5.5 Mobile Maintenance View
+- [x] Dark gradient header
+- [x] Search bar
+- [x] Stats: En attente, En cours, Résolu
+- [x] Status filter dropdown
+- [x] Ticket cards:
+  - Room number
+  - Issue title
+  - Reporter and timestamp
+  - Assigned technician
+  - Priority badge (Haute, Moyenne, Basse)
+  - Commencer/Résoudre buttons
+
+#### 5.6 Mobile Breakfast View (Petit-déjeuner)
+- [x] Orange gradient header
+- [x] Stats: À préparer, En cours, Servis
+- [x] 3 tabs: Cuisine, Livraison, Servis
+- [x] Order cards:
+  - Room number
+  - Guest name
+  - Formula and person count
+  - Beverages
+  - Allergy warnings
+  - Notes
+  - Payant badge (if not included)
+  - Status update buttons (Préparé, En livraison, Servi)
+- [x] Floating action buttons (Settings, Stats, Add)
+
+---
+
+## Backend API Endpoints (Housekeeping)
+
+### Stats & Overview
+- `GET /api/housekeeping/hotels/{hotel_id}/stats` - Dashboard statistics
+- `GET /api/housekeeping/hotels/{hotel_id}/activity` - Activity feed
+
+### Tasks Management
+- `GET /api/housekeeping/hotels/{hotel_id}/tasks` - List all tasks
+- `POST /api/housekeeping/hotels/{hotel_id}/tasks/{task_id}/start` - Start cleaning
+- `POST /api/housekeeping/hotels/{hotel_id}/tasks/{task_id}/complete` - Complete cleaning
+
+### Staff Management
+- `GET /api/housekeeping/hotels/{hotel_id}/staff` - List staff members
+- `POST /api/housekeeping/hotels/{hotel_id}/assignments/auto` - Auto-assign tasks
+
+### Inspections
+- `GET /api/housekeeping/hotels/{hotel_id}/inspections` - List inspections
+- `POST /api/housekeeping/hotels/{hotel_id}/inspections/{id}/validate` - Validate/Refuse
+
+### Maintenance
+- `GET /api/housekeeping/hotels/{hotel_id}/maintenance` - List tickets
+- `PUT /api/housekeeping/hotels/{hotel_id}/maintenance/{id}` - Update ticket status
+
+### Breakfast
+- `GET /api/housekeeping/hotels/{hotel_id}/breakfast` - List orders
+- `PUT /api/housekeeping/hotels/{hotel_id}/breakfast/{id}` - Update order status
+
+### Inventory
+- `GET /api/housekeeping/hotels/{hotel_id}/inventory` - List stock items
+
+### Demo Data
+- `POST /api/housekeeping/hotels/{hotel_id}/seed` - Generate demo data
+
+---
+
+## Technical Architecture
+
+### Frontend
+- React 18 with Vite
+- Tailwind CSS
+- Shadcn/UI components
+- Axios for API calls
+- Sonner for toasts
+- Lucide React icons
+
+### Backend
+- Python FastAPI
+- MongoDB with Motor async driver
+- JWT authentication
+- Pydantic models
+
+### Component Structure
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                    CONFIGURATION MODULE                          │
-│  (Room Types, Rate Plans, Policies, Users, Taxes, Settings)     │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                    ┌─────────┴─────────┐
-                    │   ConfigService    │
-                    │   (Shared API)     │
-                    └─────────┬─────────┘
-                              │
-        ┌─────────────────────┼─────────────────────┐
-        │                     │                     │
-   ┌────┴────┐          ┌─────┴────┐          ┌────┴────┐
-   │   RMS   │          │ Data Hub │          │   PMS   │
-   │ (Sync)  │          │(Distrib) │          │(Future) │
-   └─────────┘          └──────────┘          └─────────┘
-```
-
-## Core Modules
-
-### 1. PMS Core (Completed)
-- Planning/Calendar view
-- Reservations management
-- Client profiles
-- Arrivals/Departures
-- Night Audit
-- Reports
-
-### 2. Revenue Management System - Hoptym RMS (Completed + Integrated)
-- Rate optimization
-- Demand forecasting
-- Competitive analysis
-- Yield management
-- **NEW: Configuration Integration**
-  - `/api/rms/hotels/{id}/config-integration` - Get config from Configuration module
-  - `/api/rms/hotels/{id}/sync-from-config` - Sync pricing from Configuration
-  - `/api/rms/hotels/{id}/room-types-from-config` - Get room types for UI
-
-### 3. Channel Manager (Completed - MOCKED)
-- OTA connections (mocked)
-- Inventory distribution
-- Rate parity
-
-### 4. CRM Module (Completed)
-- Guest profiles
-- Communication history
-- Loyalty programs
-- Segmentation
-
-### 5. Booking Engine (Completed)
-- Direct booking widget
-- Multi-language support
-- Payment integration
-
-### 6. Flowtym Data Hub (Completed - Phase 1 + Integrated)
-- Universal data models for reservations, guests, transactions, rates, inventory
-- 5 Connectors (MOCKED): Mews, Booking.com, Stripe, D-EDGE, Lighthouse
-- Data normalization engine
-- API gateway functionality
-- **NEW: Configuration Integration**
-  - `/api/datahub/hotels/{id}/config-integration` - Get config for connectors
-  - `/api/datahub/hotels/{id}/pricing-for-distribution` - Get prices for OTA push
-  - `/api/datahub/hotels/{id}/room-type-mapping/{ota}` - OTA room mappings
-  - `/api/datahub/hotels/{id}/rate-plan-mapping/{ota}` - OTA rate mappings
-- Frontend with 6 views: Overview (with Config section), Connectors, Sync, Data, API, Monitoring
-
-### 7. Configuration Module (Completed)
-**Purpose**: Central configuration hub serving as the "source of truth" for all hotel settings.
-
-**Sections**:
-1. **Hotel Profile**: General info, address, contact, regional settings
-2. **Room Types**: Categories with codes, capacity, base prices, equipment
-3. **Rooms**: Physical inventory with Excel import
-4. **Rate Plans**: BAR and derived plans with automatic calculation
-5. **Policies**: Cancellation and payment policies
-6. **Users & Access**: RBAC system with 6 roles
-7. **Advanced Settings**: Taxes, booking rules, overbooking, notifications
-
-### 8. Shared ConfigService (NEW)
-**Purpose**: Centralized service for all modules to access configuration data.
-
-**Location**: `/app/backend/shared/config_service.py`
-
-**Key Methods**:
-- `get_full_config(hotel_id)` - Complete configuration in one call
-- `get_room_types(hotel_id)` - Room types with counts
-- `get_rate_plans(hotel_id)` - Rate plans with derivation rules
-- `get_pricing_matrix(hotel_id)` - Pre-calculated prices
-- `get_inventory_summary(hotel_id)` - Rooms by type/floor
-- `calculate_derived_price(base, rule)` - Derived rate calculation
-- `get_ota_room_type_mapping(hotel_id, ota)` - OTA mappings
-
-**Shared API** (`/api/shared/config/*`):
-- `/config/{hotel_id}/all` - Full configuration
-- `/config/{hotel_id}/room-types` - Room types
-- `/config/{hotel_id}/pricing-matrix` - Pricing matrix
-- `/config/{hotel_id}/rms-data` - RMS specific data
-- `/config/{hotel_id}/datahub-data` - Data Hub specific data
-
-## Tech Stack
-- **Backend**: FastAPI, Python, Pydantic, MongoDB (Motor async)
-- **Frontend**: React, Vite, Tailwind CSS, Shadcn UI, Recharts
-- **Auth**: JWT-based authentication
-- **Database**: MongoDB
-- **AI**: OpenAI GPT-4o (Emergent LLM Key)
-- **Storage**: Emergent Object Storage
-
-## Test Credentials
-- **Admin**: admin@flowtym.com / admin123
-- **Super Admin**: superadmin@flowtym.com / super123
-- **Hotel ID**: 4f02769a-5f63-4121-bb97-a7061563d934
-
-## Completion Status
-
-### Completed (100%)
-- [x] PMS Core
-- [x] Revenue Management (RMS)
-- [x] Channel Manager (mocked)
-- [x] CRM Module
-- [x] Booking Engine
-- [x] Data Hub - Phase 1
-- [x] Configuration Module
-- [x] **ConfigService & Integration (Phase A & B)**
-  - [x] Central ConfigService
-  - [x] Shared API endpoints
-  - [x] RMS ↔ Configuration integration
-  - [x] Data Hub ↔ Configuration integration
-  - [x] React hooks for frontend modules
-- [x] **PMS ↔ Configuration integration** (COMPLETED March 25, 2026)
-  - [x] Backend: create_reservation auto-calculates prices from ConfigService
-  - [x] Backend: Supports room_type_code and rate_plan_code parameters
-  - [x] Backend: Fallback to room base_price if ConfigService unavailable
-- [x] **Booking Engine ↔ Configuration integration** (COMPLETED March 25, 2026)
-  - [x] Backend: GET /api/hotels/{id}/booking-engine/config (public endpoint)
-  - [x] Backend: GET /api/hotels/{id}/booking-engine/availability (public endpoint)
-  - [x] Frontend: Booking tab shows room types with 'DEPUIS CONFIG' badge
-  - [x] Frontend: Meta Search tab shows direct price with 'VIA CONFIG' badge
-  - [x] Frontend: OTA comparison prices dynamically calculated
-
-### Test Data Created
-- 4 Room Types: STD (120€), SUP (160€), DLX (220€), STE (350€)
-- 2 Rate Plans: BAR (base), NRF (-10% derived)
-- 1 Room: 101 (Standard)
-- 1 Cancellation Policy: FLEX
-- 1 Payment Policy: PAY_ARR
-- 1 User: Marie Dupont (Reception)
-
-### In Progress / Upcoming (P0)
-- [ ] **Import Excel Parser**: Implement real parsing logic in excel_import.py
-
-### Upcoming Tasks (P1)
-- [ ] CRM ↔ Configuration integration
-- [ ] Channel Manager ↔ Configuration integration
-- [ ] Data Hub - Phase 2 (Event Orchestration, Smart Caching)
-
-### Future Tasks (P2)
-- [ ] External API Marketplace
-- [ ] Real-time webhooks for reservations
-- [ ] OAuth2 advanced security
-
-## Test Reports
-- `/app/test_reports/iteration_17.json` - Data Hub Backend
-- `/app/test_reports/iteration_18.json` - Data Hub Frontend
-- `/app/test_reports/iteration_19.json` - Configuration Module (100%)
-- `/app/test_reports/iteration_20.json` - Configuration Integration (100%)
-- `/app/test_reports/iteration_21.json` - PMS & Booking Engine Integration (100%)
-- `/app/test_reports/iteration_22.json` - Housekeeping Module (100%)
-
-## Housekeeping Module (NEW - March 25, 2026)
-
-### Features Implemented
-- **Direction Dashboard**: KPIs (progression, départs, validées, maintenance), plan des chambres par étage, équipe active, alertes du jour, fil d'activité
-- **Gouvernante View**: Validation des inspections (valider/refuser), gestion équipe, inventaire stocks avec alertes
-- **Ménage Mobile**: Vue agent avec compteurs personnels, tâches par statut, actions démarrer/terminer
-- **Maintenance Mobile**: Tickets par priorité et statut, actions commencer/résoudre
-- **Petit-déjeuner Mobile**: Commandes par statut (cuisine/livraison/servis), flux de préparation
-
-### Backend API
-- `GET /api/housekeeping/hotels/{id}/stats` - Statistiques du jour
-- `GET /api/housekeeping/hotels/{id}/tasks` - Tâches de nettoyage
-- `GET /api/housekeeping/hotels/{id}/staff` - Personnel
-- `GET /api/housekeeping/hotels/{id}/inspections` - Inspections
-- `GET /api/housekeeping/hotels/{id}/maintenance` - Tickets maintenance
-- `GET /api/housekeeping/hotels/{id}/breakfast` - Commandes petit-déjeuner
-- `POST /api/housekeeping/hotels/{id}/tasks/{taskId}/start` - Démarrer nettoyage
-- `POST /api/housekeeping/hotels/{id}/tasks/{taskId}/complete` - Terminer nettoyage
-- `POST /api/housekeeping/hotels/{id}/inspections/{inspId}/validate` - Valider/Refuser
-- `POST /api/housekeeping/hotels/{id}/seed` - Créer données de démo
-
-## File Structure
-```
-/app/
-├── backend/
-│   ├── server.py
-│   ├── shared/                 # Shared services
-│   │   ├── __init__.py
-│   │   ├── config_service.py   # Central ConfigService
-│   │   └── routes.py           # Shared API routes
-│   ├── config/                 # Configuration module
-│   │   ├── routes.py
-│   │   ├── models/
-│   │   └── services/
-│   ├── housekeeping/           # NEW: Housekeeping module
-│   │   ├── __init__.py
-│   │   ├── routes.py           # All API routes
-│   │   ├── models.py           # Pydantic models
-│   │   └── seed_data.py        # Demo data generator
-│   ├── datahub/                # Data Hub module
-│   │   └── routes.py           # +Integration endpoints
-│   └── rms/                    # RMS module
-│       └── routes.py           # +Integration endpoints
-├── frontend/
-│   └── src/
-│       ├── hooks/
-│       │   └── useConfigData.js  # React hooks
-│       └── pages/
-│           ├── config/
-│           ├── housekeeping/       # NEW
-│           │   └── HousekeepingModule.jsx
-│           └── datahub/
-└── memory/
-    └── PRD.md
+/app/frontend/src/
+├── components/
+│   ├── housekeeping/
+│   │   ├── DirectionView.jsx
+│   │   ├── GouvernanteView.jsx
+│   │   ├── InteractiveReceptionView.jsx
+│   │   ├── MobileHousekeepingView.jsx
+│   │   ├── MobileMaintenanceView.jsx
+│   │   └── MobileBreakfastView.jsx
+│   └── ui/
+├── pages/
+│   └── housekeeping/
+│       └── HousekeepingModule.jsx
+└── context/
+    └── HotelContext.jsx
 ```
 
 ---
-*Last updated: March 25, 2026*
-*Version: 3.0 - Housekeeping Module Complete*
+
+## Upcoming Tasks (Backlog)
+
+### P0 - High Priority
+- [ ] Excel Import: Implement real parsing logic in `/app/backend/config/services/excel_import.py`
+
+### P1 - Medium Priority
+- [ ] CRM Integration: Connect customer management to ConfigService
+- [ ] Channel Manager: Connect OTA sync to ConfigService
+- [ ] Real-time webhooks for booking events
+
+### P2 - Future
+- [ ] Data Hub Phase 2 (Priority Engine, Event Orchestration, Smart Caching)
+- [ ] OAuth2 security implementation
+- [ ] Mobile app (React Native)
+- [ ] Multi-language support
+
+---
+
+## Testing Status
+
+### Last Test Report: iteration_23.json (March 25, 2026)
+- **Success Rate**: 100% (24/24 tests passed)
+- **Views Tested**: All 6 Housekeeping views
+- **Issues Found**: None
+- **Retest Needed**: No
+
+### Test Credentials
+- Admin: `admin@flowtym.com` / `admin123`
+- Super Admin: `superadmin@flowtym.com` / `super123`
+
+---
+
+## Known Mocks
+
+- **Excel Parser**: Import logic returns mock success (real implementation pending)
+
+---
+
+*Document Version: 4.0*
+*Last Updated: March 25, 2026*
+*Module Completed: Housekeeping V2 (Rorck Design)*
