@@ -4576,6 +4576,11 @@ async def auto_sync_reservation_to_crm(reservation: dict):
     except Exception as e:
         logger.error(f"Error syncing reservation to CRM: {e}")
 
+# Include RMS router
+from rms.routes import router as rms_router, set_db as set_rms_db
+set_rms_db(db)  # Initialize RMS module with database
+api_router.include_router(rms_router)
+
 # Include the router in the main app
 app.include_router(api_router)
 

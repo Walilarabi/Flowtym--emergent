@@ -353,7 +353,7 @@ const CSS = () => (
 );
 
 /* ══════════════════════════════════════════════════════════════════════════
-   MOCK DATA
+   MOCK DATA (Fallback when API unavailable)
 ══════════════════════════════════════════════════════════════════════════ */
 
 const MOCK_KPIS = {
@@ -402,6 +402,136 @@ const WEIGHT_FACTORS = [
 ];
 
 /* ══════════════════════════════════════════════════════════════════════════
+   API SERVICE
+══════════════════════════════════════════════════════════════════════════ */
+
+const API_BASE = import.meta.env.VITE_BACKEND_URL || '';
+const HOTEL_ID = 'default-hotel'; // Would come from context/auth
+
+const api = {
+  async getConfig() {
+    try {
+      const res = await fetch(`${API_BASE}/api/rms/hotels/${HOTEL_ID}/config`);
+      return res.ok ? await res.json() : null;
+    } catch (e) { console.error('API error:', e); return null; }
+  },
+  
+  async getKPIs() {
+    try {
+      const res = await fetch(`${API_BASE}/api/rms/hotels/${HOTEL_ID}/kpis`);
+      return res.ok ? await res.json() : null;
+    } catch (e) { console.error('API error:', e); return null; }
+  },
+  
+  async getStrategy() {
+    try {
+      const res = await fetch(`${API_BASE}/api/rms/hotels/${HOTEL_ID}/strategy`);
+      return res.ok ? await res.json() : null;
+    } catch (e) { console.error('API error:', e); return null; }
+  },
+  
+  async updateStrategy(data) {
+    try {
+      const res = await fetch(`${API_BASE}/api/rms/hotels/${HOTEL_ID}/strategy`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      return res.ok ? await res.json() : null;
+    } catch (e) { console.error('API error:', e); return null; }
+  },
+  
+  async getWeights() {
+    try {
+      const res = await fetch(`${API_BASE}/api/rms/hotels/${HOTEL_ID}/weights`);
+      return res.ok ? await res.json() : null;
+    } catch (e) { console.error('API error:', e); return null; }
+  },
+  
+  async updateWeights(factors) {
+    try {
+      const res = await fetch(`${API_BASE}/api/rms/hotels/${HOTEL_ID}/weights`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ factors })
+      });
+      return res.ok ? await res.json() : null;
+    } catch (e) { console.error('API error:', e); return null; }
+  },
+  
+  async getRecommendations() {
+    try {
+      const res = await fetch(`${API_BASE}/api/rms/hotels/${HOTEL_ID}/recommendations`);
+      return res.ok ? await res.json() : null;
+    } catch (e) { console.error('API error:', e); return null; }
+  },
+  
+  async applyRecommendation(id) {
+    try {
+      const res = await fetch(`${API_BASE}/api/rms/hotels/${HOTEL_ID}/recommendations/${id}/apply`, {
+        method: 'POST'
+      });
+      return res.ok ? await res.json() : null;
+    } catch (e) { console.error('API error:', e); return null; }
+  },
+  
+  async dismissRecommendation(id) {
+    try {
+      const res = await fetch(`${API_BASE}/api/rms/hotels/${HOTEL_ID}/recommendations/${id}/dismiss`, {
+        method: 'POST'
+      });
+      return res.ok ? await res.json() : null;
+    } catch (e) { console.error('API error:', e); return null; }
+  },
+  
+  async getCalendar() {
+    try {
+      const res = await fetch(`${API_BASE}/api/rms/hotels/${HOTEL_ID}/calendar`);
+      return res.ok ? await res.json() : null;
+    } catch (e) { console.error('API error:', e); return null; }
+  },
+  
+  async runEngine() {
+    try {
+      const res = await fetch(`${API_BASE}/api/rms/hotels/${HOTEL_ID}/engine/run`, {
+        method: 'POST'
+      });
+      return res.ok ? await res.json() : null;
+    } catch (e) { console.error('API error:', e); return null; }
+  },
+  
+  async getConnectorsStatus() {
+    try {
+      const res = await fetch(`${API_BASE}/api/rms/hotels/${HOTEL_ID}/connectors/status`);
+      return res.ok ? await res.json() : null;
+    } catch (e) { console.error('API error:', e); return null; }
+  },
+  
+  async syncConnector(connector) {
+    try {
+      const res = await fetch(`${API_BASE}/api/rms/hotels/${HOTEL_ID}/connectors/${connector}/sync`, {
+        method: 'POST'
+      });
+      return res.ok ? await res.json() : null;
+    } catch (e) { console.error('API error:', e); return null; }
+  },
+  
+  async getMarketData() {
+    try {
+      const res = await fetch(`${API_BASE}/api/rms/hotels/${HOTEL_ID}/market-data`);
+      return res.ok ? await res.json() : null;
+    } catch (e) { console.error('API error:', e); return null; }
+  },
+  
+  async getCompetitors() {
+    try {
+      const res = await fetch(`${API_BASE}/api/rms/hotels/${HOTEL_ID}/competitors`);
+      return res.ok ? await res.json() : null;
+    } catch (e) { console.error('API error:', e); return null; }
+  }
+};
+
+/* ══════════════════════════════════════════════════════════════════════════
    MAIN COMPONENT
 ══════════════════════════════════════════════════════════════════════════ */
 
@@ -410,15 +540,116 @@ export const RMS = () => {
   const [activeMenu, setActiveMenu] = useState('revenue');
   const [activeSubMenu, setActiveSubMenu] = useState('dashboard');
   
+  // Data state (from API)
+  const [kpis, setKpis] = useState(null);
+  const [calendarData, setCalendarData] = useState(null);
+  const [recommendations, setRecommendations] = useState([]);
+  const [competitors, setCompetitors] = useState([]);
+  const [connectors, setConnectors] = useState(null);
+  const [strategies, setStrategies] = useState(STRATEGIES);
+  
   // Strategy state
   const [selectedStrategy, setSelectedStrategy] = useState('balanced');
-  const [autopilotEnabled, setAutopilotEnabled] = useState(true);
+  const [autopilotEnabled, setAutopilotEnabled] = useState(false);
+  const [autopilotThreshold, setAutopilotThreshold] = useState(0.75);
   const [weights, setWeights] = useState(WEIGHT_FACTORS);
   
   // Engine state
   const [engineStatus, setEngineStatus] = useState('live');
   const [lastSync, setLastSync] = useState(new Date());
   const [isCalculating, setIsCalculating] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load initial data
+  useEffect(() => {
+    loadInitialData();
+  }, []);
+
+  const loadInitialData = async () => {
+    setIsLoading(true);
+    try {
+      // Load all data in parallel
+      const [configData, kpisData, strategyData, weightsData, recsData, calData, connData] = await Promise.all([
+        api.getConfig(),
+        api.getKPIs(),
+        api.getStrategy(),
+        api.getWeights(),
+        api.getRecommendations(),
+        api.getCalendar(),
+        api.getConnectorsStatus()
+      ]);
+      
+      if (kpisData?.current) {
+        setKpis({
+          revpar: { value: kpisData.current.revpar || 0, change: 8.3, target: kpisData.targets?.revpar || 155 },
+          adr: { value: kpisData.current.adr || 0, change: 5.2, target: kpisData.targets?.adr || 195 },
+          occupancy: { value: kpisData.current.occupancy_pct || 0, change: 2.1, target: kpisData.targets?.occupancy || 82 },
+          revenue: { value: kpisData.current.total_revenue || 0, change: 12.5, target: kpisData.targets?.revenue || 32000 }
+        });
+      }
+      
+      if (strategyData) {
+        setSelectedStrategy(strategyData.active_strategy || 'balanced');
+        setAutopilotEnabled(strategyData.autopilot_enabled || false);
+        setAutopilotThreshold(strategyData.autopilot_confidence_threshold || 0.75);
+        if (strategyData.strategies?.length) {
+          setStrategies(strategyData.strategies.map(s => ({
+            id: s.strategy_type,
+            emoji: s.emoji,
+            name: s.name,
+            tag: s.tag
+          })));
+        }
+      }
+      
+      if (weightsData?.factors) {
+        setWeights(weightsData.factors.map(f => ({
+          id: f.factor_id,
+          label: f.label,
+          color: f.color,
+          value: f.value
+        })));
+      }
+      
+      if (recsData?.recommendations) {
+        setRecommendations(recsData.recommendations.map(r => ({
+          id: r.id,
+          type: r.type,
+          icon: r.type === 'price_increase' ? TrendingUp : r.type === 'promotion' ? Sparkles : AlertTriangle,
+          color: r.priority === 'high' || r.priority === 'critical' ? 'green' : r.type === 'promotion' ? 'amber' : 'blue',
+          title: r.title,
+          description: r.description,
+          impact: `€${r.estimated_revenue_impact?.toFixed(0) || '0'}`,
+          priority: r.priority,
+          confidence: r.confidence_score,
+          status: r.status
+        })));
+      }
+      
+      if (calData?.days) {
+        const days = Object.entries(calData.days).slice(0, 7).map(([date, info]) => {
+          const d = new Date(date);
+          return {
+            date,
+            day: d.toLocaleDateString('fr-FR', { weekday: 'short' }),
+            price: info.final_price || info.base_price,
+            occ: info.occupancy_forecast || 70,
+            demand: info.demand_level || 'medium'
+          };
+        });
+        setCalendarData(days);
+      }
+      
+      if (connData?.connectors) {
+        setConnectors(connData.connectors);
+      }
+      
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Sub-menu items based on active menu
   const getSubMenuItems = () => {
@@ -451,10 +682,93 @@ export const RMS = () => {
 
   const runEngine = async () => {
     setIsCalculating(true);
-    // Simulate calculation
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsCalculating(false);
-    setLastSync(new Date());
+    try {
+      const result = await api.runEngine();
+      if (result?.status === 'success') {
+        // Reload recommendations after engine run
+        const recsData = await api.getRecommendations();
+        if (recsData?.recommendations) {
+          setRecommendations(recsData.recommendations.map(r => ({
+            id: r.id,
+            type: r.type,
+            icon: r.type === 'price_increase' ? TrendingUp : r.type === 'promotion' ? Sparkles : AlertTriangle,
+            color: r.priority === 'high' || r.priority === 'critical' ? 'green' : r.type === 'promotion' ? 'amber' : 'blue',
+            title: r.title,
+            description: r.description,
+            impact: `€${r.estimated_revenue_impact?.toFixed(0) || '0'}`,
+            priority: r.priority,
+            confidence: r.confidence_score,
+            status: r.status
+          })));
+        }
+        setLastSync(new Date());
+      }
+    } catch (error) {
+      console.error('Engine run error:', error);
+    } finally {
+      setIsCalculating(false);
+    }
+  };
+
+  const handleStrategyChange = async (strategyId) => {
+    setSelectedStrategy(strategyId);
+    await api.updateStrategy({ active_strategy: strategyId });
+  };
+
+  const handleAutopilotToggle = async (enabled) => {
+    setAutopilotEnabled(enabled);
+    await api.updateStrategy({ autopilot_enabled: enabled });
+  };
+
+  const handleWeightChange = async (factorId, newValue) => {
+    const newWeights = weights.map(w => 
+      w.id === factorId ? { ...w, value: parseInt(newValue) } : w
+    );
+    setWeights(newWeights);
+  };
+
+  const saveWeights = async () => {
+    const factors = weights.map(w => ({
+      factor_id: w.id,
+      label: w.label,
+      value: w.value,
+      color: w.color
+    }));
+    await api.updateWeights(factors);
+  };
+
+  const handleApplyRecommendation = async (recId) => {
+    await api.applyRecommendation(recId);
+    // Reload recommendations
+    const recsData = await api.getRecommendations();
+    if (recsData?.recommendations) {
+      setRecommendations(recsData.recommendations.map(r => ({
+        id: r.id,
+        type: r.type,
+        icon: r.type === 'price_increase' ? TrendingUp : r.type === 'promotion' ? Sparkles : AlertTriangle,
+        color: r.priority === 'high' || r.priority === 'critical' ? 'green' : r.type === 'promotion' ? 'amber' : 'blue',
+        title: r.title,
+        description: r.description,
+        impact: `€${r.estimated_revenue_impact?.toFixed(0) || '0'}`,
+        priority: r.priority,
+        confidence: r.confidence_score,
+        status: r.status
+      })));
+    }
+  };
+
+  const handleDismissRecommendation = async (recId) => {
+    await api.dismissRecommendation(recId);
+    setRecommendations(prev => prev.filter(r => r.id !== recId));
+  };
+
+  const handleSyncConnector = async (connector) => {
+    await api.syncConnector(connector);
+    // Reload connectors status
+    const connData = await api.getConnectorsStatus();
+    if (connData?.connectors) {
+      setConnectors(connData.connectors);
+    }
   };
 
   const formatTime = (date) => {
@@ -584,44 +898,44 @@ export const RMS = () => {
               <div className="kpi-grid" data-testid="kpi-grid">
                 <div className="kpi" style={{ '--kpi-c': 'var(--primary)' }}>
                   <div className="kpi-label">RevPAR</div>
-                  <div className="kpi-value">€{MOCK_KPIS.revpar.value.toFixed(2)}</div>
+                  <div className="kpi-value">€{(kpis?.revpar?.value || MOCK_KPIS.revpar.value).toFixed(2)}</div>
                   <div className="kpi-sub">
                     <span className="tag tag-green">
                       <ArrowUpRight size={12} />
-                      +{MOCK_KPIS.revpar.change}%
+                      +{kpis?.revpar?.change || MOCK_KPIS.revpar.change}%
                     </span>
                     <span style={{ marginLeft: 4 }}>vs N-1</span>
                   </div>
                 </div>
                 <div className="kpi" style={{ '--kpi-c': 'var(--blue)' }}>
                   <div className="kpi-label">ADR</div>
-                  <div className="kpi-value">€{MOCK_KPIS.adr.value.toFixed(2)}</div>
+                  <div className="kpi-value">€{(kpis?.adr?.value || MOCK_KPIS.adr.value).toFixed(2)}</div>
                   <div className="kpi-sub">
                     <span className="tag tag-green">
                       <ArrowUpRight size={12} />
-                      +{MOCK_KPIS.adr.change}%
+                      +{kpis?.adr?.change || MOCK_KPIS.adr.change}%
                     </span>
                     <span style={{ marginLeft: 4 }}>vs N-1</span>
                   </div>
                 </div>
                 <div className="kpi" style={{ '--kpi-c': 'var(--teal)' }}>
                   <div className="kpi-label">Occupation</div>
-                  <div className="kpi-value">{MOCK_KPIS.occupancy.value}%</div>
+                  <div className="kpi-value">{kpis?.occupancy?.value || MOCK_KPIS.occupancy.value}%</div>
                   <div className="kpi-sub">
                     <span className="tag tag-green">
                       <ArrowUpRight size={12} />
-                      +{MOCK_KPIS.occupancy.change}%
+                      +{kpis?.occupancy?.change || MOCK_KPIS.occupancy.change}%
                     </span>
                     <span style={{ marginLeft: 4 }}>vs N-1</span>
                   </div>
                 </div>
                 <div className="kpi" style={{ '--kpi-c': 'var(--green)' }}>
                   <div className="kpi-label">Revenu Total</div>
-                  <div className="kpi-value">€{MOCK_KPIS.revenue.value.toLocaleString()}</div>
+                  <div className="kpi-value">€{(kpis?.revenue?.value || MOCK_KPIS.revenue.value).toLocaleString()}</div>
                   <div className="kpi-sub">
                     <span className="tag tag-green">
                       <ArrowUpRight size={12} />
-                      +{MOCK_KPIS.revenue.change}%
+                      +{kpis?.revenue?.change || MOCK_KPIS.revenue.change}%
                     </span>
                     <span style={{ marginLeft: 4 }}>vs N-1</span>
                   </div>
@@ -632,8 +946,8 @@ export const RMS = () => {
               <div className="alert primary" data-testid="engine-alert">
                 <Sparkles size={18} style={{ color: 'var(--primary)' }} className="alert-icon" />
                 <div className="alert-body">
-                  <strong>Moteur RMS actif</strong> — {MOCK_RECOMMENDATIONS.length} recommandations générées. 
-                  La stratégie <strong>{STRATEGIES.find(s => s.id === selectedStrategy)?.name}</strong> est appliquée.
+                  <strong>Moteur RMS actif</strong> — {recommendations.length || MOCK_RECOMMENDATIONS.length} recommandations générées. 
+                  La stratégie <strong>{strategies.find(s => s.id === selectedStrategy)?.name || 'Équilibré'}</strong> est appliquée.
                   {autopilotEnabled && ' Mode Autopilot activé.'}
                 </div>
               </div>
@@ -652,7 +966,7 @@ export const RMS = () => {
                   </div>
                   <div className="card-b">
                     <div className="cal-grid" style={{ gridTemplateColumns: 'repeat(7, 1fr)' }}>
-                      {MOCK_CALENDAR.map((day, idx) => (
+                      {(calendarData || MOCK_CALENDAR).map((day, idx) => (
                         <div 
                           key={day.date} 
                           className={`cal-cell ${idx === 0 ? 'today' : ''}`}
@@ -683,15 +997,15 @@ export const RMS = () => {
                     </button>
                   </div>
                   <div className="card-b">
-                    {MOCK_RECOMMENDATIONS.map((reco) => (
+                    {(recommendations.length > 0 ? recommendations : MOCK_RECOMMENDATIONS).slice(0, 3).map((reco) => (
                       <div key={reco.id} className="reco-row">
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                           <div className={`reco-icon icon-${reco.color}`} style={{ background: `var(--${reco.color}-s)` }}>
-                            <reco.icon size={16} style={{ color: `var(--${reco.color})` }} />
+                            {reco.icon ? <reco.icon size={16} style={{ color: `var(--${reco.color})` }} /> : <Sparkles size={16} style={{ color: `var(--${reco.color})` }} />}
                           </div>
                           <div>
                             <div style={{ fontWeight: 600, fontSize: '13px', color: 'var(--ink)' }}>{reco.title}</div>
-                            <div style={{ fontSize: '11.5px', color: 'var(--ink4)' }}>{reco.description}</div>
+                            <div style={{ fontSize: '11.5px', color: 'var(--ink4)' }}>{reco.description?.slice(0, 50)}...</div>
                           </div>
                         </div>
                         <span className={`tag tag-${reco.color}`}>{reco.impact}</span>
@@ -726,8 +1040,8 @@ export const RMS = () => {
                           <Building2 size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
                           Votre hôtel
                         </td>
-                        <td style={{ fontWeight: 700 }}>€{MOCK_KPIS.adr.value}</td>
-                        <td>{MOCK_KPIS.occupancy.value}%</td>
+                        <td style={{ fontWeight: 700 }}>€{kpis?.adr?.value || MOCK_KPIS.adr.value}</td>
+                        <td>{kpis?.occupancy?.value || MOCK_KPIS.occupancy.value}%</td>
                         <td><span className="tag tag-primary">Tous canaux</span></td>
                         <td><span className="tag tag-green">Position 2</span></td>
                       </tr>
@@ -925,11 +1239,11 @@ export const RMS = () => {
                 </div>
                 <div className="card-b">
                   <div className="strat-grid" data-testid="strategy-grid">
-                    {STRATEGIES.map((strat) => (
+                    {strategies.map((strat) => (
                       <div
                         key={strat.id}
                         className={`strat-card ${selectedStrategy === strat.id ? 'on' : ''}`}
-                        onClick={() => setSelectedStrategy(strat.id)}
+                        onClick={() => handleStrategyChange(strat.id)}
                         data-testid={`strategy-${strat.id}`}
                       >
                         <div className="strat-emoji">{strat.emoji}</div>
@@ -944,7 +1258,7 @@ export const RMS = () => {
               <div className="alert green">
                 <Check size={18} style={{ color: 'var(--green)' }} className="alert-icon" />
                 <div className="alert-body">
-                  Stratégie <strong>{STRATEGIES.find(s => s.id === selectedStrategy)?.name}</strong> sélectionnée.
+                  Stratégie <strong>{strategies.find(s => s.id === selectedStrategy)?.name || 'Équilibré'}</strong> sélectionnée.
                   Les recommandations seront adaptées à cette approche.
                 </div>
               </div>
@@ -957,11 +1271,11 @@ export const RMS = () => {
               <div className="card-h">
                 <div>
                   <div className="card-title">Pondération des Facteurs</div>
-                  <div className="card-sub">Ajustez l'influence de chaque paramètre</div>
+                  <div className="card-sub">Ajustez l'influence de chaque paramètre (total: 100%)</div>
                 </div>
-                <button className="btn btn-sm">
-                  <RotateCcw size={14} />
-                  Réinitialiser
+                <button className="btn btn-primary btn-sm" onClick={saveWeights}>
+                  <Save size={14} />
+                  Sauvegarder
                 </button>
               </div>
               <div className="card-b">
@@ -977,17 +1291,17 @@ export const RMS = () => {
                       min="0"
                       max="100"
                       value={factor.value}
-                      onChange={(e) => {
-                        const newWeights = weights.map(w => 
-                          w.id === factor.id ? { ...w, value: parseInt(e.target.value) } : w
-                        );
-                        setWeights(newWeights);
-                      }}
+                      onChange={(e) => handleWeightChange(factor.id, e.target.value)}
                       style={{ '--slider-color': factor.color }}
                     />
                     <div className="weight-val">{factor.value}%</div>
                   </div>
                 ))}
+                <div style={{ marginTop: 16, padding: '10px 12px', background: 'var(--surface2)', borderRadius: 8, fontSize: '12px', color: 'var(--ink3)' }}>
+                  Total: <strong style={{ color: weights.reduce((s, w) => s + w.value, 0) === 100 ? 'var(--green)' : 'var(--red)' }}>
+                    {weights.reduce((s, w) => s + w.value, 0)}%
+                  </strong> {weights.reduce((s, w) => s + w.value, 0) !== 100 && '(doit être 100%)'}
+                </div>
               </div>
             </div>
           )}
@@ -1003,14 +1317,14 @@ export const RMS = () => {
                     </div>
                     <div>
                       <div style={{ fontWeight: 700, fontSize: '16px', color: 'var(--ink)' }}>Mode Autopilot</div>
-                      <div style={{ fontSize: '12px', color: 'var(--ink4)' }}>Application automatique des recommandations</div>
+                      <div style={{ fontSize: '12px', color: 'var(--ink4)' }}>Application automatique des recommandations (confiance ≥ {autopilotThreshold * 100}%)</div>
                     </div>
                   </div>
                   <label className="toggle">
                     <input 
                       type="checkbox" 
                       checked={autopilotEnabled}
-                      onChange={(e) => setAutopilotEnabled(e.target.checked)}
+                      onChange={(e) => handleAutopilotToggle(e.target.checked)}
                       data-testid="autopilot-toggle"
                     />
                     <span className="toggle-track" />
