@@ -47,13 +47,22 @@ export default function ConfigurationPage() {
   }, []);
 
   const loadSummary = async (id) => {
+    // Verify auth token exists before making API call
+    const token = localStorage.getItem('flowtym_token');
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+    
     try {
       setLoading(true);
       const data = await getConfigurationSummary(id);
       setSummary(data);
     } catch (err) {
-      console.error('Failed to load summary:', err);
-      toast.error('Erreur lors du chargement');
+      // Only show error if user is authenticated
+      if (localStorage.getItem('flowtym_token')) {
+        console.error('Failed to load summary:', err);
+      }
     } finally {
       setLoading(false);
     }
