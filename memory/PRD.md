@@ -10,6 +10,30 @@ Flowtym is a next-generation SaaS hotel property management system (PMS) built f
 - **Housekeeping**: Room status management
 - **Super Admin**: Multi-property oversight, system administration
 
+## Architecture Overview
+
+### Central Configuration Module
+The Configuration module serves as the **"Source of Truth"** for all hotel settings. All other modules access configuration through the centralized `ConfigService`.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    CONFIGURATION MODULE                          │
+│  (Room Types, Rate Plans, Policies, Users, Taxes, Settings)     │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                    ┌─────────┴─────────┐
+                    │   ConfigService    │
+                    │   (Shared API)     │
+                    └─────────┬─────────┘
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        │                     │                     │
+   ┌────┴────┐          ┌─────┴────┐          ┌────┴────┐
+   │   RMS   │          │ Data Hub │          │   PMS   │
+   │ (Sync)  │          │(Distrib) │          │(Future) │
+   └─────────┘          └──────────┘          └─────────┘
+```
+
 ## Core Modules
 
 ### 1. PMS Core (Completed)
@@ -20,11 +44,15 @@ Flowtym is a next-generation SaaS hotel property management system (PMS) built f
 - Night Audit
 - Reports
 
-### 2. Revenue Management System - Hoptym RMS (Completed)
+### 2. Revenue Management System - Hoptym RMS (Completed + Integrated)
 - Rate optimization
 - Demand forecasting
 - Competitive analysis
 - Yield management
+- **NEW: Configuration Integration**
+  - `/api/rms/hotels/{id}/config-integration` - Get config from Configuration module
+  - `/api/rms/hotels/{id}/sync-from-config` - Sync pricing from Configuration
+  - `/api/rms/hotels/{id}/room-types-from-config` - Get room types for UI
 
 ### 3. Channel Manager (Completed - MOCKED)
 - OTA connections (mocked)
@@ -42,40 +70,50 @@ Flowtym is a next-generation SaaS hotel property management system (PMS) built f
 - Multi-language support
 - Payment integration
 
-### 6. Flowtym Data Hub (Completed - Phase 1)
+### 6. Flowtym Data Hub (Completed - Phase 1 + Integrated)
 - Universal data models for reservations, guests, transactions, rates, inventory
 - 5 Connectors (MOCKED): Mews, Booking.com, Stripe, D-EDGE, Lighthouse
 - Data normalization engine
 - API gateway functionality
-- Frontend with 6 views: Overview, Connectors, Sync, Data, API, Monitoring
+- **NEW: Configuration Integration**
+  - `/api/datahub/hotels/{id}/config-integration` - Get config for connectors
+  - `/api/datahub/hotels/{id}/pricing-for-distribution` - Get prices for OTA push
+  - `/api/datahub/hotels/{id}/room-type-mapping/{ota}` - OTA room mappings
+  - `/api/datahub/hotels/{id}/rate-plan-mapping/{ota}` - OTA rate mappings
+- Frontend with 6 views: Overview (with Config section), Connectors, Sync, Data, API, Monitoring
 
-### 7. Configuration Module (Completed - NEW)
+### 7. Configuration Module (Completed)
 **Purpose**: Central configuration hub serving as the "source of truth" for all hotel settings.
 
 **Sections**:
-1. **Hotel Profile**: General info, address, contact, regional settings (currency, timezone), check-in/out times, tax info
-2. **Room Types (Typologies)**: Categories with codes, capacity, base prices, equipment, views, bathrooms
-3. **Rooms (Inventory)**: Physical room list with Excel import functionality, floor/view/status management
-4. **Rate Plans**: BAR (Best Available Rate) and derived plans with automatic calculation rules
-5. **Policies**: Cancellation policies (flexible, strict, non-refundable) and payment policies (timing, deposit, methods)
-6. **Users & Access**: RBAC system with roles (Admin, Reception, Revenue Manager, Housekeeping, Accounting, Readonly)
-7. **Advanced Settings**: Taxes, booking rules, overbooking, price rounding, notifications
+1. **Hotel Profile**: General info, address, contact, regional settings
+2. **Room Types**: Categories with codes, capacity, base prices, equipment
+3. **Rooms**: Physical inventory with Excel import
+4. **Rate Plans**: BAR and derived plans with automatic calculation
+5. **Policies**: Cancellation and payment policies
+6. **Users & Access**: RBAC system with 6 roles
+7. **Advanced Settings**: Taxes, booking rules, overbooking, notifications
 
-**APIs** (all at `/api/config/*`):
-- `/hotels/{hotel_id}/profile` - GET/PUT
-- `/hotels/{hotel_id}/room-types` - CRUD
-- `/hotels/{hotel_id}/rooms` - CRUD
-- `/hotels/{hotel_id}/rooms/import/template` - Excel template download
-- `/hotels/{hotel_id}/rooms/import/preview` - Preview import
-- `/hotels/{hotel_id}/rooms/import/confirm` - Execute import
-- `/hotels/{hotel_id}/rate-plans` - CRUD + derivation
-- `/hotels/{hotel_id}/cancellation-policies` - CRUD
-- `/hotels/{hotel_id}/payment-policies` - CRUD
-- `/hotels/{hotel_id}/users` - CRUD
-- `/roles` - Available roles
-- `/hotels/{hotel_id}/settings` - GET/PUT
-- `/hotels/{hotel_id}/taxes` - Add/Remove
-- `/hotels/{hotel_id}/summary` - Configuration progress
+### 8. Shared ConfigService (NEW)
+**Purpose**: Centralized service for all modules to access configuration data.
+
+**Location**: `/app/backend/shared/config_service.py`
+
+**Key Methods**:
+- `get_full_config(hotel_id)` - Complete configuration in one call
+- `get_room_types(hotel_id)` - Room types with counts
+- `get_rate_plans(hotel_id)` - Rate plans with derivation rules
+- `get_pricing_matrix(hotel_id)` - Pre-calculated prices
+- `get_inventory_summary(hotel_id)` - Rooms by type/floor
+- `calculate_derived_price(base, rule)` - Derived rate calculation
+- `get_ota_room_type_mapping(hotel_id, ota)` - OTA mappings
+
+**Shared API** (`/api/shared/config/*`):
+- `/config/{hotel_id}/all` - Full configuration
+- `/config/{hotel_id}/room-types` - Room types
+- `/config/{hotel_id}/pricing-matrix` - Pricing matrix
+- `/config/{hotel_id}/rms-data` - RMS specific data
+- `/config/{hotel_id}/datahub-data` - Data Hub specific data
 
 ## Tech Stack
 - **Backend**: FastAPI, Python, Pydantic, MongoDB (Motor async)
@@ -99,55 +137,66 @@ Flowtym is a next-generation SaaS hotel property management system (PMS) built f
 - [x] CRM Module
 - [x] Booking Engine
 - [x] Data Hub - Phase 1
-- [x] **Configuration Module** (NEW - Backend + Frontend)
-  - [x] Backend APIs (23 endpoints tested)
-  - [x] Excel import for rooms
-  - [x] Frontend with 7 sections
-  - [x] Multi-tenant architecture
+- [x] Configuration Module
+- [x] **ConfigService & Integration (Phase A & B)**
+  - [x] Central ConfigService
+  - [x] Shared API endpoints
+  - [x] RMS ↔ Configuration integration
+  - [x] Data Hub ↔ Configuration integration
+  - [x] React hooks for frontend modules
 
-### In Progress / Upcoming (P1-P2)
-- [ ] Data Hub - Phase 2 (Event Orchestration, Smart Caching, Priority Engine)
-- [ ] Inter-module connectivity (Config → RMS, Config → Data Hub)
+### Test Data Created
+- 4 Room Types: STD (120€), SUP (160€), DLX (220€), STE (350€)
+- 2 Rate Plans: BAR (base), NRF (-10% derived)
+- 1 Room: 101 (Standard)
+- 1 Cancellation Policy: FLEX
+- 1 Payment Policy: PAY_ARR
+- 1 User: Marie Dupont (Reception)
+
+### In Progress / Upcoming (P1)
+- [ ] PMS ↔ Configuration integration
+- [ ] Booking Engine ↔ Configuration integration
+- [ ] Data Hub - Phase 2 (Event Orchestration, Smart Caching)
+
+### Future Tasks (P2)
 - [ ] External API Marketplace
 - [ ] Real-time webhooks for reservations
-
-## Design Guidelines
-See `/app/design_guidelines.json` for complete UI/UX specifications including:
-- Color palette (violet primary, dark backgrounds)
-- Typography (Manrope for headings, Inter for body)
-- Component patterns (cards, modals, tables)
-- Layout guidelines
-
-## Architecture
-```
-/app/
-├── backend/
-│   ├── server.py           # Main FastAPI app
-│   ├── config/             # Configuration module
-│   │   ├── routes.py       # API endpoints
-│   │   ├── models/         # Pydantic schemas
-│   │   └── services/       # Business logic (Excel import)
-│   ├── datahub/            # Data Hub module
-│   ├── rms/                # RMS module
-│   └── crm/                # CRM module
-├── frontend/
-│   └── src/
-│       ├── pages/
-│       │   ├── config/     # Configuration pages
-│       │   ├── datahub/    # Data Hub pages
-│       │   ├── rms/        # RMS pages
-│       │   └── crm/        # CRM pages
-│       └── components/
-│           └── ui/         # Shadcn components
-└── memory/
-    └── PRD.md              # This file
-```
+- [ ] OAuth2 advanced security
 
 ## Test Reports
 - `/app/test_reports/iteration_17.json` - Data Hub Backend
 - `/app/test_reports/iteration_18.json` - Data Hub Frontend
-- `/app/test_reports/iteration_19.json` - Configuration Module (100% passed)
+- `/app/test_reports/iteration_19.json` - Configuration Module (100%)
+- `/app/test_reports/iteration_20.json` - Configuration Integration (100%)
+
+## File Structure
+```
+/app/
+├── backend/
+│   ├── server.py
+│   ├── shared/                 # NEW: Shared services
+│   │   ├── __init__.py
+│   │   ├── config_service.py   # Central ConfigService
+│   │   └── routes.py           # Shared API routes
+│   ├── config/                 # Configuration module
+│   │   ├── routes.py
+│   │   ├── models/
+│   │   └── services/
+│   ├── datahub/                # Data Hub module
+│   │   └── routes.py           # +Integration endpoints
+│   └── rms/                    # RMS module
+│       └── routes.py           # +Integration endpoints
+├── frontend/
+│   └── src/
+│       ├── hooks/
+│       │   └── useConfigData.js  # NEW: React hooks
+│       └── pages/
+│           ├── config/
+│           └── datahub/
+└── memory/
+    └── PRD.md
+```
 
 ---
 *Last updated: March 25, 2026*
-*Version: 2.0 - Configuration Module Complete*
+*Version: 2.1 - Configuration Integration Complete (Phase A & B)*
