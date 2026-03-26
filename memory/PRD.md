@@ -267,12 +267,58 @@ Complete visual redesign of the entire application with premium "Kleon Figma" de
 
 ---
 
+### Phase 7: Flowboard & Integrations Hub (Completed - March 26, 2026)
+Central dashboard and external system integrations.
+
+#### 7.1 Flowboard - Central Dashboard
+- [x] 6 consolidated KPIs (Occupation, ADR, RevPAR, CA Jour, Arrivées, Départs)
+- [x] Trend indicators (vs yesterday)
+- [x] Timeline du jour (arrivals/departures events)
+- [x] Contextual alerts (high occupancy, unpaid departures, housekeeping)
+- [x] AI Suggestions with revenue impact estimates
+- [x] Quick Actions (Nouvelle réservation, Check-in, Check-out, Housekeeping, Rapports)
+- [x] Housekeeping widget with progress bar
+- [x] Channel Mix widget (direct vs OTA distribution)
+- [x] E-Reputation widget (global score + platforms)
+- [x] Personnaliser mode for drag & drop widgets
+- [x] Auto-refresh every 60 seconds
+
+#### 7.2 Integrations Hub - External Connections
+- [x] PMS Providers catalog: Mews (Certifié), Medialog (Certifié), Webhook Générique, API REST
+- [x] Channel Managers catalog: D-Edge (Certifié)
+- [x] Configuration dialog for credentials (API keys, tokens)
+- [x] Connection testing functionality
+- [x] Sync direction (inbound/outbound/bidirectional)
+- [x] Sync interval configuration (5/15/30/60 min)
+- [x] Status tracking (Active, Pending, Error, Syncing)
+- [x] Sync logs and error tracking
+
+#### 7.3 Inter-Module Connections (Backend Ready)
+- [x] PMS ↔ Channel Manager sync endpoints
+- [x] PMS ↔ CRM client data sync
+- [x] PMS ↔ Housekeeping room status sync
+- [x] RMS → Channel Manager dynamic pricing sync
+
+#### 7.4 Files Created
+- `/app/backend/flowboard/routes.py` - Flowboard API
+- `/app/backend/flowboard/models.py` - Pydantic models
+- `/app/backend/integrations/routes.py` - Integrations API
+- `/app/backend/integrations/models.py` - Integration models
+- `/app/frontend/src/pages/flowboard/Flowboard.jsx` - Dashboard UI
+- `/app/frontend/src/pages/integrations/IntegrationsHub.jsx` - Integrations UI
+
+---
+
 ## Upcoming Tasks (Backlog)
 
 ### P0 - High Priority
 - [ ] Excel Import: Implement real parsing logic in `/app/backend/config/services/excel_import.py`
 
 ### P1 - Medium Priority
+- [ ] Real Mews API integration (with real credentials)
+- [ ] Real Medialog API integration
+- [ ] Real D-Edge API integration
+- [ ] Webhook delivery system for external notifications
 - [ ] CRM Integration: Connect customer management to ConfigService
 - [ ] Channel Manager: Connect OTA sync to ConfigService
 - [ ] Real-time webhooks for booking events
@@ -287,11 +333,11 @@ Complete visual redesign of the entire application with premium "Kleon Figma" de
 
 ## Testing Status
 
-### Last Test Report: iteration_24.json (March 26, 2026)
-- **Success Rate**: 100% (13/13 frontend tests passed)
-- **Features Tested**: UI Refonte, Command Palette, All modules navigation
-- **Design Verified**: Colors, typography, shadows, border-radius all correct
-- **Issues Found**: None (minor backend error in /config but form still works)
+### Last Test Report: iteration_25.json (March 26, 2026)
+- **Success Rate**: 100% (Backend: 14/14, Frontend: 100%)
+- **Features Tested**: Flowboard, Integrations Hub, all APIs
+- **Verified Features**: 6 KPIs, Timeline, AI Suggestions, Alerts, Quick Actions, Integrations catalog
+- **Issues Found**: None
 - **Retest Needed**: No
 
 ### Test Credentials
@@ -303,10 +349,21 @@ Complete visual redesign of the entire application with premium "Kleon Figma" de
 ## Known Mocks
 
 - **Excel Parser**: Import logic returns mock success (real implementation pending)
+- **External Integrations**: Mews, Medialog, D-Edge connection tests return mock success (no real API credentials)
 
 ---
 
 ## Key Files Reference
+
+### Flowboard
+- `/app/backend/flowboard/routes.py` - Flowboard API endpoints
+- `/app/backend/flowboard/models.py` - Pydantic models
+- `/app/frontend/src/pages/flowboard/Flowboard.jsx` - Dashboard UI
+
+### Integrations Hub
+- `/app/backend/integrations/routes.py` - Integrations API
+- `/app/backend/integrations/models.py` - Provider models
+- `/app/frontend/src/pages/integrations/IntegrationsHub.jsx` - Integration management UI
 
 ### Design System
 - `/app/frontend/src/styles/flowtym-premium-v2.css` - Main CSS with global overrides
@@ -319,6 +376,6 @@ Complete visual redesign of the entire application with premium "Kleon Figma" de
 
 ---
 
-*Document Version: 5.0*
+*Document Version: 6.0*
 *Last Updated: March 26, 2026*
-*Module Completed: UI Refonte Kleon Figma Design System*
+*Module Completed: Flowboard & Integrations Hub*
