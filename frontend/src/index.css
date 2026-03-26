@@ -1,8 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
+/* FLOWTYM PREMIUM DESIGN SYSTEM */
+@import './styles/flowtym-tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* FLOWTYM OVERRIDES - Applied after Tailwind */
+@import './styles/flowtym-overrides.css';
 
 @layer base {
   :root {
@@ -73,7 +79,25 @@ html, body, #root {
   background: #cbd5e1;
 }
 
-/* ===================== FLOWTYM DESIGN SYSTEM ===================== */
+/* ===================== FLOWTYM PREMIUM DESIGN SYSTEM ===================== */
+
+/* KPI Cards Premium */
+.kpi-card {
+  @apply bg-white rounded-xl p-5 transition-all;
+  border: 1px solid #F3F4F6;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+.kpi-card:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+}
+.kpi-value {
+  @apply text-3xl font-bold tracking-tight;
+  color: #1F2937;
+}
+.kpi-label {
+  @apply text-xs font-medium uppercase tracking-wider mt-1;
+  color: #6B7280;
+}
 
 /* Contract Type Badges */
 .badge-cdi { @apply bg-violet-100 text-violet-700 border border-violet-200; }
