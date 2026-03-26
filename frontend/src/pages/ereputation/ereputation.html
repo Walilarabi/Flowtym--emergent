@@ -475,6 +475,59 @@ hr{border:none;border-top:1px solid var(--bdr);margin:10px 0}
 .int-toggle input:checked + .int-toggle-sl{background:var(--t4)}
 .int-toggle input:checked + .int-toggle-sl::before{transform:translateX(16px)}
 
+/* ── E-REP HORIZONTAL NAV ─────────────────────────────────── */
+.erep-hnav {
+  background: #1B1A35;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 42px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.erep-hnav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: rgba(255,255,255,.5);
+  cursor: pointer;
+  transition: all .15s ease;
+  background: none;
+  border: none;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.erep-hnav-btn:hover {
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.85);
+}
+.erep-hnav-btn.act {
+  background: rgba(255,255,255,.12);
+  color: #fff;
+  font-weight: 600;
+}
+.erep-hnav-btn svg {
+  opacity: 0.7;
+}
+.erep-hnav-btn:hover svg,
+.erep-hnav-btn.act svg {
+  opacity: 1;
+}
+.erep-hnav-sep {
+  width: 1px;
+  height: 20px;
+  background: rgba(255,255,255,.1);
+  margin: 0 6px;
+}
+/* Remove old sidebar */
+.sidebar { display: none !important; }
+.layout { height: calc(100vh - 94px) !important; }
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
@@ -485,19 +538,6 @@ hr{border:none;border-top:1px solid var(--bdr);margin:10px 0}
 <div style="max-width:1400px;margin:0 auto;padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:12px">
   <div style="display:flex;align-items:center;gap:20px;flex-shrink:0">
     <span class="logo-f">FLOW<span class="logo-t">TYM</span></span>
-    <div style="width:1px;height:18px;background:rgba(255,255,255,.1);flex-shrink:0"></div>
-    <nav id="moduleNavInline" style="display:flex;align-items:center;gap:2px;overflow-x:auto;flex:1" aria-label="Modules principaux">
-      <button class="np mi" data-mod="dashboard" onclick="navModule('dashboard',this)"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> Tableau de bord</button>
-      <button class="np mi" data-mod="pms" onclick="navModule('pms',this)"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> PMS</button>
-      <button class="np mi mact" data-mod="ereputation" onclick="navModule('ereputation',this)"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> E-Réputation</button>
-      <button class="np mi" data-mod="operations" onclick="navModule('operations',this)"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg> Opérations</button>
-      <button class="np mi" data-mod="yield" onclick="navModule('yield',this)"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> Yield</button>
-      <button class="np mi" data-mod="channel" onclick="navModule('channel',this)"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg> Channel</button>
-      <button class="np mi" data-mod="reports" onclick="navModule('reports',this)"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Rapports</button>
-      <button class="np mi" data-mod="config" onclick="navModule('config',this)"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg> Config</button>
-      <!-- Hamburger mobile -->
-      <button class="np mhbg" onclick="toggleDrawer(true)" aria-label="Menu" style="display:none"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
-    </nav>
   </div>
   <div style="display:flex;align-items:center;gap:8px">
     <div class="fsync" style="display:none;font-size:10.5px" id="syncBadge">Synchronisé · 3 min</div>
@@ -508,111 +548,48 @@ hr{border:none;border-top:1px solid var(--bdr);margin:10px 0}
 </div>
 </header>
 
-
-<!-- ═══ MOBILE DRAWER ═══ -->
-<div class="mdrawer" id="mobileDrawer" role="dialog" aria-modal="true" aria-label="Navigation modules">
-  <div class="mdrawer-overlay" onclick="toggleDrawer(false)"></div>
-  <div class="mdrawer-panel">
-    <div class="mdrawer-head">
-      <span class="mdrawer-logo">FLOW<span>TYM</span></span>
-      <button class="mdrawer-close" onclick="toggleDrawer(false)" aria-label="Fermer">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
-    <div class="mdrawer-list">
-      <button class="mdrawer-item" data-mod="dashboard" onclick="navModule('dashboard',this);toggleDrawer(false)">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-        Tableau de bord
-      </button>
-      <button class="mdrawer-item" data-mod="pms" onclick="navModule('pms',this);toggleDrawer(false)">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        PMS
-      </button>
-      <button class="mdrawer-item mact" data-mod="ereputation" onclick="navModule('ereputation',this);toggleDrawer(false)">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        E-Réputation
-      </button>
-      <button class="mdrawer-item" data-mod="operations" onclick="navModule('operations',this);toggleDrawer(false)">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
-        Opérations
-      </button>
-      <button class="mdrawer-item" data-mod="yield" onclick="navModule('yield',this);toggleDrawer(false)">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-        Yield Management
-      </button>
-      <button class="mdrawer-item" data-mod="channel" onclick="navModule('channel',this);toggleDrawer(false)">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
-        Channel Manager
-      </button>
-      <button class="mdrawer-item" data-mod="reports" onclick="navModule('reports',this);toggleDrawer(false)">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-        Rapports
-      </button>
-      <button class="mdrawer-item" data-mod="settings" onclick="navModule('settings',this);toggleDrawer(false)">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-        Configuration
-      </button>
-    </div>
-  </div>
-</div>
-
+<!-- ═══ E-REP HORIZONTAL NAV ═══ -->
+<nav class="erep-hnav" id="erepHnav">
+  <button class="erep-hnav-btn act" onclick="nav('dashboard')" data-tab="dashboard">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Dashboard
+  </button>
+  <button class="erep-hnav-btn" onclick="nav('inbox')" data-tab="inbox">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+    Inbox
+  </button>
+  <button class="erep-hnav-btn" onclick="nav('radar')" data-tab="radar">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M6.3 6.3a8 8 0 000 11.4M17.7 6.3a8 8 0 010 11.4M3.5 3.5a12.7 12.7 0 000 17M20.5 3.5a12.7 12.7 0 010 17"/></svg>
+    Radar
+  </button>
+  <button class="erep-hnav-btn" onclick="nav('booster')" data-tab="booster">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+    Booster
+  </button>
+  <button class="erep-hnav-btn" onclick="nav('integrity')" data-tab="integrity">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    Integrity
+  </button>
+  <button class="erep-hnav-btn" onclick="nav('campaigns')" data-tab="campaigns">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="5" height="5"/><rect x="16" y="3" width="5" height="5"/><rect x="3" y="16" width="5" height="5"/><path d="M21 16h-3a2 2 0 00-2 2v3M13 3h2M13 8h4M13 13h8M13 18v3"/></svg>
+    Campagnes
+  </button>
+  <button class="erep-hnav-btn" onclick="nav('stats')" data-tab="stats">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    Analytics
+  </button>
+  <div class="erep-hnav-sep"></div>
+  <button class="erep-hnav-btn" onclick="nav('connections')" data-tab="connections">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    Paramètres
+  </button>
+</nav>
 
 <!-- ═══ LAYOUT ═══ -->
 <div class="layout">
 
-  <!-- SIDEBAR -->
-  <nav class="sidebar">
-    <!-- Nav -->
-    <div class="sb-nav" style="padding-top:12px">
-      <button class="sn act" onclick="nav('dashboard')">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-        Accueil
-      </button>
-
-      <div class="sn-label" style="margin-top:6px">Gestion des avis</div>
-      <button class="sn" onclick="nav('stats')">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        Statistiques
-      </button>
-      <button class="sn" onclick="nav('inbox')">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-        Inbox avis
-        <span class="snbdg">7</span>
-      </button>
-      <button class="sn" onclick="nav('integrity')">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        Intégrité avis
-        <span class="snbdg" style="background:var(--amber)">3</span>
-      </button>
-
-      <div class="sn-label" style="margin-top:6px">Croissance</div>
-      <button class="sn" onclick="nav('radar')">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M6.3 6.3a8 8 0 000 11.4M17.7 6.3a8 8 0 010 11.4M3.5 3.5a12.7 12.7 0 000 17M20.5 3.5a12.7 12.7 0 010 17"/></svg>
-        Radar IA
-      </button>
-      <button class="sn" onclick="nav('booster')">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-        OTA Booster
-      </button>
-      <button class="sn" onclick="nav('campaigns')">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="5" height="5"/><rect x="16" y="3" width="5" height="5"/><rect x="3" y="16" width="5" height="5"/><path d="M21 16h-3a2 2 0 00-2 2v3M13 3h2M13 8h4M13 13h8M13 18v3"/></svg>
-        Campagnes QR
-      </button>
-
-      <div class="sn-label" style="margin-top:6px">Configuration</div>
-      <button class="sn" onclick="nav('connections')">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-        Connexions
-      </button>
-    </div>
-
-
-  </nav>
-
   <!-- MAIN -->
-  <main class="main" id="mainContent">
-
-    <!-- ═══ DASHBOARD ═══ -->
+  <main class="main" id="mainContent" style="width:100%">
     <div class="screen act" id="s-dashboard">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
         <div>
@@ -1404,6 +1381,10 @@ function nav(screen) {
   if(screen==='integrity') setTimeout(()=>{ intRenderTable(intFilteredReviews); intRenderRules(); intInitChart(); }, 50);
   closePanel();
   syncModuleNav(screen);
+  // Update horizontal nav
+  document.querySelectorAll('.erep-hnav-btn').forEach(b=>b.classList.remove('act'));
+  const tabBtn = document.querySelector('.erep-hnav-btn[data-tab="'+screen+'"]');
+  if(tabBtn) tabBtn.classList.add('act');
 }
 
 // ═══ INBOX TABLE ═══
