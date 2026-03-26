@@ -526,27 +526,13 @@ hr{border:none;border-top:1px solid var(--bdr);margin:10px 0}
 }
 /* Remove old sidebar */
 .sidebar { display: none !important; }
-.layout { height: calc(100vh - 94px) !important; }
+.layout { height: calc(100vh - 42px) !important; }
+.hdr { display: none !important; }
 
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
-
-<!-- ═══ HEADER ═══ -->
-<header class="hdr">
-<div style="max-width:1400px;margin:0 auto;padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:12px">
-  <div style="display:flex;align-items:center;gap:20px;flex-shrink:0">
-    <span class="logo-f">FLOW<span class="logo-t">TYM</span></span>
-  </div>
-  <div style="display:flex;align-items:center;gap:8px">
-    <div class="fsync" style="display:none;font-size:10.5px" id="syncBadge">Synchronisé · 3 min</div>
-    <div class="nb"><svg width="15" height="15" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/></svg><span class="nbdg">3</span></div>
-    <div class="nb"><svg width="15" height="15" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd"/></svg></div>
-    <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--p4),var(--t4));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;cursor:pointer;border:2px solid rgba(255,255,255,.2)">AD</div>
-  </div>
-</div>
-</header>
 
 <!-- ═══ E-REP HORIZONTAL NAV ═══ -->
 <nav class="erep-hnav" id="erepHnav">
