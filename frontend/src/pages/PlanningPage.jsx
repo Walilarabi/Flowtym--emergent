@@ -142,50 +142,68 @@ export const PlanningPage = () => {
 
   return (
     <div className="h-full flex flex-col gap-4">
-      {/* KPIs Row */}
+      {/* Premium KPI Cards */}
       {showKpis && dashboard && (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3" data-testid="kpis-row">
-          <div className="kpi-card">
-            <div className="flex items-center gap-2 text-slate-500 mb-1">
-              <TrendingUp className="w-4 h-4" />
-              <span className="text-xs font-medium">Occupation</span>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4" data-testid="kpis-row">
+          <div className="bg-white rounded-xl p-5 relative overflow-hidden" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.04)', border: '1px solid #F3F4F6' }}>
+            <div className="absolute top-0 left-0 right-0 h-1" style={{ background: 'linear-gradient(135deg, #6C5CE7, #A29BFE)' }} />
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: '#F5F4FE' }}>
+                <TrendingUp className="w-4 h-4" style={{ color: '#6C5CE7' }} />
+              </div>
+              <span className="text-xs font-medium uppercase tracking-wider" style={{ color: '#6B7280' }}>Occupation</span>
             </div>
-            <p className="text-2xl font-bold text-slate-900">{dashboard.occupancy_rate}%</p>
+            <p className="text-3xl font-bold" style={{ color: '#1F2937', letterSpacing: '-0.02em' }}>{dashboard.occupancy_rate}%</p>
           </div>
-          <div className="kpi-card">
-            <div className="flex items-center gap-2 text-slate-500 mb-1">
-              <DollarSign className="w-4 h-4" />
-              <span className="text-xs font-medium">ADR</span>
+          <div className="bg-white rounded-xl p-5 relative overflow-hidden" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.04)', border: '1px solid #F3F4F6' }}>
+            <div className="absolute top-0 left-0 right-0 h-1" style={{ background: '#22C55E' }} />
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: '#DCFCE7' }}>
+                <DollarSign className="w-4 h-4" style={{ color: '#22C55E' }} />
+              </div>
+              <span className="text-xs font-medium uppercase tracking-wider" style={{ color: '#6B7280' }}>ADR</span>
             </div>
-            <p className="text-2xl font-bold text-slate-900">{dashboard.adr.toFixed(0)}EUR</p>
+            <p className="text-3xl font-bold" style={{ color: '#1F2937', letterSpacing: '-0.02em' }}>{dashboard.adr.toFixed(0)}€</p>
           </div>
-          <div className="kpi-card">
-            <div className="flex items-center gap-2 text-slate-500 mb-1">
-              <TrendingUp className="w-4 h-4" />
-              <span className="text-xs font-medium">RevPAR</span>
+          <div className="bg-white rounded-xl p-5 relative overflow-hidden" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.04)', border: '1px solid #F3F4F6' }}>
+            <div className="absolute top-0 left-0 right-0 h-1" style={{ background: '#3B82F6' }} />
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: '#DBEAFE' }}>
+                <TrendingUp className="w-4 h-4" style={{ color: '#3B82F6' }} />
+              </div>
+              <span className="text-xs font-medium uppercase tracking-wider" style={{ color: '#6B7280' }}>RevPAR</span>
             </div>
-            <p className="text-2xl font-bold text-slate-900">{dashboard.revpar.toFixed(0)}EUR</p>
+            <p className="text-3xl font-bold" style={{ color: '#1F2937', letterSpacing: '-0.02em' }}>{dashboard.revpar.toFixed(0)}€</p>
           </div>
-          <div className="kpi-card">
-            <div className="flex items-center gap-2 text-slate-500 mb-1">
-              <Bed className="w-4 h-4" />
-              <span className="text-xs font-medium">Chambres dispo</span>
+          <div className="bg-white rounded-xl p-5 relative overflow-hidden" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.04)', border: '1px solid #F3F4F6' }}>
+            <div className="absolute top-0 left-0 right-0 h-1" style={{ background: '#F59E0B' }} />
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: '#FEF3C7' }}>
+                <Bed className="w-4 h-4" style={{ color: '#F59E0B' }} />
+              </div>
+              <span className="text-xs font-medium uppercase tracking-wider" style={{ color: '#6B7280' }}>Chambres dispo</span>
             </div>
-            <p className="text-2xl font-bold text-slate-900">{dashboard.available_rooms}/{dashboard.total_rooms}</p>
+            <p className="text-3xl font-bold" style={{ color: '#1F2937', letterSpacing: '-0.02em' }}>{dashboard.available_rooms}<span style={{ color: '#9CA3AF', fontSize: '18px' }}>/{dashboard.total_rooms}</span></p>
           </div>
-          <div className="kpi-card">
-            <div className="flex items-center gap-2 text-slate-500 mb-1">
-              <LogIn className="w-4 h-4" />
-              <span className="text-xs font-medium">Arrivees</span>
+          <div className="bg-white rounded-xl p-5 relative overflow-hidden" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.04)', border: '1px solid #F3F4F6' }}>
+            <div className="absolute top-0 left-0 right-0 h-1" style={{ background: '#22C55E' }} />
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: '#DCFCE7' }}>
+                <LogIn className="w-4 h-4" style={{ color: '#22C55E' }} />
+              </div>
+              <span className="text-xs font-medium uppercase tracking-wider" style={{ color: '#6B7280' }}>Arrivées</span>
             </div>
-            <p className="text-2xl font-bold text-emerald-600">{dashboard.arrivals}</p>
+            <p className="text-3xl font-bold" style={{ color: '#22C55E', letterSpacing: '-0.02em' }}>{dashboard.arrivals}</p>
           </div>
-          <div className="kpi-card">
-            <div className="flex items-center gap-2 text-slate-500 mb-1">
-              <LogOut className="w-4 h-4" />
-              <span className="text-xs font-medium">Departs</span>
+          <div className="bg-white rounded-xl p-5 relative overflow-hidden" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.04)', border: '1px solid #F3F4F6' }}>
+            <div className="absolute top-0 left-0 right-0 h-1" style={{ background: '#EF4444' }} />
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: '#FEE2E2' }}>
+                <LogOut className="w-4 h-4" style={{ color: '#EF4444' }} />
+              </div>
+              <span className="text-xs font-medium uppercase tracking-wider" style={{ color: '#6B7280' }}>Départs</span>
             </div>
-            <p className="text-2xl font-bold text-amber-600">{dashboard.departures}</p>
+            <p className="text-3xl font-bold" style={{ color: '#EF4444', letterSpacing: '-0.02em' }}>{dashboard.departures}</p>
           </div>
         </div>
       )}

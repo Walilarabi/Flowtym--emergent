@@ -46,19 +46,19 @@ export const TopNavigation = () => {
   const getInitials = (firstName, lastName) => `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase()
 
   return (
-    <header className="h-14 bg-white border-b border-slate-200 flex items-center px-4 shrink-0 shadow-sm">
+    <header className="h-14 bg-white border-b border-slate-100 flex items-center px-6 shrink-0" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
       {/* Logo */}
-      <div className="flex items-center gap-2.5 mr-8">
-        <div className="w-8 h-8 bg-gradient-to-br from-violet-600 to-violet-700 rounded-lg flex items-center justify-center shadow-sm">
-          <Building2 className="w-4.5 h-4.5 text-white" />
+      <div className="flex items-center gap-3 mr-10">
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #6C5CE7, #A29BFE)' }}>
+          <Building2 className="w-5 h-5 text-white" />
         </div>
-        <span className="text-lg font-bold tracking-tight">
-          <span className="text-violet-600">FLOW</span><span className="text-slate-800">TYM</span>
+        <span className="text-lg font-bold" style={{ letterSpacing: '-0.02em' }}>
+          <span style={{ color: '#6C5CE7' }}>FLOW</span><span style={{ color: '#1F2937' }}>TYM</span>
         </span>
       </div>
 
       {/* Main Navigation */}
-      <nav className="flex-1 flex items-center gap-0.5 overflow-x-auto scrollbar-hide">
+      <nav className="flex-1 flex items-center gap-1 overflow-x-auto scrollbar-hide">
         {modules.map((module) => {
           const Icon = module.icon
           const active = isActive(module.path)
@@ -67,7 +67,8 @@ export const TopNavigation = () => {
             return (
               <div 
                 key={module.id} 
-                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-400 whitespace-nowrap cursor-not-allowed" 
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap cursor-not-allowed rounded-lg" 
+                style={{ color: '#9CA3AF' }}
                 data-testid={`nav-${module.id}`}
               >
                 <Icon className="w-4 h-4" />
@@ -78,16 +79,17 @@ export const TopNavigation = () => {
 
           return (
             <NavLink 
-              key={module.id} 
-              to={module.path} 
-              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium whitespace-nowrap rounded-md transition-colors
-                ${active 
-                  ? 'text-violet-700 bg-violet-50' 
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                }`}
+              key={module.id}
+              to={module.path}
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap rounded-lg transition-all duration-150"
+              style={{ 
+                color: active ? '#6C5CE7' : '#6B7280',
+                background: active ? '#F5F4FE' : 'transparent',
+                fontWeight: active ? 600 : 500
+              }}
               data-testid={`nav-${module.id}`}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="w-4 h-4" style={{ opacity: active ? 1 : 0.7 }} />
               <span className="hidden lg:inline">{module.label}</span>
             </NavLink>
           )
@@ -95,39 +97,51 @@ export const TopNavigation = () => {
       </nav>
 
       {/* Right Side Actions */}
-      <div className="flex items-center gap-2 ml-4">
+      <div className="flex items-center gap-3 ml-6">
         {/* Theme Toggle */}
-        <button className="p-2 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
-          <Moon className="w-4.5 h-4.5" />
+        <button 
+          className="p-2 rounded-lg transition-all duration-150"
+          style={{ color: '#6B7280' }}
+          onMouseEnter={e => e.target.style.background = '#F8F9FC'}
+          onMouseLeave={e => e.target.style.background = 'transparent'}
+        >
+          <Moon className="w-4 h-4" />
         </button>
         
         {/* Notifications */}
-        <button className="p-2 rounded-lg hover:bg-slate-100 text-slate-500 relative transition-colors">
-          <Bell className="w-4.5 h-4.5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white" />
+        <button 
+          className="p-2 rounded-lg relative transition-all duration-150"
+          style={{ color: '#6B7280' }}
+          onMouseEnter={e => e.target.style.background = '#F8F9FC'}
+          onMouseLeave={e => e.target.style.background = 'transparent'}
+        >
+          <Bell className="w-4 h-4" />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full ring-2 ring-white" style={{ background: '#EF4444' }} />
         </button>
 
         {/* Hotel Selector */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button 
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all" 
+              className="flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-150" 
+              style={{ border: '1px solid #E5E7EB', background: '#FFFFFF' }}
               data-testid="btn-hotel-selector"
             >
-              <span className="w-2 h-2 bg-emerald-500 rounded-full" />
-              <span className="text-sm font-medium text-slate-700 max-w-[120px] truncate">{currentHotel?.name || 'Selectionner'}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              <span className="w-2 h-2 rounded-full" style={{ background: '#22C55E' }} />
+              <span className="text-sm font-medium max-w-[120px] truncate" style={{ color: '#1F2937' }}>{currentHotel?.name || 'Selectionner'}</span>
+              <ChevronDown className="w-3.5 h-3.5" style={{ color: '#9CA3AF' }} />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="end" className="w-56" style={{ borderRadius: '12px', boxShadow: '0 12px 40px rgba(0,0,0,0.08)', border: '1px solid #F3F4F6' }}>
             {hotels.map((hotel) => (
               <DropdownMenuItem 
                 key={hotel.id} 
                 onClick={() => switchHotel(hotel)} 
                 className="flex items-center justify-between cursor-pointer"
+                style={{ borderRadius: '8px' }}
               >
                 <span>{hotel.name}</span>
-                {currentHotel?.id === hotel.id && <Check className="w-4 h-4 text-violet-600" />}
+                {currentHotel?.id === hotel.id && <Check className="w-4 h-4" style={{ color: '#6C5CE7' }} />}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
@@ -137,29 +151,30 @@ export const TopNavigation = () => {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button 
-              className="flex items-center gap-2.5 pl-3 pr-2 py-1 rounded-lg hover:bg-slate-50 transition-colors" 
+              className="flex items-center gap-2.5 pl-3 pr-2 py-1.5 rounded-lg transition-all duration-150" 
+              style={{ background: 'transparent' }}
               data-testid="btn-user-menu"
             >
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-medium text-slate-800 leading-tight">{user?.first_name} {user?.last_name}</p>
-                <p className="text-xs text-slate-500 capitalize leading-tight">{user?.role === 'admin' ? 'Directeur' : user?.role}</p>
+                <p className="text-sm font-semibold leading-tight" style={{ color: '#1F2937', letterSpacing: '-0.01em' }}>{user?.first_name} {user?.last_name}</p>
+                <p className="text-xs capitalize leading-tight" style={{ color: '#6B7280' }}>{user?.role === 'admin' ? 'Directeur' : user?.role}</p>
               </div>
-              <Avatar className="w-8 h-8">
-                <AvatarFallback className="bg-gradient-to-br from-violet-500 to-violet-600 text-white font-semibold text-xs">
+              <Avatar className="w-9 h-9" style={{ borderRadius: '10px' }}>
+                <AvatarFallback className="text-white font-semibold text-xs" style={{ background: 'linear-gradient(135deg, #6C5CE7, #A29BFE)', borderRadius: '10px' }}>
                   {getInitials(user?.first_name, user?.last_name)}
                 </AvatarFallback>
               </Avatar>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem className="cursor-pointer">
+          <DropdownMenuContent align="end" className="w-48" style={{ borderRadius: '12px', boxShadow: '0 12px 40px rgba(0,0,0,0.08)', border: '1px solid #F3F4F6' }}>
+            <DropdownMenuItem className="cursor-pointer" style={{ borderRadius: '8px' }}>
               <User className="w-4 h-4 mr-2" />Mon profil
             </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer">
+            <DropdownMenuItem className="cursor-pointer" style={{ borderRadius: '8px' }}>
               <Settings className="w-4 h-4 mr-2" />Parametres
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={logout} className="text-red-600 cursor-pointer">
+            <DropdownMenuItem onClick={logout} className="cursor-pointer" style={{ color: '#EF4444', borderRadius: '8px' }}>
               <LogOut className="w-4 h-4 mr-2" />Deconnexion
             </DropdownMenuItem>
           </DropdownMenuContent>

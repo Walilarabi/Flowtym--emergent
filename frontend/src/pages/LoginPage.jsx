@@ -22,20 +22,20 @@ const LoginStyles = () => (
     
     .login-bg {
       background: linear-gradient(135deg, 
-        rgba(91, 33, 182, 0.85) 0%, 
-        rgba(124, 58, 237, 0.75) 30%,
-        rgba(139, 92, 246, 0.7) 60%,
-        rgba(167, 139, 250, 0.65) 100%
+        #6C5CE7 0%, 
+        #7C6BED 30%,
+        #8B7AF3 60%,
+        #A29BFE 100%
       );
     }
     
     .glass-card {
-      background: rgba(255, 255, 255, 0.95);
+      background: rgba(255, 255, 255, 0.98);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border: 1px solid rgba(255, 255, 255, 0.3);
       box-shadow: 
-        0 25px 50px -12px rgba(0, 0, 0, 0.25),
+        0 25px 60px -12px rgba(0, 0, 0, 0.15),
         0 0 0 1px rgba(255, 255, 255, 0.1);
     }
     
@@ -47,13 +47,13 @@ const LoginStyles = () => (
     }
     
     .btn-gradient {
-      background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6d28d9 100%);
-      box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
-      transition: all 0.3s ease;
+      background: linear-gradient(135deg, #6C5CE7 0%, #5B4ED1 100%);
+      box-shadow: 0 4px 20px rgba(108, 92, 231, 0.35);
+      transition: all 0.2s ease;
     }
     
     .btn-gradient:hover {
-      box-shadow: 0 6px 25px rgba(124, 58, 237, 0.5);
+      box-shadow: 0 8px 30px rgba(108, 92, 231, 0.45);
       transform: translateY(-1px);
     }
     
@@ -62,20 +62,20 @@ const LoginStyles = () => (
     }
     
     .feature-check {
-      color: #10b981;
-      filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.4));
+      color: #22C55E;
+      filter: drop-shadow(0 0 4px rgba(34, 197, 94, 0.4));
     }
     
     .input-styled {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      transition: all 0.2s ease;
+      background: #F8F9FC;
+      border: 1px solid #E5E7EB;
+      transition: all 0.15s ease;
     }
     
     .input-styled:focus {
       background: white;
-      border-color: #a78bfa;
-      box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.15);
+      border-color: #6C5CE7;
+      box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.12);
     }
     
     .text-gradient {
