@@ -419,6 +419,13 @@ Onglet "Pointage" dans le module STAFF avec système QR code et validation des h
 - `/app/backend/integrations/models.py` - Provider models
 - `/app/frontend/src/pages/integrations/IntegrationsHub.jsx` - Integration management UI
 
+### QR Codes & Satisfaction
+- `/app/backend/qrcodes/routes.py` - QR Codes API
+- `/app/backend/satisfaction/routes.py` - Satisfaction API
+- `/app/frontend/src/pages/public/SatisfactionSurvey.jsx` - Formulaire public multi-langues
+- `/app/frontend/src/components/housekeeping/QRCodeManager.jsx` - Gestionnaire QR
+- `/app/frontend/src/components/housekeeping/SatisfactionConfig.jsx` - Config satisfaction
+
 ### Design System
 - `/app/frontend/src/styles/flowtym-premium-v2.css` - Main CSS with global overrides
 - `/app/frontend/src/styles/flowtym-tokens.css` - CSS variables/tokens
@@ -430,6 +437,6 @@ Onglet "Pointage" dans le module STAFF avec système QR code et validation des h
 
 ---
 
-*Document Version: 7.0*
+*Document Version: 8.0*
 *Last Updated: March 26, 2026*
-*Module Completed: Staff Pointage (Time Tracking)*
+*Module Completed: QR Codes & Satisfaction Client Multi-langues*
