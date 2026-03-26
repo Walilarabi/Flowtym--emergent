@@ -309,6 +309,53 @@ Central dashboard and external system integrations.
 
 ---
 
+### Phase 8: Staff Pointage - Time Tracking (Completed - March 26, 2026)
+Onglet "Pointage" dans le module STAFF avec système QR code et validation des heures supplémentaires.
+
+#### 8.1 Desktop Pointage View (/staff/pointage)
+- [x] 6 KPI strip (Effectif, Pointés, Conformes, Retards, Heures sup, H.Sup validées)
+- [x] Pointage table with 11 columns (Collaborateur, Service, Prévu, Entrée, Sortie, Durée, Écart, H.Sup, Statut, Source)
+- [x] Status badges (Conforme ✅, Retard 🟡, Dépassement 🟠, En cours 🔵, Anomalie 🔴)
+- [x] Source badges (QR, Manuel, Admin)
+- [x] Filters (Date picker, Search, Department, Status)
+- [x] QR Code dialog with generated hotel QR
+- [x] Manual pointage dialog with form validation (motif obligatoire)
+- [x] Overtime validation button (Direction/RH only) with rate selection (25%/50%)
+- [x] Late tolerance: 10 minutes
+
+#### 8.2 QR Code System
+- [x] Static QR code per hotel
+- [x] URL format: /pointage/mobile?hotel_id=xxx&token=xxx
+- [x] Print and Copy URL functionality
+
+#### 8.3 Mobile Pointage Page (/pointage/mobile)
+- [x] Authentication required (redirects to login)
+- [x] Employee status display
+- [x] Large check-in/check-out buttons
+- [x] Current time display
+- [x] Planning info (if available)
+- [x] Gradient design with rounded card
+
+#### 8.4 Backend APIs
+- [x] GET /api/staff/pointage/hotels/{hotel_id}/stats
+- [x] GET /api/staff/pointage/hotels/{hotel_id}/qr-code
+- [x] GET /api/staff/pointage/hotels/{hotel_id}/pointages
+- [x] POST /api/staff/pointage/hotels/{hotel_id}/manual
+- [x] POST /api/staff/pointage/hotels/{hotel_id}/check-in
+- [x] POST /api/staff/pointage/hotels/{hotel_id}/check-out/employee/{employee_id}
+- [x] PATCH /api/staff/pointage/hotels/{hotel_id}/pointages/{pointage_id}/validate-overtime
+- [x] GET /api/staff/pointage/hotels/{hotel_id}/config
+- [x] GET /api/staff/pointage/hotels/{hotel_id}/employee/{employee_id}/status
+
+#### 8.5 Files Created
+- `/app/backend/staff/pointage_routes.py` - Pointage API (1078 lines)
+- `/app/backend/staff/pointage_models.py` - Pydantic models
+- `/app/frontend/src/pages/staff/StaffPointage.jsx` - Desktop UI (710 lines)
+- `/app/frontend/src/pages/pointage/MobilePointage.jsx` - Mobile QR UI
+- `/app/backend/tests/test_staff_pointage.py` - Tests unitaires
+
+---
+
 ## Upcoming Tasks (Backlog)
 
 ### P0 - High Priority
@@ -322,6 +369,7 @@ Central dashboard and external system integrations.
 - [ ] CRM Integration: Connect customer management to ConfigService
 - [ ] Channel Manager: Connect OTA sync to ConfigService
 - [ ] Real-time webhooks for booking events
+- [ ] STAFF → Paie: Export heures travaillées/sup/absences
 
 ### P2 - Future
 - [ ] Data Hub Phase 2 (Priority Engine, Event Orchestration, Smart Caching)
@@ -333,10 +381,10 @@ Central dashboard and external system integrations.
 
 ## Testing Status
 
-### Last Test Report: iteration_25.json (March 26, 2026)
-- **Success Rate**: 100% (Backend: 14/14, Frontend: 100%)
-- **Features Tested**: Flowboard, Integrations Hub, all APIs
-- **Verified Features**: 6 KPIs, Timeline, AI Suggestions, Alerts, Quick Actions, Integrations catalog
+### Last Test Report: iteration_26.json (March 26, 2026)
+- **Module Tested**: Staff Pointage (Time Tracking)
+- **Success Rate**: 100% (Backend: 19/19, Frontend: 100%)
+- **Features Tested**: All backend APIs, KPIs, Table, QR Dialog, Manual Pointage Dialog
 - **Issues Found**: None
 - **Retest Needed**: No
 
@@ -354,6 +402,12 @@ Central dashboard and external system integrations.
 ---
 
 ## Key Files Reference
+
+### Staff Pointage (Time Tracking)
+- `/app/backend/staff/pointage_routes.py` - Pointage API endpoints
+- `/app/backend/staff/pointage_models.py` - Pydantic models
+- `/app/frontend/src/pages/staff/StaffPointage.jsx` - Desktop Pointage UI
+- `/app/frontend/src/pages/pointage/MobilePointage.jsx` - Mobile QR Pointage UI
 
 ### Flowboard
 - `/app/backend/flowboard/routes.py` - Flowboard API endpoints
@@ -376,6 +430,6 @@ Central dashboard and external system integrations.
 
 ---
 
-*Document Version: 6.0*
+*Document Version: 7.0*
 *Last Updated: March 26, 2026*
-*Module Completed: Flowboard & Integrations Hub*
+*Module Completed: Staff Pointage (Time Tracking)*
