@@ -4889,6 +4889,14 @@ from housekeeping.seed_data import seed_housekeeping_data
 init_housekeeping_db(db)  # Initialize Housekeeping module with database
 api_router.include_router(housekeeping_router)
 
+# Include Flowboard Module router (Central Dashboard)
+from flowboard.routes import router as flowboard_router
+api_router.include_router(flowboard_router)
+
+# Include Integrations Hub router (External PMS & Channel Manager)
+from integrations.routes import router as integrations_router
+api_router.include_router(integrations_router)
+
 # Housekeeping Seed Data Endpoint
 @api_router.post("/housekeeping/hotels/{hotel_id}/seed")
 async def seed_hk_data(hotel_id: str, current_user: dict = Depends(get_current_user)):

@@ -35,6 +35,8 @@ import DataHubMonitoring from '@/pages/datahub/DataHubMonitoring'
 import ConfigurationPage from '@/pages/config/ConfigurationPage'
 import HousekeepingModule from '@/pages/housekeeping/HousekeepingModule'
 import EReputationModule from '@/pages/ereputation/EReputationModule'
+import Flowboard from '@/pages/flowboard/Flowboard'
+import IntegrationsHub from '@/pages/integrations/IntegrationsHub'
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth()
@@ -120,6 +122,12 @@ const AppRoutes = () => {
                   {/* E-Reputation Module Routes */}
                   <Route path="/e-reputation" element={<EReputationModule />} />
                   <Route path="/e-reputation/*" element={<EReputationModule />} />
+                  {/* Flowboard (Central Dashboard) Routes */}
+                  <Route path="/flowboard" element={<Flowboard />} />
+                  <Route path="/flowboard/*" element={<Flowboard />} />
+                  {/* Integrations Hub Routes */}
+                  <Route path="/integrations" element={<IntegrationsHub />} />
+                  <Route path="/integrations/*" element={<IntegrationsHub />} />
                   {/* Settings */}
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="*" element={<Navigate to="/pms/planning" replace />} />
