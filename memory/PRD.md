@@ -379,13 +379,42 @@ Onglet "Pointage" dans le module STAFF avec système QR code et validation des h
 
 ---
 
+### Phase 9: UI Buttons Fix & Login Page Redesign (Completed - March 26, 2026)
+Correction des boutons violets illisibles et redesign de la page de connexion.
+
+#### 9.1 Button Style Fix
+- [x] Changed button background from gradient to solid #A855F7 (violet)
+- [x] Forced white text color (#FFFFFF) on all violet buttons
+- [x] Added proper box-shadow: 0 4px 14px rgba(168, 85, 247, 0.35)
+- [x] Improved hover state with #9333EA and translateY(-1px)
+- [x] Border-radius: 12px for modern look
+- [x] Updated flowtym-overrides.css and flowtym-premium-v2.css
+
+#### 9.2 Login Page Redesign
+- [x] Left panel: Hotel image with gradient overlay (purple/violet tones)
+- [x] Logo badge with glass-morphism effect (FLOW in white, TYM in green)
+- [x] Tagline: "Le système d'exploitation des hôtels modernes"
+- [x] Right panel: White card with login form
+- [x] Input fields with gray background and purple focus states
+- [x] "Accéder à mon espace" button with proper violet styling
+- [x] Features checklist (Plateforme tout-en-un, Synchronisation temps réel, etc.)
+- [x] Responsive design with mobile support
+- [x] Footer: "Flowtym – Tous droits réservés 2026"
+
+#### 9.3 Token Fix
+- [x] Fixed localStorage key from 'token' to 'flowtym_token' in HousekeepingModule.jsx
+- [x] All Housekeeping API calls now properly authenticated
+
+---
+
 ## Testing Status
 
-### Last Test Report: iteration_26.json (March 26, 2026)
-- **Module Tested**: Staff Pointage (Time Tracking)
-- **Success Rate**: 100% (Backend: 19/19, Frontend: 100%)
-- **Features Tested**: All backend APIs, KPIs, Table, QR Dialog, Manual Pointage Dialog
-- **Issues Found**: None
+### Last Test Report: iteration_29.json (March 26, 2026)
+- **Module Tested**: Housekeeping Module - Complete UI/UX Testing
+- **Success Rate**: 95% (Frontend: 35/37 tests passed)
+- **Features Tested**: All 8 navigation tabs, Réception view (KPIs, filters, checkboxes, bulk assign), Direction view (KPIs, room plan), Gouvernante view (3 tabs), Mobile views (Femme de chambre, Maintenance, Petit-déj), QR Codes (CRUD), Satisfaction (config)
+- **Issues Found**: 
+  - FIXED: Token auth issue with 'Données démo' button (localStorage key mismatch)
 - **Retest Needed**: No
 
 ### Test Credentials
@@ -437,6 +466,6 @@ Onglet "Pointage" dans le module STAFF avec système QR code et validation des h
 
 ---
 
-*Document Version: 8.0*
+*Document Version: 9.0*
 *Last Updated: March 26, 2026*
-*Module Completed: QR Codes & Satisfaction Client Multi-langues*
+*Module Completed: UI Buttons Fix & Login Page Redesign*

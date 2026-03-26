@@ -62,7 +62,7 @@ const useHousekeepingData = () => {
     if (!hotelId) return
     
     setData(d => ({ ...d, loading: true, error: null }))
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('flowtym_token')
     const headers = { Authorization: `Bearer ${token}` }
     
     try {
@@ -99,7 +99,7 @@ const useHousekeepingData = () => {
 
   const seedData = useCallback(async () => {
     if (!hotelId) return
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('flowtym_token')
     try {
       await axios.post(`${API_URL}/api/housekeeping/hotels/${hotelId}/seed`, {}, {
         headers: { Authorization: `Bearer ${token}` }
@@ -113,7 +113,7 @@ const useHousekeepingData = () => {
 
   const startTask = useCallback(async (taskId) => {
     if (!hotelId) return
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('flowtym_token')
     try {
       await axios.post(`${API_URL}/api/housekeeping/hotels/${hotelId}/tasks/${taskId}/start`, {}, {
         headers: { Authorization: `Bearer ${token}` }
@@ -127,7 +127,7 @@ const useHousekeepingData = () => {
 
   const completeTask = useCallback(async (taskId, photos = [], notes = '') => {
     if (!hotelId) return
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('flowtym_token')
     try {
       await axios.post(`${API_URL}/api/housekeeping/hotels/${hotelId}/tasks/${taskId}/complete`, 
         { task_id: taskId, photos_after: photos, notes },
@@ -142,7 +142,7 @@ const useHousekeepingData = () => {
 
   const validateInspection = useCallback(async (inspectionId, approved, rating, notes, reason) => {
     if (!hotelId) return
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('flowtym_token')
     try {
       await axios.post(`${API_URL}/api/housekeeping/hotels/${hotelId}/inspections/${inspectionId}/validate`,
         { inspection_id: inspectionId, approved, rating, notes, refused_reason: reason },
@@ -157,7 +157,7 @@ const useHousekeepingData = () => {
 
   const autoAssign = useCallback(async () => {
     if (!hotelId) return
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('flowtym_token')
     try {
       const res = await axios.post(`${API_URL}/api/housekeeping/hotels/${hotelId}/assignments/auto`,
         { date: new Date().toISOString().split('T')[0], strategy: 'balanced' },
@@ -172,7 +172,7 @@ const useHousekeepingData = () => {
 
   const updateBreakfast = useCallback(async (orderId, updates) => {
     if (!hotelId) return
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('flowtym_token')
     try {
       await axios.put(`${API_URL}/api/housekeeping/hotels/${hotelId}/breakfast/${orderId}`,
         updates,
@@ -186,7 +186,7 @@ const useHousekeepingData = () => {
 
   const updateMaintenance = useCallback(async (ticketId, updates) => {
     if (!hotelId) return
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('flowtym_token')
     try {
       await axios.put(`${API_URL}/api/housekeeping/hotels/${hotelId}/maintenance/${ticketId}`,
         updates,
