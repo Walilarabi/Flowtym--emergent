@@ -14,6 +14,7 @@ const pmsSubNav = [
 const staffSubNav = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/staff/dashboard' },
   { label: 'Planning', icon: Calendar, path: '/staff/planning' },
+  { label: 'Pointage', icon: Clock, path: '/staff/pointage' },
   { label: 'Personnel', icon: UsersRound, path: '/staff/employees' },
   { label: 'Contrats', icon: FileText, path: '/staff/contracts' },
   { label: 'Paie & URSSAF', icon: Euro, path: '/staff/payroll' },

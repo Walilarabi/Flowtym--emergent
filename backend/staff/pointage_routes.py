@@ -154,7 +154,7 @@ async def get_pointage_config(db, hotel_id: str) -> dict:
             "qr_code_secret": secrets.token_urlsafe(32),
             "geolocation_enabled": False,
             "geolocation_radius_meters": 100,
-            "late_tolerance_minutes": 5,
+            "late_tolerance_minutes": 10,
             "manual_pointage_enabled": True,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "updated_at": datetime.now(timezone.utc).isoformat()
@@ -174,7 +174,7 @@ async def get_qr_code(
     current_user: dict = Depends(get_current_user)
 ):
     """Get QR code for hotel pointage - Direction/RH/Admin only"""
-    check_role_access(current_user, ["admin", "manager", "super_admin"])
+    check_role_access(current_user, ["admin", "manager", "super_admin", "receptionist"])
     db = get_db()
     
     config = await get_pointage_config(db, hotel_id)
@@ -182,9 +182,9 @@ async def get_qr_code(
     if not config.get("qr_code_enabled"):
         raise HTTPException(status_code=400, detail="QR Code désactivé pour cet hôtel")
     
-    # Build QR code URL
+    # Build QR code URL for mobile pointage
     base_url = os.environ.get("REACT_APP_BACKEND_URL", "https://flowtym.com")
-    qr_url = f"{base_url}/pointage/{hotel_id}?token={config['qr_code_secret']}"
+    qr_url = f"{base_url}/pointage/mobile?hotel_id={hotel_id}&token={config['qr_code_secret']}"
     
     return QRCodeResponse(
         qr_code_url=qr_url,
@@ -234,7 +234,7 @@ async def check_in(
     db = get_db()
     
     # Get employee info
-    employee = await db.employees.find_one({
+    employee = await db.staff_employees.find_one({
         "id": pointage.employee_id,
         "hotel_id": hotel_id,
         "is_active": True
@@ -467,7 +467,7 @@ async def create_manual_pointage(
         raise HTTPException(status_code=400, detail="Le motif est obligatoire (minimum 5 caractères)")
     
     # Get employee info
-    employee = await db.employees.find_one({
+    employee = await db.staff_employees.find_one({
         "id": pointage.employee_id,
         "hotel_id": hotel_id,
         "is_active": True
@@ -694,7 +694,7 @@ async def get_employee_pointage_status(
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
     # Get employee info
-    employee = await db.employees.find_one({
+    employee = await db.staff_employees.find_one({
         "id": employee_id,
         "hotel_id": hotel_id
     }, {"_id": 0})
@@ -747,7 +747,7 @@ async def get_pointage_stats(
     target_date = date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
     # Get all employees
-    employees = await db.employees.find({
+    employees = await db.staff_employees.find({
         "hotel_id": hotel_id,
         "is_active": True
     }, {"_id": 0}).to_list(500)
@@ -798,7 +798,7 @@ async def export_for_payroll(
     db = get_db()
     
     # Get all employees
-    employees = await db.employees.find({
+    employees = await db.staff_employees.find({
         "hotel_id": hotel_id,
         "is_active": True
     }, {"_id": 0}).to_list(500)
@@ -888,9 +888,9 @@ async def get_pointage_config_endpoint(
     db = get_db()
     config = await get_pointage_config(db, hotel_id)
     
-    # Build QR URL
+    # Build QR URL for mobile pointage
     base_url = os.environ.get("REACT_APP_BACKEND_URL", "https://flowtym.com")
-    config["qr_code_url"] = f"{base_url}/pointage/{hotel_id}?token={config['qr_code_secret']}"
+    config["qr_code_url"] = f"{base_url}/pointage/mobile?hotel_id={hotel_id}&token={config['qr_code_secret']}"
     
     return QRCodeConfig(**config)
 

@@ -4904,6 +4904,11 @@ async def seed_hk_data(hotel_id: str, current_user: dict = Depends(get_current_u
     result = await seed_housekeeping_data(db, hotel_id)
     return result
 
+# Include Staff Pointage routes
+from staff.pointage_routes import router as pointage_router, init_pointage_db
+init_pointage_db(db)
+api_router.include_router(pointage_router)
+
 # Include the router in the main app
 app.include_router(api_router)
 

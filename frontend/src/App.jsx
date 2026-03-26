@@ -16,6 +16,7 @@ import { StaffDashboard } from '@/pages/staff/StaffDashboard'
 import { StaffEmployees } from '@/pages/staff/StaffEmployees'
 import { StaffPlanning } from '@/pages/staff/StaffPlanning'
 import { StaffTimeTracking } from '@/pages/staff/StaffTimeTracking'
+import { StaffPointage } from '@/pages/staff/StaffPointage'
 import { StaffContracts } from '@/pages/staff/StaffContracts'
 import { StaffPayroll } from '@/pages/staff/StaffPayroll'
 import { StaffReporting } from '@/pages/staff/StaffReporting'
@@ -37,6 +38,7 @@ import HousekeepingModule from '@/pages/housekeeping/HousekeepingModule'
 import EReputationModule from '@/pages/ereputation/EReputationModule'
 import Flowboard from '@/pages/flowboard/Flowboard'
 import IntegrationsHub from '@/pages/integrations/IntegrationsHub'
+import MobilePointage from '@/pages/pointage/MobilePointage'
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth()
@@ -66,6 +68,14 @@ const AppRoutes = () => {
       <Route path="/superadmin/*" element={<SuperAdminApp />} />
       
       <Route path="/login" element={<LoginPage />} />
+      
+      {/* Mobile Pointage - Accessible after QR scan (needs auth) */}
+      <Route path="/pointage/mobile" element={
+        <ProtectedRoute>
+          <MobilePointage />
+        </ProtectedRoute>
+      } />
+      
       <Route
         path="/*"
         element={
@@ -86,6 +96,7 @@ const AppRoutes = () => {
                   <Route path="/staff" element={<Navigate to="/staff/dashboard" replace />} />
                   <Route path="/staff/dashboard" element={<StaffDashboard />} />
                   <Route path="/staff/planning" element={<StaffPlanning />} />
+                  <Route path="/staff/pointage" element={<StaffPointage />} />
                   <Route path="/staff/employees" element={<StaffEmployees />} />
                   <Route path="/staff/time-tracking" element={<StaffTimeTracking />} />
                   <Route path="/staff/contracts" element={<StaffContracts />} />
