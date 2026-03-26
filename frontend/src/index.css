@@ -1,14 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* FLOWTYM PREMIUM DESIGN SYSTEM */
+/* FLOWTYM PREMIUM DESIGN SYSTEM V2 - Kleon Figma */
+@import './styles/flowtym-premium-v2.css';
 @import './styles/flowtym-tokens.css';
+@import './styles/flowtym-overrides.css';
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* FLOWTYM OVERRIDES - Applied after Tailwind */
-@import './styles/flowtym-overrides.css';
 
 @layer base {
   :root {

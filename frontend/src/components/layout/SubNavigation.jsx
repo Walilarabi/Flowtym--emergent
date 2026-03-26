@@ -33,7 +33,13 @@ export const SubNavigation = () => {
   const navItems = isPMS ? pmsSubNav : staffSubNav
 
   return (
-    <div className="h-12 bg-slate-50 border-b border-slate-200 flex items-center px-4 shrink-0">
+    <div 
+      className="h-12 flex items-center px-6 shrink-0"
+      style={{ 
+        background: 'var(--bg-hover, #F3F4F6)', 
+        borderBottom: '1px solid var(--border-light, #F3F4F6)' 
+      }}
+    >
       <nav className="flex items-center gap-1">
         {navItems.map((item) => {
           const Icon = item.icon
@@ -46,7 +52,8 @@ export const SubNavigation = () => {
             return (
               <div
                 key={item.path}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-400 cursor-not-allowed"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium cursor-not-allowed"
+                style={{ color: 'var(--text-muted, #9CA3AF)' }}
                 data-testid={`subnav-${item.label.toLowerCase().replace(/ /g, '-')}`}
               >
                 <Icon className="w-4 h-4" />
@@ -59,14 +66,18 @@ export const SubNavigation = () => {
             <NavLink
               key={item.path}
               to={item.path}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all
-                ${isActive 
-                  ? 'bg-white text-violet-700 shadow-sm border border-slate-200' 
-                  : 'text-slate-600 hover:text-slate-800 hover:bg-white/60'
-                }`}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg"
+              style={{ 
+                background: isActive ? 'var(--bg-card, #FFFFFF)' : 'transparent',
+                color: isActive ? 'var(--primary, #6C5CE7)' : 'var(--text-secondary, #6B7280)',
+                boxShadow: isActive ? 'var(--shadow-sm, 0 2px 4px rgba(0,0,0,0.04))' : 'none',
+                border: isActive ? '1px solid var(--border-light, #F3F4F6)' : '1px solid transparent',
+                fontWeight: isActive ? 600 : 500,
+                transition: 'all 150ms ease'
+              }}
               data-testid={`subnav-${item.label.toLowerCase().replace(/ /g, '-')}`}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="w-4 h-4" style={{ opacity: isActive ? 1 : 0.7 }} />
               <span>{item.label}</span>
             </NavLink>
           )

@@ -1092,3 +1092,355 @@ body {
     border: 1px solid #ddd;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   GLOBAL OVERRIDES - AUTO-APPLY KLEON DESIGN SYSTEM
+   Ces styles s'appliquent automatiquement sur l'ensemble de l'application
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Force le fond global de l'application */
+#root,
+.h-screen,
+[class*="min-h-screen"] {
+  background: var(--bg-app) !important;
+}
+
+/* Override des cards blanches par défaut */
+.bg-white,
+[class*="bg-white"] {
+  background: var(--bg-card) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-card) !important;
+  border: 1px solid var(--border-light) !important;
+}
+
+/* Override des borders existants */
+.border,
+[class*="border-slate"],
+[class*="border-gray"] {
+  border-color: var(--border-light) !important;
+}
+
+/* Override des radius Tailwind */
+.rounded-lg { border-radius: var(--radius-lg) !important; }
+.rounded-xl { border-radius: var(--radius-xl) !important; }
+.rounded-2xl { border-radius: var(--radius-2xl) !important; }
+
+/* Override des couleurs violet - Primary */
+.bg-violet-600,
+.bg-violet-700,
+[class*="bg-violet-6"],
+[class*="bg-violet-7"] {
+  background: var(--primary) !important;
+}
+
+.bg-violet-100,
+[class*="bg-violet-1"] {
+  background: var(--primary-soft) !important;
+}
+
+.text-violet-600,
+.text-violet-700,
+[class*="text-violet-6"],
+[class*="text-violet-7"] {
+  color: var(--primary) !important;
+}
+
+/* Override des hover states */
+.hover\:bg-violet-700:hover {
+  background: var(--primary-dark) !important;
+}
+
+/* Override des ombres */
+.shadow,
+.shadow-sm,
+.shadow-md {
+  box-shadow: var(--shadow-card) !important;
+}
+
+.shadow-lg,
+.shadow-xl {
+  box-shadow: var(--shadow-hover) !important;
+}
+
+/* Override des textes */
+.text-slate-900,
+.text-gray-900 {
+  color: var(--text-primary) !important;
+}
+
+.text-slate-500,
+.text-slate-600,
+.text-gray-500,
+.text-gray-600 {
+  color: var(--text-secondary) !important;
+}
+
+.text-slate-400,
+.text-gray-400 {
+  color: var(--text-muted) !important;
+}
+
+/* Override des boutons Shadcn */
+button[class*="bg-violet"],
+.btn-primary,
+button.bg-violet-600 {
+  background: var(--primary-gradient) !important;
+  border: none !important;
+  box-shadow: var(--shadow-primary) !important;
+  transition: all var(--transition-fast) !important;
+}
+
+button[class*="bg-violet"]:hover,
+.btn-primary:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 20px rgba(108, 92, 231, 0.35) !important;
+}
+
+/* Override des inputs */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+textarea,
+select {
+  font-family: var(--font-family) !important;
+  border-radius: var(--radius-md) !important;
+  border: 1px solid var(--border) !important;
+  transition: all var(--transition-fast) !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px var(--primary-soft) !important;
+}
+
+/* Override des badges */
+.rounded-full[class*="bg-"],
+span[class*="badge"] {
+  border-radius: var(--radius-full) !important;
+}
+
+/* Tables premium */
+table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
+table th {
+  background: var(--bg-hover) !important;
+  font-size: var(--text-xs) !important;
+  font-weight: var(--font-medium) !important;
+  text-transform: uppercase !important;
+  letter-spacing: var(--tracking-wide) !important;
+  color: var(--text-secondary) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+table td {
+  border-bottom: 1px solid var(--border-light) !important;
+}
+
+table tbody tr {
+  transition: background var(--transition-fast) !important;
+}
+
+table tbody tr:hover {
+  background: var(--bg-hover) !important;
+}
+
+/* Modals & Dialogs */
+[role="dialog"] {
+  border-radius: var(--radius-xl) !important;
+  box-shadow: var(--shadow-xl) !important;
+}
+
+/* Dropdown menus */
+[role="menu"],
+[data-radix-popper-content-wrapper] > div {
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-lg) !important;
+  border: 1px solid var(--border-light) !important;
+}
+
+/* Popovers & Tooltips */
+[data-state="open"][data-side] {
+  animation: ft-slideDown 150ms ease !important;
+}
+
+/* Status colors - Soft variants */
+.bg-emerald-100,
+.bg-green-100 {
+  background: var(--success-soft) !important;
+}
+
+.bg-red-100,
+.bg-rose-100 {
+  background: var(--danger-soft) !important;
+}
+
+.bg-amber-100,
+.bg-yellow-100,
+.bg-orange-100 {
+  background: var(--warning-soft) !important;
+}
+
+.bg-blue-100,
+.bg-sky-100 {
+  background: var(--info-soft) !important;
+}
+
+/* KPI Cards Auto-styling */
+[data-testid*="kpi"],
+.kpi-card {
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+[data-testid*="kpi"]::before,
+.kpi-card::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 3px !important;
+  background: var(--primary-gradient) !important;
+}
+
+/* Page headers */
+h1 {
+  font-size: var(--text-2xl) !important;
+  font-weight: var(--font-bold) !important;
+  letter-spacing: var(--tracking-tight) !important;
+  color: var(--text-primary) !important;
+}
+
+h2 {
+  font-size: var(--text-xl) !important;
+  font-weight: var(--font-semibold) !important;
+  color: var(--text-primary) !important;
+}
+
+h3 {
+  font-size: var(--text-lg) !important;
+  font-weight: var(--font-semibold) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Smooth transitions on all interactive elements */
+button,
+a,
+input,
+select,
+textarea,
+[role="button"],
+[class*="cursor-pointer"] {
+  transition: all var(--transition-fast) !important;
+}
+
+/* Hover lift effect on cards */
+.bg-white:hover,
+[class*="bg-white"]:hover {
+  box-shadow: var(--shadow-hover) !important;
+}
+
+/* Loading spinners */
+.spinner,
+[class*="animate-spin"] {
+  animation: ft-spin 1s linear infinite !important;
+}
+
+/* Empty states */
+.text-slate-300,
+.text-gray-300 {
+  color: var(--text-muted) !important;
+  opacity: 0.5 !important;
+}
+
+/* Navigation active states - ensure violet */
+.nav-item.active,
+[class*="active"][class*="text-violet"] {
+  color: var(--primary) !important;
+  font-weight: var(--font-semibold) !important;
+}
+
+/* Sub-navigation tabs premium */
+.subnav-tab-active,
+[class*="subnav"][class*="active"] {
+  background: var(--bg-card) !important;
+  color: var(--primary) !important;
+  box-shadow: var(--shadow-sm) !important;
+  border: 1px solid var(--border-light) !important;
+}
+
+/* Reservation bars in planning */
+.reservation-bar {
+  border-radius: var(--radius-sm) !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.reservation-bar:hover {
+  transform: scale(1.02) translateY(-1px) !important;
+  box-shadow: var(--shadow-md) !important;
+  z-index: 20 !important;
+}
+
+/* Channel colors - keep existing but ensure smooth transitions */
+.channel-direct,
+.channel-booking_com,
+.channel-expedia,
+.channel-airbnb,
+.channel-other {
+  transition: all var(--transition-fast) !important;
+}
+
+/* Sheet/Slide panels */
+[data-state="open"][class*="Sheet"],
+.sheet-content {
+  box-shadow: var(--shadow-xl) !important;
+}
+
+/* Date pickers */
+[class*="calendar"],
+.rdp {
+  font-family: var(--font-family) !important;
+}
+
+.rdp-day_selected {
+  background: var(--primary) !important;
+  color: white !important;
+}
+
+.rdp-day_today {
+  font-weight: var(--font-bold) !important;
+  color: var(--primary) !important;
+}
+
+/* Ensure consistent spacing */
+.p-4 { padding: var(--space-4) !important; }
+.p-5 { padding: var(--space-5) !important; }
+.p-6 { padding: var(--space-6) !important; }
+.gap-4 { gap: var(--space-4) !important; }
+.gap-6 { gap: var(--space-6) !important; }
+
+/* Fix any remaining hardcoded colors */
+[style*="color: #1F2937"],
+[style*="color:#1F2937"] {
+  color: var(--text-primary) !important;
+}
+
+[style*="color: #6B7280"],
+[style*="color:#6B7280"] {
+  color: var(--text-secondary) !important;
+}
+
+[style*="background: #F8F9FC"],
+[style*="background:#F8F9FC"] {
+  background: var(--bg-app) !important;
+}
+
