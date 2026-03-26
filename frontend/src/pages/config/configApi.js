@@ -326,61 +326,6 @@ export const deletePaymentPolicy = async (hotelId, policyId) => {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// USERS & ROLES
-// ═══════════════════════════════════════════════════════════════════════════════
-
-export const getConfigUsers = async (hotelId) => {
-  const res = await fetch(`${API_URL}/api/config/hotels/${hotelId}/users`, {
-    headers: getAuthHeaders()
-  });
-  if (!res.ok) throw new Error('Failed to fetch users');
-  return res.json();
-};
-
-export const createConfigUser = async (hotelId, data) => {
-  const res = await fetch(`${API_URL}/api/config/hotels/${hotelId}/users`, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(data)
-  });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.detail || 'Failed to create user');
-  }
-  return res.json();
-};
-
-export const updateConfigUser = async (hotelId, userId, data) => {
-  const res = await fetch(`${API_URL}/api/config/hotels/${hotelId}/users/${userId}`, {
-    method: 'PUT',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(data)
-  });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.detail || 'Failed to update user');
-  }
-  return res.json();
-};
-
-export const deleteConfigUser = async (hotelId, userId) => {
-  const res = await fetch(`${API_URL}/api/config/hotels/${hotelId}/users/${userId}`, {
-    method: 'DELETE',
-    headers: getAuthHeaders()
-  });
-  if (!res.ok) throw new Error('Failed to delete user');
-  return res.json();
-};
-
-export const getAvailableRoles = async () => {
-  const res = await fetch(`${API_URL}/api/config/roles`, {
-    headers: getAuthHeaders()
-  });
-  if (!res.ok) throw new Error('Failed to fetch roles');
-  return res.json();
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // SETTINGS
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -430,5 +375,71 @@ export const getConfigurationSummary = async (hotelId) => {
     headers: getAuthHeaders()
   });
   if (!res.ok) throw new Error('Failed to fetch summary');
+  return res.json();
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// USERS MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const getAvailableRoles = async () => {
+  const res = await fetch(`${API_URL}/api/config/roles`, {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Failed to fetch roles');
+  return res.json();
+};
+
+export const getConfigUsers = async (hotelId, params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  const url = `${API_URL}/api/config/hotels/${hotelId}/users${query ? `?${query}` : ''}`;
+  const res = await fetch(url, {
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Failed to fetch users');
+  return res.json();
+};
+
+export const createConfigUser = async (hotelId, data) => {
+  const res = await fetch(`${API_URL}/api/config/hotels/${hotelId}/users`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.detail || 'Failed to create user');
+  }
+  return res.json();
+};
+
+export const updateConfigUser = async (hotelId, userId, data) => {
+  const res = await fetch(`${API_URL}/api/config/hotels/${hotelId}/users/${userId}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.detail || 'Failed to update user');
+  }
+  return res.json();
+};
+
+export const deleteConfigUser = async (hotelId, userId) => {
+  const res = await fetch(`${API_URL}/api/config/hotels/${hotelId}/users/${userId}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Failed to delete user');
+  return res.json();
+};
+
+export const resetUserPassword = async (hotelId, userId, newPassword) => {
+  const res = await fetch(`${API_URL}/api/config/hotels/${hotelId}/users/${userId}/reset-password?new_password=${encodeURIComponent(newPassword)}`, {
+    method: 'POST',
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) throw new Error('Failed to reset password');
   return res.json();
 };

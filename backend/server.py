@@ -3302,6 +3302,217 @@ async def update_role(hotel_id: str, role_id: str, role: RoleCreate, current_use
     updated = await db.roles.find_one({"id": role_id}, {"_id": 0})
     return RoleResponse(**updated)
 
+# ===================== CONFIGURATION - USERS (Mobile & Desktop) =====================
+
+# Rôles système disponibles
+SYSTEM_ROLES = [
+    {"code": "admin", "name": "Administrateur", "description": "Accès complet à toutes les fonctionnalités", "is_mobile": False, "can_manage_config": True, "can_manage_users": True, "can_view_financials": True},
+    {"code": "reception", "name": "Réception", "description": "Gestion des réservations et check-in/out", "is_mobile": False, "can_manage_config": False, "can_manage_users": False, "can_view_financials": False},
+    {"code": "revenue_manager", "name": "Revenue Manager", "description": "Gestion des tarifs et revenus", "is_mobile": False, "can_manage_config": True, "can_manage_users": False, "can_view_financials": True},
+    {"code": "housekeeping", "name": "Gouvernante", "description": "Supervision du service housekeeping", "is_mobile": True, "can_manage_config": False, "can_manage_users": False, "can_view_financials": False},
+    {"code": "housekeeper", "name": "Femme de chambre", "description": "Nettoyage des chambres (mobile)", "is_mobile": True, "can_manage_config": False, "can_manage_users": False, "can_view_financials": False},
+    {"code": "maintenance", "name": "Maintenance", "description": "Réparations et maintenance (mobile)", "is_mobile": True, "can_manage_config": False, "can_manage_users": False, "can_view_financials": False},
+    {"code": "breakfast", "name": "Service Petit-déjeuner", "description": "Gestion du service PDJ (mobile)", "is_mobile": True, "can_manage_config": False, "can_manage_users": False, "can_view_financials": False},
+    {"code": "spa", "name": "SPA", "description": "Gestion du service SPA (mobile)", "is_mobile": True, "can_manage_config": False, "can_manage_users": False, "can_view_financials": False},
+    {"code": "restaurant", "name": "Restaurant", "description": "Service restauration (mobile)", "is_mobile": True, "can_manage_config": False, "can_manage_users": False, "can_view_financials": False},
+    {"code": "accounting", "name": "Comptabilité", "description": "Accès aux données financières", "is_mobile": False, "can_manage_config": False, "can_manage_users": False, "can_view_financials": True},
+    {"code": "readonly", "name": "Consultation", "description": "Accès en lecture seule", "is_mobile": False, "can_manage_config": False, "can_manage_users": False, "can_view_financials": False},
+]
+
+class ConfigUserCreate(BaseModel):
+    email: str
+    password: str  # Mot de passe obligatoire
+    first_name: str
+    last_name: str
+    role: str
+    department: Optional[str] = "front_office"
+    phone: Optional[str] = None
+    job_title: Optional[str] = None
+    language: str = "fr"
+
+class ConfigUserUpdate(BaseModel):
+    email: Optional[str] = None
+    password: Optional[str] = None  # Si fourni, reset le mot de passe
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    role: Optional[str] = None
+    department: Optional[str] = None
+    phone: Optional[str] = None
+    job_title: Optional[str] = None
+    language: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class ConfigUserResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    hotel_id: str
+    email: str
+    first_name: str
+    last_name: str
+    full_name: str
+    role: str
+    department: Optional[str] = None
+    phone: Optional[str] = None
+    job_title: Optional[str] = None
+    language: str
+    is_active: bool
+    is_mobile_role: bool
+    created_at: str
+    last_login: Optional[str] = None
+
+@api_router.get("/config/roles")
+async def get_available_roles(current_user: dict = Depends(get_current_user)):
+    """Retourne tous les rôles système disponibles"""
+    return SYSTEM_ROLES
+
+@api_router.get("/config/hotels/{hotel_id}/users", response_model=List[ConfigUserResponse])
+async def get_config_users(
+    hotel_id: str,
+    role: Optional[str] = None,
+    is_active: bool = True,
+    current_user: dict = Depends(get_current_user)
+):
+    """Liste des utilisateurs de l'hôtel"""
+    query = {"hotel_id": hotel_id}
+    if role:
+        query["role"] = role
+    if is_active is not None:
+        query["is_active"] = is_active
+    
+    users = await db.users.find(query, {"_id": 0, "password": 0}).sort("created_at", -1).to_list(200)
+    
+    # Ajouter les infos dérivées
+    for user in users:
+        user["full_name"] = f"{user.get('first_name', '')} {user.get('last_name', '')}".strip()
+        role_info = next((r for r in SYSTEM_ROLES if r["code"] == user.get("role")), None)
+        user["is_mobile_role"] = role_info["is_mobile"] if role_info else False
+    
+    return [ConfigUserResponse(**u) for u in users]
+
+@api_router.post("/config/hotels/{hotel_id}/users", response_model=ConfigUserResponse)
+async def create_config_user(
+    hotel_id: str,
+    user: ConfigUserCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Créer un nouvel utilisateur pour l'hôtel"""
+    # Vérifier que l'email n'existe pas déjà
+    existing = await db.users.find_one({"email": user.email.lower()})
+    if existing:
+        raise HTTPException(status_code=400, detail="Cet email est déjà utilisé")
+    
+    # Vérifier le rôle
+    role_info = next((r for r in SYSTEM_ROLES if r["code"] == user.role), None)
+    if not role_info:
+        raise HTTPException(status_code=400, detail="Rôle invalide")
+    
+    # Hasher le mot de passe
+    import bcrypt
+    password_hash = bcrypt.hashpw(user.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    
+    now = datetime.now(timezone.utc).isoformat()
+    user_id = str(uuid.uuid4())
+    
+    user_doc = {
+        "id": user_id,
+        "hotel_id": hotel_id,
+        "email": user.email.lower(),
+        "password": password_hash,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "full_name": f"{user.first_name} {user.last_name}",
+        "role": user.role,
+        "department": user.department,
+        "phone": user.phone,
+        "job_title": user.job_title,
+        "language": user.language,
+        "is_active": True,
+        "is_mobile_role": role_info["is_mobile"],
+        "created_at": now,
+        "last_login": None
+    }
+    
+    await db.users.insert_one(user_doc)
+    
+    # Retourner sans le mot de passe
+    del user_doc["password"]
+    return ConfigUserResponse(**user_doc)
+
+@api_router.put("/config/hotels/{hotel_id}/users/{user_id}", response_model=ConfigUserResponse)
+async def update_config_user(
+    hotel_id: str,
+    user_id: str,
+    update: ConfigUserUpdate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Mettre à jour un utilisateur"""
+    existing = await db.users.find_one({"id": user_id, "hotel_id": hotel_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+    
+    update_data = {k: v for k, v in update.model_dump().items() if v is not None}
+    
+    # Si nouveau mot de passe
+    if "password" in update_data:
+        import bcrypt
+        update_data["password"] = bcrypt.hashpw(update_data["password"].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    
+    # Si changement de rôle, mettre à jour is_mobile_role
+    if "role" in update_data:
+        role_info = next((r for r in SYSTEM_ROLES if r["code"] == update_data["role"]), None)
+        if role_info:
+            update_data["is_mobile_role"] = role_info["is_mobile"]
+    
+    # Si changement de nom, mettre à jour full_name
+    if "first_name" in update_data or "last_name" in update_data:
+        first = update_data.get("first_name", existing.get("first_name", ""))
+        last = update_data.get("last_name", existing.get("last_name", ""))
+        update_data["full_name"] = f"{first} {last}".strip()
+    
+    if update_data:
+        await db.users.update_one({"id": user_id}, {"$set": update_data})
+    
+    updated = await db.users.find_one({"id": user_id}, {"_id": 0, "password": 0})
+    updated["full_name"] = f"{updated.get('first_name', '')} {updated.get('last_name', '')}".strip()
+    role_info = next((r for r in SYSTEM_ROLES if r["code"] == updated.get("role")), None)
+    updated["is_mobile_role"] = role_info["is_mobile"] if role_info else False
+    
+    return ConfigUserResponse(**updated)
+
+@api_router.delete("/config/hotels/{hotel_id}/users/{user_id}")
+async def delete_config_user(
+    hotel_id: str,
+    user_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Désactiver un utilisateur (soft delete)"""
+    result = await db.users.update_one(
+        {"id": user_id, "hotel_id": hotel_id},
+        {"$set": {"is_active": False}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+    return {"success": True, "message": "Utilisateur désactivé"}
+
+@api_router.post("/config/hotels/{hotel_id}/users/{user_id}/reset-password")
+async def reset_user_password(
+    hotel_id: str,
+    user_id: str,
+    new_password: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Réinitialiser le mot de passe d'un utilisateur"""
+    import bcrypt
+    password_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    
+    result = await db.users.update_one(
+        {"id": user_id, "hotel_id": hotel_id},
+        {"$set": {"password": password_hash}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+    return {"success": True, "message": "Mot de passe réinitialisé"}
+
 # ===================== CONFIGURATION - HR DOCUMENTS =====================
 
 class HRDocumentTypeCreate(BaseModel):

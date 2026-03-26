@@ -1,8 +1,11 @@
 /**
- * Users Section - RBAC Management
+ * Users Section - Complete User Management with Mobile Roles
  */
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Edit2, Trash2, Save, Shield, Mail, Phone, Building } from 'lucide-react';
+import { 
+  Users, Plus, Edit2, Trash2, Save, Shield, Mail, Phone, Building, 
+  Smartphone, Monitor, Eye, EyeOff, Key, RefreshCw 
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
@@ -10,8 +13,9 @@ import { Label } from '../../../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
 import { Badge } from '../../../components/ui/badge';
 import { Avatar, AvatarFallback } from '../../../components/ui/avatar';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../../components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../../../components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs';
 import { toast } from 'sonner';
 import { getConfigUsers, getAvailableRoles, createConfigUser, updateConfigUser, deleteConfigUser } from '../configApi';
 
@@ -20,6 +24,11 @@ const ROLE_COLORS = {
   reception: 'bg-blue-100 text-blue-700',
   revenue_manager: 'bg-emerald-100 text-emerald-700',
   housekeeping: 'bg-amber-100 text-amber-700',
+  housekeeper: 'bg-orange-100 text-orange-700',
+  maintenance: 'bg-red-100 text-red-700',
+  breakfast: 'bg-yellow-100 text-yellow-700',
+  spa: 'bg-pink-100 text-pink-700',
+  restaurant: 'bg-indigo-100 text-indigo-700',
   accounting: 'bg-slate-100 text-slate-700',
   readonly: 'bg-gray-100 text-gray-700',
 };
@@ -30,12 +39,16 @@ const DEPARTMENTS = [
   { value: 'revenue', label: 'Revenue Management' },
   { value: 'sales', label: 'Commercial' },
   { value: 'housekeeping', label: 'Housekeeping' },
+  { value: 'maintenance', label: 'Maintenance' },
+  { value: 'food_beverage', label: 'F&B / Restaurant' },
+  { value: 'spa', label: 'SPA & Bien-être' },
   { value: 'accounting', label: 'Comptabilité' },
   { value: 'it', label: 'IT' },
 ];
 
 const initialForm = {
   email: '',
+  password: '',
   first_name: '',
   last_name: '',
   role: 'reception',
@@ -53,6 +66,8 @@ export default function UsersSection({ hotelId, onUpdate }) {
   const [editingUser, setEditingUser] = useState(null);
   const [form, setForm] = useState(initialForm);
   const [saving, setSaving] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
     loadData();
@@ -77,6 +92,7 @@ export default function UsersSection({ hotelId, onUpdate }) {
   const handleAdd = () => {
     setEditingUser(null);
     setForm(initialForm);
+    setShowPassword(false);
     setShowModal(true);
   };
 
@@ -84,6 +100,7 @@ export default function UsersSection({ hotelId, onUpdate }) {
     setEditingUser(user);
     setForm({
       email: user.email,
+      password: '', // Ne pas afficher le mot de passe existant
       first_name: user.first_name,
       last_name: user.last_name,
       role: user.role,
@@ -92,6 +109,7 @@ export default function UsersSection({ hotelId, onUpdate }) {
       job_title: user.job_title || '',
       language: user.language || 'fr'
     });
+    setShowPassword(false);
     setShowModal(true);
   };
 
@@ -114,13 +132,31 @@ export default function UsersSection({ hotelId, onUpdate }) {
       return;
     }
     
+    // Pour la création, le mot de passe est obligatoire
+    if (!editingUser && !form.password) {
+      toast.error('Le mot de passe est obligatoire pour un nouvel utilisateur');
+      return;
+    }
+    
+    if (form.password && form.password.length < 6) {
+      toast.error('Le mot de passe doit contenir au moins 6 caractères');
+      return;
+    }
+    
     try {
       setSaving(true);
+      
+      const payload = { ...form };
+      // Ne pas envoyer le mot de passe si vide (en mode édition)
+      if (!payload.password) {
+        delete payload.password;
+      }
+      
       if (editingUser) {
-        await updateConfigUser(hotelId, editingUser.id, form);
+        await updateConfigUser(hotelId, editingUser.id, payload);
         toast.success('Utilisateur mis à jour');
       } else {
-        await createConfigUser(hotelId, form);
+        await createConfigUser(hotelId, payload);
         toast.success('Utilisateur créé');
       }
       setShowModal(false);
@@ -133,12 +169,33 @@ export default function UsersSection({ hotelId, onUpdate }) {
     }
   };
 
-  const getRoleName = (code) => roles.find(r => r.code === code)?.name || code;
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+    let password = '';
+    for (let i = 0; i < 12; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setForm(f => ({ ...f, password }));
+    setShowPassword(true);
+  };
+
+  const getRoleInfo = (code) => roles.find(r => r.code === code) || { name: code };
   const getDepartmentLabel = (value) => DEPARTMENTS.find(d => d.value === value)?.label || value;
 
   const getInitials = (firstName, lastName) => {
     return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
   };
+
+  // Filtrer les utilisateurs selon l'onglet
+  const filteredUsers = users.filter(u => {
+    if (activeTab === 'desktop') return !u.is_mobile_role;
+    if (activeTab === 'mobile') return u.is_mobile_role;
+    return true;
+  });
+
+  // Séparer les rôles desktop et mobile
+  const desktopRoles = roles.filter(r => !r.is_mobile);
+  const mobileRoles = roles.filter(r => r.is_mobile);
 
   return (
     <div className="space-y-6" data-testid="users-section">
@@ -150,7 +207,7 @@ export default function UsersSection({ hotelId, onUpdate }) {
           </div>
           <div>
             <h2 className="text-xl font-semibold text-slate-900">Utilisateurs & Accès</h2>
-            <p className="text-sm text-slate-500">Gestion des droits et des rôles</p>
+            <p className="text-sm text-slate-500">Gestion des comptes et des rôles mobile/desktop</p>
           </div>
         </div>
         <Button onClick={handleAdd} data-testid="add-user-btn">
@@ -159,20 +216,60 @@ export default function UsersSection({ hotelId, onUpdate }) {
         </Button>
       </div>
 
-      {/* Roles Summary */}
-      <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-        {roles.map(role => {
-          const count = users.filter(u => u.role === role.code).length;
-          return (
-            <Card key={role.code} className="text-center">
-              <CardContent className="py-3">
-                <div className="text-2xl font-bold text-slate-900">{count}</div>
-                <div className="text-xs text-slate-500 truncate">{role.name}</div>
-              </CardContent>
-            </Card>
-          );
-        })}
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="py-4 text-center">
+            <div className="text-3xl font-bold text-slate-900">{users.length}</div>
+            <div className="text-sm text-slate-500">Total utilisateurs</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="py-4 text-center">
+            <div className="flex items-center justify-center gap-2">
+              <Monitor className="w-5 h-5 text-blue-500" />
+              <span className="text-3xl font-bold text-blue-600">
+                {users.filter(u => !u.is_mobile_role).length}
+              </span>
+            </div>
+            <div className="text-sm text-slate-500">Desktop</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="py-4 text-center">
+            <div className="flex items-center justify-center gap-2">
+              <Smartphone className="w-5 h-5 text-emerald-500" />
+              <span className="text-3xl font-bold text-emerald-600">
+                {users.filter(u => u.is_mobile_role).length}
+              </span>
+            </div>
+            <div className="text-sm text-slate-500">Mobile</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="py-4 text-center">
+            <div className="text-3xl font-bold text-amber-600">
+              {users.filter(u => !u.is_active).length}
+            </div>
+            <div className="text-sm text-slate-500">Inactifs</div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Tabs for filtering */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="all">Tous ({users.length})</TabsTrigger>
+          <TabsTrigger value="desktop">
+            <Monitor className="w-4 h-4 mr-1" />
+            Desktop ({users.filter(u => !u.is_mobile_role).length})
+          </TabsTrigger>
+          <TabsTrigger value="mobile">
+            <Smartphone className="w-4 h-4 mr-1" />
+            Mobile ({users.filter(u => u.is_mobile_role).length})
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Users Table */}
       {loading ? (
@@ -181,14 +278,14 @@ export default function UsersSection({ hotelId, onUpdate }) {
             <div className="animate-spin h-8 w-8 border-4 border-violet-500 border-t-transparent rounded-full mx-auto" />
           </CardContent>
         </Card>
-      ) : users.length === 0 ? (
+      ) : filteredUsers.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <Users className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-500 mb-4">Aucun utilisateur configuré</p>
+            <p className="text-slate-500 mb-4">Aucun utilisateur trouvé</p>
             <Button onClick={handleAdd}>
               <Plus className="h-4 w-4 mr-2" />
-              Créer le premier utilisateur
+              Créer un utilisateur
             </Button>
           </CardContent>
         </Card>
@@ -198,105 +295,128 @@ export default function UsersSection({ hotelId, onUpdate }) {
             <TableHeader>
               <TableRow>
                 <TableHead>Utilisateur</TableHead>
+                <TableHead>Identifiant</TableHead>
                 <TableHead>Rôle</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>Département</TableHead>
-                <TableHead>Contact</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map(user => (
-                <TableRow key={user.id} data-testid={`user-row-${user.id}`}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback className="bg-violet-100 text-violet-700">
-                          {getInitials(user.first_name, user.last_name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium">{user.full_name}</div>
-                        <div className="text-sm text-slate-500">{user.job_title || '-'}</div>
+              {filteredUsers.map(user => {
+                const roleInfo = getRoleInfo(user.role);
+                return (
+                  <TableRow key={user.id} data-testid={`user-row-${user.id}`}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback className={user.is_mobile_role ? 'bg-emerald-100 text-emerald-700' : 'bg-violet-100 text-violet-700'}>
+                            {getInitials(user.first_name, user.last_name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-medium">{user.full_name}</div>
+                          <div className="text-sm text-slate-500">{user.job_title || '-'}</div>
+                        </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={ROLE_COLORS[user.role] || 'bg-slate-100'}>
-                      {getRoleName(user.role)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1 text-slate-600">
-                      <Building className="h-3 w-3" />
-                      <span className="text-sm">{getDepartmentLabel(user.department)}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
+                    </TableCell>
+                    <TableCell>
                       <div className="flex items-center gap-1 text-sm text-slate-600">
                         <Mail className="h-3 w-3" />
                         {user.email}
                       </div>
-                      {user.phone && (
-                        <div className="flex items-center gap-1 text-sm text-slate-400">
-                          <Phone className="h-3 w-3" />
-                          {user.phone}
-                        </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={ROLE_COLORS[user.role] || 'bg-slate-100'}>
+                        {roleInfo.name}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {user.is_mobile_role ? (
+                        <Badge className="bg-emerald-100 text-emerald-700">
+                          <Smartphone className="w-3 h-3 mr-1" />
+                          Mobile
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-blue-100 text-blue-700">
+                          <Monitor className="w-3 h-3 mr-1" />
+                          Desktop
+                        </Badge>
                       )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => handleEdit(user)}>
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => handleDelete(user)}
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1 text-slate-600">
+                        <Building className="h-3 w-3" />
+                        <span className="text-sm">{getDepartmentLabel(user.department)}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" onClick={() => handleEdit(user)}>
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => handleDelete(user)}
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </Card>
       )}
 
       {/* Roles Reference */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            Référentiel des rôles
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {roles.map(role => (
-              <div key={role.code} className="p-3 bg-slate-50 rounded-lg">
-                <div className="flex items-center gap-2 mb-1">
-                  <Badge className={ROLE_COLORS[role.code] || 'bg-slate-100'}>{role.name}</Badge>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Desktop Roles */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Monitor className="h-4 w-4 text-blue-500" />
+              Rôles Desktop
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {desktopRoles.map(role => (
+                <div key={role.code} className="p-3 bg-slate-50 rounded-lg">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge className={ROLE_COLORS[role.code] || 'bg-slate-100'}>{role.name}</Badge>
+                  </div>
+                  <p className="text-sm text-slate-500">{role.description}</p>
                 </div>
-                <p className="text-sm text-slate-500">{role.description}</p>
-                <div className="mt-2 flex gap-2 text-xs">
-                  {role.can_manage_config && (
-                    <span className="text-emerald-600">Config</span>
-                  )}
-                  {role.can_manage_users && (
-                    <span className="text-blue-600">Utilisateurs</span>
-                  )}
-                  {role.can_view_financials && (
-                    <span className="text-amber-600">Finance</span>
-                  )}
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Mobile Roles */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Smartphone className="h-4 w-4 text-emerald-500" />
+              Rôles Mobile (terrain)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {mobileRoles.map(role => (
+                <div key={role.code} className="p-3 bg-emerald-50 rounded-lg">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge className={ROLE_COLORS[role.code] || 'bg-slate-100'}>{role.name}</Badge>
+                  </div>
+                  <p className="text-sm text-slate-500">{role.description}</p>
                 </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Add/Edit Modal */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
@@ -305,37 +425,89 @@ export default function UsersSection({ hotelId, onUpdate }) {
             <DialogTitle>
               {editingUser ? 'Modifier l\'utilisateur' : 'Nouvel utilisateur'}
             </DialogTitle>
+            <DialogDescription>
+              {editingUser 
+                ? 'Modifiez les informations. Laissez le mot de passe vide pour ne pas le changer.'
+                : 'Créez un compte avec identifiant et mot de passe.'}
+            </DialogDescription>
           </DialogHeader>
 
-          <div className="grid grid-cols-2 gap-4 py-4">
+          <div className="grid gap-4 py-4">
+            {/* Nom & Prénom */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Prénom *</Label>
+                <Input
+                  value={form.first_name}
+                  onChange={(e) => setForm(f => ({ ...f, first_name: e.target.value }))}
+                  placeholder="Marie"
+                  data-testid="user-firstname-input"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Nom *</Label>
+                <Input
+                  value={form.last_name}
+                  onChange={(e) => setForm(f => ({ ...f, last_name: e.target.value }))}
+                  placeholder="Dupont"
+                  data-testid="user-lastname-input"
+                />
+              </div>
+            </div>
+
+            {/* Email (Identifiant) */}
             <div className="space-y-2">
-              <Label>Prénom *</Label>
-              <Input
-                value={form.first_name}
-                onChange={(e) => setForm(f => ({ ...f, first_name: e.target.value }))}
-                placeholder="Marie"
-                data-testid="user-firstname-input"
-              />
+              <Label>Email (Identifiant de connexion) *</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
+                  placeholder="marie.dupont@hotel.com"
+                  className="pl-9"
+                  data-testid="user-email-input"
+                />
+              </div>
             </div>
+
+            {/* Mot de passe */}
             <div className="space-y-2">
-              <Label>Nom *</Label>
-              <Input
-                value={form.last_name}
-                onChange={(e) => setForm(f => ({ ...f, last_name: e.target.value }))}
-                placeholder="Dupont"
-                data-testid="user-lastname-input"
-              />
+              <Label>
+                Mot de passe {!editingUser && '*'}
+                {editingUser && <span className="text-slate-400 font-normal"> (laisser vide pour ne pas changer)</span>}
+              </Label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    value={form.password}
+                    onChange={(e) => setForm(f => ({ ...f, password: e.target.value }))}
+                    placeholder={editingUser ? '••••••••' : 'Minimum 6 caractères'}
+                    className="pl-9 pr-10"
+                    data-testid="user-password-input"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <Button type="button" variant="outline" onClick={generatePassword} title="Générer un mot de passe">
+                  <RefreshCw className="w-4 h-4" />
+                </Button>
+              </div>
+              {form.password && (
+                <p className="text-xs text-slate-500">
+                  Force: {form.password.length < 8 ? '🔴 Faible' : form.password.length < 12 ? '🟡 Moyen' : '🟢 Fort'}
+                </p>
+              )}
             </div>
-            <div className="col-span-2 space-y-2">
-              <Label>Email *</Label>
-              <Input
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
-                placeholder="marie.dupont@hotel.com"
-                data-testid="user-email-input"
-              />
-            </div>
+
+            {/* Rôle */}
             <div className="space-y-2">
               <Label>Rôle *</Label>
               <Select value={form.role} onValueChange={(v) => setForm(f => ({ ...f, role: v }))}>
@@ -343,54 +515,83 @@ export default function UsersSection({ hotelId, onUpdate }) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {roles.map(r => (
-                    <SelectItem key={r.code} value={r.code}>{r.name}</SelectItem>
+                  <div className="px-2 py-1 text-xs font-semibold text-slate-500 flex items-center gap-1">
+                    <Monitor className="w-3 h-3" /> Desktop
+                  </div>
+                  {desktopRoles.map(r => (
+                    <SelectItem key={r.code} value={r.code}>
+                      <span className="flex items-center gap-2">
+                        {r.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                  <div className="border-t my-1" />
+                  <div className="px-2 py-1 text-xs font-semibold text-slate-500 flex items-center gap-1">
+                    <Smartphone className="w-3 h-3" /> Mobile (terrain)
+                  </div>
+                  {mobileRoles.map(r => (
+                    <SelectItem key={r.code} value={r.code}>
+                      <span className="flex items-center gap-2">
+                        {r.name}
+                      </span>
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Département</Label>
-              <Select value={form.department} onValueChange={(v) => setForm(f => ({ ...f, department: v }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {DEPARTMENTS.map(d => (
-                    <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+
+            {/* Département & Fonction */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Département</Label>
+                <Select value={form.department} onValueChange={(v) => setForm(f => ({ ...f, department: v }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DEPARTMENTS.map(d => (
+                      <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Fonction</Label>
+                <Input
+                  value={form.job_title}
+                  onChange={(e) => setForm(f => ({ ...f, job_title: e.target.value }))}
+                  placeholder="Réceptionniste, Gouvernante..."
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Fonction</Label>
-              <Input
-                value={form.job_title}
-                onChange={(e) => setForm(f => ({ ...f, job_title: e.target.value }))}
-                placeholder="Réceptionniste"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Téléphone</Label>
-              <Input
-                value={form.phone}
-                onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))}
-                placeholder="+33 6 12 34 56 78"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Langue</Label>
-              <Select value={form.language} onValueChange={(v) => setForm(f => ({ ...f, language: v }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="fr">Français</SelectItem>
-                  <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="de">Deutsch</SelectItem>
-                  <SelectItem value="es">Español</SelectItem>
-                </SelectContent>
-              </Select>
+
+            {/* Téléphone & Langue */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Téléphone</Label>
+                <Input
+                  value={form.phone}
+                  onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))}
+                  placeholder="+33 6 12 34 56 78"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Langue</Label>
+                <Select value={form.language} onValueChange={(v) => setForm(f => ({ ...f, language: v }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fr">🇫🇷 Français</SelectItem>
+                    <SelectItem value="en">🇬🇧 English</SelectItem>
+                    <SelectItem value="es">🇪🇸 Español</SelectItem>
+                    <SelectItem value="de">🇩🇪 Deutsch</SelectItem>
+                    <SelectItem value="it">🇮🇹 Italiano</SelectItem>
+                    <SelectItem value="pt">🇵🇹 Português</SelectItem>
+                    <SelectItem value="ar">🇸🇦 العربية</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 

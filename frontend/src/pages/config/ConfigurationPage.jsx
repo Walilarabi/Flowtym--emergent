@@ -10,6 +10,8 @@ import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Progress } from '../../components/ui/progress';
 import { toast } from 'sonner';
+import { useAuth } from '../../context/AuthContext';
+import { useHotel } from '../../context/HotelContext';
 
 // Sub-components
 import HotelProfileSection from './components/HotelProfileSection';
@@ -33,18 +35,20 @@ const CONFIG_SECTIONS = [
 ];
 
 export default function ConfigurationPage() {
+  const { user } = useAuth();
+  const { currentHotel } = useHotel();
   const [activeSection, setActiveSection] = useState('profile');
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [hotelId, setHotelId] = useState(null);
+  
+  // Get hotelId from context or user
+  const hotelId = currentHotel?.id || user?.hotel_id;
 
   useEffect(() => {
-    // Get hotel_id from user data
-    const userData = JSON.parse(localStorage.getItem('flowtym_user') || '{}');
-    const id = userData.hotel_id || '4f02769a-5f63-4121-bb97-a7061563d934';
-    setHotelId(id);
-    loadSummary(id);
-  }, []);
+    if (hotelId) {
+      loadSummary(hotelId);
+    }
+  }, [hotelId]);
 
   const loadSummary = async (id) => {
     // Verify auth token exists before making API call
