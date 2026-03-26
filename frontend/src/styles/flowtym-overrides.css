@@ -72,24 +72,51 @@ aside, [class*="sidebar"], .sidebar {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   SHADCN/UI BUTTON OVERRIDE
+   SHADCN/UI BUTTON OVERRIDE - VIOLET AVEC TEXTE BLANC LISIBLE
    ═══════════════════════════════════════════════════════════════════════ */
 
 button[class*="bg-violet"], 
 button[class*="bg-primary"],
 .btn-primary,
-[data-slot="button"][class*="primary"] {
-  background: var(--ft-primary-gradient) !important;
-  box-shadow: var(--ft-shadow-sm) !important;
+[data-slot="button"][class*="primary"],
+button.bg-violet-600,
+button.bg-violet-700,
+.bg-violet-600,
+.bg-violet-700 {
+  background: #A855F7 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 14px rgba(168, 85, 247, 0.35) !important;
   border: none !important;
-  font-weight: var(--ft-font-medium) !important;
-  transition: all var(--ft-transition-fast) !important;
+  font-weight: 500 !important;
+  border-radius: 12px !important;
+  transition: all 0.15s ease !important;
 }
 
 button[class*="bg-violet"]:hover:not(:disabled),
-button[class*="bg-primary"]:hover:not(:disabled) {
+button[class*="bg-primary"]:hover:not(:disabled),
+.bg-violet-600:hover,
+.bg-violet-700:hover {
+  background: #9333EA !important;
+  color: #FFFFFF !important;
   transform: translateY(-1px) !important;
-  box-shadow: var(--ft-shadow-primary) !important;
+  box-shadow: 0 6px 20px rgba(168, 85, 247, 0.45) !important;
+}
+
+/* Force le texte blanc sur tous les boutons violets */
+button[class*="bg-violet"] *,
+button[class*="bg-primary"] *,
+.btn-primary *,
+.bg-violet-600 *,
+.bg-violet-700 * {
+  color: #FFFFFF !important;
+}
+
+/* Override pour les boutons avec classe text-white */
+.bg-violet-600.text-white,
+.bg-violet-700.text-white,
+button.bg-violet-600,
+button.bg-violet-700 {
+  color: #FFFFFF !important;
 }
 
 /* Secondary buttons */

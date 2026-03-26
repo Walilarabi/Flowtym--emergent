@@ -1181,20 +1181,38 @@ body {
   color: var(--text-muted) !important;
 }
 
-/* Override des boutons Shadcn */
+/* Override des boutons Shadcn - VIOLET AVEC TEXTE BLANC */
 button[class*="bg-violet"],
 .btn-primary,
-button.bg-violet-600 {
-  background: var(--primary-gradient) !important;
+button.bg-violet-600,
+button.bg-violet-700,
+.bg-violet-600,
+.bg-violet-700 {
+  background: #A855F7 !important;
+  color: #FFFFFF !important;
   border: none !important;
-  box-shadow: var(--shadow-primary) !important;
-  transition: all var(--transition-fast) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 14px rgba(168, 85, 247, 0.35) !important;
+  transition: all 0.15s ease !important;
+  font-weight: 500 !important;
 }
 
 button[class*="bg-violet"]:hover,
-.btn-primary:hover {
+.btn-primary:hover,
+.bg-violet-600:hover,
+.bg-violet-700:hover {
+  background: #9333EA !important;
+  color: #FFFFFF !important;
   transform: translateY(-1px) !important;
-  box-shadow: 0 6px 20px rgba(108, 92, 231, 0.35) !important;
+  box-shadow: 0 6px 20px rgba(168, 85, 247, 0.45) !important;
+}
+
+/* Force texte blanc dans les boutons violets */
+button[class*="bg-violet"] *,
+.btn-primary *,
+.bg-violet-600 *,
+.bg-violet-700 * {
+  color: #FFFFFF !important;
 }
 
 /* Override des inputs */

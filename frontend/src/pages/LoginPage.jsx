@@ -8,81 +8,298 @@ import { toast } from 'sonner'
 import { Eye, EyeOff, Lock, Check, Layers, RefreshCw, TrendingUp } from 'lucide-react'
 
 /* ═══════════════════════════════════════════════════════════════════════════════
-   FLOWTYM LOGIN PAGE - Inspired by modern hotel management design
+   FLOWTYM LOGIN PAGE - Design Premium Hôtelier
+   Basé sur le mockup fourni avec image d'hôtel et gradient violet/rose
 ═══════════════════════════════════════════════════════════════════════════════ */
 
-// CSS for glassmorphism and animations
 const LoginStyles = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
     
     .login-page {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      width: 100%;
+      display: flex;
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 30%, #4c1d95 60%, #6d28d9 80%, #7c3aed 100%);
+      position: relative;
+      overflow: hidden;
     }
     
-    .login-bg {
-      background: linear-gradient(135deg, 
-        #6C5CE7 0%, 
-        #7C6BED 30%,
-        #8B7AF3 60%,
-        #A29BFE 100%
+    .login-bg-image {
+      position: absolute;
+      inset: 0;
+      background-image: url('https://images.pexels.com/photos/2034335/pexels-photo-2034335.jpeg?auto=compress&cs=tinysrgb&w=1920');
+      background-size: cover;
+      background-position: center;
+      opacity: 0.4;
+      mix-blend-mode: overlay;
+    }
+    
+    .login-gradient-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        135deg,
+        rgba(30, 27, 75, 0.95) 0%,
+        rgba(76, 29, 149, 0.85) 40%,
+        rgba(109, 40, 217, 0.75) 70%,
+        rgba(168, 85, 247, 0.65) 100%
       );
     }
     
-    .glass-card {
-      background: rgba(255, 255, 255, 0.98);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      box-shadow: 
-        0 25px 60px -12px rgba(0, 0, 0, 0.15),
-        0 0 0 1px rgba(255, 255, 255, 0.1);
+    .login-content {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      width: 100%;
+      min-height: 100vh;
+    }
+    
+    .login-left {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 40px 60px;
+      color: white;
+    }
+    
+    .login-right {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
     }
     
     .logo-badge {
-      background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 12px 20px;
+      background: rgba(255, 255, 255, 0.15);
       backdrop-filter: blur(10px);
-      border: 1px solid rgba(255,255,255,0.3);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     }
     
-    .btn-gradient {
-      background: linear-gradient(135deg, #6C5CE7 0%, #5B4ED1 100%);
-      box-shadow: 0 4px 20px rgba(108, 92, 231, 0.35);
-      transition: all 0.2s ease;
+    .logo-flow {
+      font-size: 20px;
+      font-weight: 700;
+      color: white;
+      letter-spacing: -0.02em;
     }
     
-    .btn-gradient:hover {
-      box-shadow: 0 8px 30px rgba(108, 92, 231, 0.45);
-      transform: translateY(-1px);
-    }
-    
-    .btn-gradient:active {
-      transform: translateY(0);
-    }
-    
-    .feature-check {
-      color: #22C55E;
-      filter: drop-shadow(0 0 4px rgba(34, 197, 94, 0.4));
-    }
-    
-    .input-styled {
-      background: #F8F9FC;
-      border: 1px solid #E5E7EB;
-      transition: all 0.15s ease;
-    }
-    
-    .input-styled:focus {
-      background: white;
-      border-color: #6C5CE7;
-      box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.12);
-    }
-    
-    .text-gradient {
-      background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+    .logo-tym {
+      font-size: 20px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #34d399, #10b981);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      letter-spacing: -0.02em;
+    }
+    
+    .login-tagline {
+      max-width: 500px;
+    }
+    
+    .login-tagline h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 20px;
+      letter-spacing: -0.02em;
+      color: white;
+    }
+    
+    .login-tagline p {
+      font-size: 1.1rem;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .login-footer {
+      font-size: 0.875rem;
+      color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .login-card {
+      width: 420px;
+      max-width: 100%;
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    .login-card-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    
+    .login-card-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+    
+    .login-card-subtitle {
+      font-size: 0.9rem;
+      color: #6b7280;
+    }
+    
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    .login-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .login-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #374151;
+    }
+    
+    .login-input-wrapper {
+      position: relative;
+    }
+    
+    .login-input {
+      width: 100%;
+      height: 48px;
+      padding: 0 16px;
+      font-size: 0.95rem;
+      color: #1f2937;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+    }
+    
+    .login-input:focus {
+      outline: none;
+      background: white;
+      border-color: #a855f7;
+      box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+    }
+    
+    .login-input::placeholder {
+      color: #9ca3af;
+    }
+    
+    .login-input-icon {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9ca3af;
+      cursor: pointer;
+      transition: color 0.15s ease;
+    }
+    
+    .login-input-icon:hover {
+      color: #6b7280;
+    }
+    
+    .login-submit {
+      width: 100%;
+      height: 52px;
+      background: #a855f7;
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px rgba(168, 85, 247, 0.35);
+      margin-top: 8px;
+    }
+    
+    .login-submit:hover:not(:disabled) {
+      background: #9333ea;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(168, 85, 247, 0.45);
+    }
+    
+    .login-submit:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+    
+    .login-security {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 16px;
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+    
+    .login-forgot {
+      text-align: center;
+      margin-top: 16px;
+    }
+    
+    .login-forgot a {
+      color: #a855f7;
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+      transition: color 0.15s ease;
+    }
+    
+    .login-forgot a:hover {
+      color: #9333ea;
+    }
+    
+    .login-features {
+      margin-top: 28px;
+      padding-top: 24px;
+      border-top: 1px solid #f3f4f6;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .login-feature {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #4b5563;
+      font-size: 0.9rem;
+    }
+    
+    .login-feature-icon {
+      width: 20px;
+      height: 20px;
+      color: #22c55e;
+      flex-shrink: 0;
+    }
+    
+    .login-spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
     
     @keyframes fadeInUp {
@@ -100,9 +317,36 @@ const LoginStyles = () => (
       animation: fadeInUp 0.6s ease-out forwards;
     }
     
-    .animate-delay-1 { animation-delay: 0.1s; }
-    .animate-delay-2 { animation-delay: 0.2s; }
-    .animate-delay-3 { animation-delay: 0.3s; }
+    .animate-delay-1 { animation-delay: 0.1s; opacity: 0; }
+    .animate-delay-2 { animation-delay: 0.2s; opacity: 0; }
+    .animate-delay-3 { animation-delay: 0.3s; opacity: 0; }
+    
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .login-left {
+        display: none;
+      }
+      
+      .login-right {
+        flex: 1;
+        background: linear-gradient(135deg, #1e1b4b 0%, #4c1d95 50%, #7c3aed 100%);
+      }
+      
+      .login-card {
+        margin: 20px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .login-card {
+        padding: 30px 24px;
+        border-radius: 16px;
+      }
+      
+      .login-card-title {
+        font-size: 1.5rem;
+      }
+    }
   `}</style>
 )
 
@@ -146,192 +390,170 @@ export const LoginPage = () => {
   }
 
   const features = [
-    { icon: Layers, text: "Plateforme tout-en-un" },
-    { icon: RefreshCw, text: "Synchronisation temps réel" },
-    { icon: TrendingUp, text: "Pilotage intelligent des revenus" },
+    "Plateforme tout-en-un",
+    "Synchronisation temps réel",
+    "Pilotage intelligent des revenus",
   ]
 
   return (
     <>
       <LoginStyles />
-      <div className="login-page min-h-screen w-full flex">
-        {/* Left Panel - Background with Hotel Image */}
-        <div 
-          className="hidden lg:flex lg:w-[55%] bg-cover bg-center relative overflow-hidden"
-          style={{ 
-            backgroundImage: 'url(https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2)'
-          }}
-        >
-          {/* Gradient Overlay */}
-          <div className="absolute inset-0 login-bg" />
-          
-          {/* Content */}
-          <div className="relative z-10 flex flex-col justify-between p-10 text-white w-full">
+      <div className="login-page">
+        {/* Background Image */}
+        <div className="login-bg-image" />
+        
+        {/* Gradient Overlay */}
+        <div className="login-gradient-overlay" />
+        
+        {/* Content */}
+        <div className="login-content">
+          {/* Left Panel - Branding */}
+          <div className="login-left">
             {/* Logo */}
             <div className="animate-fade-in">
-              <div className="logo-badge inline-flex items-center gap-2 px-5 py-2.5 rounded-xl">
-                <span className="text-xl font-bold tracking-tight text-white">FLOW</span>
-                <span className="text-xl font-bold tracking-tight text-gradient">TYM</span>
+              <div className="logo-badge">
+                <span className="logo-flow">FLOW</span>
+                <span className="logo-tym">TYM</span>
               </div>
             </div>
             
-            {/* Main Text */}
-            <div className="max-w-lg animate-fade-in animate-delay-1">
-              <h1 className="text-4xl lg:text-[2.75rem] font-bold mb-5 leading-tight tracking-tight">
+            {/* Tagline */}
+            <div className="login-tagline animate-fade-in animate-delay-1">
+              <h1>
                 Le système d'exploitation<br />
                 des hôtels modernes
               </h1>
-              <p className="text-lg text-white/80 leading-relaxed">
+              <p>
                 Réservations, revenus, distribution et expérience client.<br />
                 Tout est connecté dans une seule plateforme.
               </p>
             </div>
             
             {/* Footer */}
-            <p className="text-sm text-white/50 animate-fade-in animate-delay-2">
-              Flowtym PMS – Tous droits réservés 2026
-            </p>
-          </div>
-        </div>
-
-        {/* Right Panel - Login Form */}
-        <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-gradient-to-br from-slate-50 to-slate-100 relative overflow-hidden">
-          {/* Decorative gradient blob */}
-          <div className="absolute top-0 right-0 w-96 h-96 bg-violet-200/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-0 w-80 h-80 bg-emerald-200/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
-          
-          <div className="w-full max-w-md relative z-10">
-            {/* Mobile Logo */}
-            <div className="lg:hidden flex items-center gap-2 mb-8 justify-center">
-              <div className="logo-badge inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600">
-                <span className="text-xl font-bold tracking-tight text-white">FLOW</span>
-                <span className="text-xl font-bold tracking-tight text-emerald-400">TYM</span>
-              </div>
+            <div className="login-footer animate-fade-in animate-delay-2">
+              Flowtym – Tous droits réservés 2026
             </div>
-
-            {/* Glass Card */}
-            <div className="glass-card rounded-2xl p-8 lg:p-10">
+          </div>
+          
+          {/* Right Panel - Login Form */}
+          <div className="login-right">
+            <div className="login-card animate-fade-in animate-delay-1">
               {/* Header */}
-              <div className="mb-8 text-center">
-                <h2 className="text-2xl lg:text-[1.75rem] font-bold text-slate-800 mb-2">
+              <div className="login-card-header">
+                <h2 className="login-card-title">
                   {isLogin ? 'Bienvenue sur Flowtym' : 'Créer un compte'}
                 </h2>
-                <p className="text-slate-500 text-sm">
-                  {isLogin ? 'Connectez-vous pour accéder à votre plateforme' : 'Remplissez le formulaire pour commencer'}
+                <p className="login-card-subtitle">
+                  {isLogin 
+                    ? 'Connectez-vous pour accéder à votre plateforme' 
+                    : 'Remplissez le formulaire pour commencer'}
                 </p>
               </div>
-
+              
               {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit} className="login-form">
                 {!isLogin && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="first_name" className="text-slate-700 font-medium text-sm">Prénom</Label>
-                      <Input
-                        id="first_name"
+                  <>
+                    <div className="login-input-group">
+                      <label className="login-label">Prénom</label>
+                      <input
+                        type="text"
                         value={formData.first_name}
                         onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
                         placeholder="Jean"
                         required={!isLogin}
-                        className="input-styled h-11 rounded-lg"
+                        className="login-input"
                         data-testid="input-first-name"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="last_name" className="text-slate-700 font-medium text-sm">Nom</Label>
-                      <Input
-                        id="last_name"
+                    <div className="login-input-group">
+                      <label className="login-label">Nom</label>
+                      <input
+                        type="text"
                         value={formData.last_name}
                         onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
                         placeholder="Dupont"
                         required={!isLogin}
-                        className="input-styled h-11 rounded-lg"
+                        className="login-input"
                         data-testid="input-last-name"
                       />
                     </div>
-                  </div>
+                  </>
                 )}
-
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-slate-700 font-medium text-sm">Email</Label>
-                  <Input
-                    id="email"
+                
+                <div className="login-input-group">
+                  <label className="login-label">Email</label>
+                  <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="jean.dupont@hotel.com"
                     required
-                    className="input-styled h-11 rounded-lg"
+                    className="login-input"
                     data-testid="input-email"
                   />
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-slate-700 font-medium text-sm">Mot de passe</Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
+                
+                <div className="login-input-group">
+                  <label className="login-label">Mot de passe</label>
+                  <div className="login-input-wrapper">
+                    <input
                       type={showPassword ? 'text' : 'password'}
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       placeholder="••••••••"
                       required
-                      className="input-styled h-11 rounded-lg pr-11"
+                      className="login-input"
+                      style={{ paddingRight: '48px' }}
                       data-testid="input-password"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                      className="login-input-icon"
+                      tabIndex={-1}
                     >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
                   </div>
                 </div>
-
-                <Button 
+                
+                <button 
                   type="submit" 
-                  className="w-full h-12 btn-gradient text-white font-semibold rounded-xl text-base border-0" 
-                  disabled={loading} 
+                  className="login-submit"
+                  disabled={loading}
                   data-testid="btn-submit-login"
                 >
                   {loading ? (
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <div className="login-spinner" />
                   ) : (
                     isLogin ? 'Accéder à mon espace' : 'Créer le compte'
                   )}
-                </Button>
+                </button>
               </form>
-
+              
               {/* Security Note */}
-              <div className="flex items-center justify-center gap-2 mt-5 text-slate-400 text-xs">
-                <Lock className="w-3.5 h-3.5" />
+              <div className="login-security">
+                <Lock size={14} />
                 <span>Données sécurisées – Accès réservé</span>
               </div>
-
-              {/* Toggle Mode */}
-              <div className="mt-5 text-center">
-                <button
-                  type="button"
-                  onClick={() => setIsLogin(!isLogin)}
-                  className="text-sm text-violet-600 hover:text-violet-700 font-medium transition-colors"
-                  data-testid="btn-toggle-auth-mode"
-                >
+              
+              {/* Forgot Password / Toggle */}
+              <div className="login-forgot">
+                <a onClick={() => setIsLogin(!isLogin)} data-testid="btn-toggle-auth-mode">
                   {isLogin ? "Mot de passe oublié ?" : 'Déjà un compte ? Se connecter'}
-                </button>
+                </a>
               </div>
-
+              
               {/* Features */}
               {isLogin && (
-                <div className="mt-8 pt-6 border-t border-slate-100">
-                  <div className="space-y-3">
-                    {features.map((feature, idx) => (
-                      <div key={idx} className="flex items-center gap-3">
-                        <Check className="w-5 h-5 feature-check flex-shrink-0" />
-                        <span className="text-slate-600 text-sm">{feature.text}</span>
-                      </div>
-                    ))}
-                  </div>
+                <div className="login-features">
+                  {features.map((feature, idx) => (
+                    <div key={idx} className="login-feature">
+                      <Check className="login-feature-icon" />
+                      <span>{feature}</span>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
