@@ -20,7 +20,7 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import {
   MapPin, Zap, Grid3X3, CheckCircle, Wrench, Coffee, RefreshCw,
-  Loader2, LayoutGrid
+  Loader2, LayoutGrid, QrCode, Settings
 } from 'lucide-react'
 import axios from 'axios'
 
@@ -31,6 +31,8 @@ import MobileHousekeepingView from '@/components/housekeeping/MobileHousekeeping
 import MobileMaintenanceView from '@/components/housekeeping/MobileMaintenanceView'
 import MobileBreakfastView from '@/components/housekeeping/MobileBreakfastView'
 import InteractiveReceptionView from '@/components/housekeeping/InteractiveReceptionView'
+import QRCodeManager from '@/components/housekeeping/QRCodeManager'
+import SatisfactionConfig from '@/components/housekeeping/SatisfactionConfig'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL
 
@@ -326,6 +328,29 @@ export default function HousekeepingModule() {
             >
               <Coffee size={16} /> Petit-déj
             </button>
+            
+            {/* Separator */}
+            <div className="w-px h-8 bg-slate-300 mx-1 self-center" />
+            
+            {/* Config Views */}
+            <button 
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                activeView === 'qrcodes' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              }`}
+              onClick={() => setActiveView('qrcodes')}
+              data-testid="hk-nav-qrcodes"
+            >
+              <QrCode size={16} /> QR Codes
+            </button>
+            <button 
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                activeView === 'satisfaction' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              }`}
+              onClick={() => setActiveView('satisfaction')}
+              data-testid="hk-nav-satisfaction"
+            >
+              <Settings size={16} /> Satisfaction
+            </button>
           </div>
 
           {/* Actions */}
@@ -361,6 +386,16 @@ export default function HousekeepingModule() {
         )}
         {activeView === 'breakfast' && (
           <MobileBreakfastView data={data} actions={actions} />
+        )}
+        {activeView === 'qrcodes' && (
+          <div className="h-full overflow-auto p-6">
+            <QRCodeManager />
+          </div>
+        )}
+        {activeView === 'satisfaction' && (
+          <div className="h-full overflow-auto p-6">
+            <SatisfactionConfig />
+          </div>
         )}
       </div>
     </div>

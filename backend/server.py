@@ -4909,6 +4909,16 @@ from staff.pointage_routes import router as pointage_router, init_pointage_db
 init_pointage_db(db)
 api_router.include_router(pointage_router)
 
+# Include QR Codes Module router
+from qrcodes.routes import router as qrcodes_router, init_qrcodes_db
+init_qrcodes_db(db)
+api_router.include_router(qrcodes_router)
+
+# Include Satisfaction Survey Module router
+from satisfaction.routes import router as satisfaction_router, init_satisfaction_db
+init_satisfaction_db(db)
+api_router.include_router(satisfaction_router)
+
 # Include the router in the main app
 app.include_router(api_router)
 

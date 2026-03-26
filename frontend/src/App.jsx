@@ -39,6 +39,8 @@ import EReputationModule from '@/pages/ereputation/EReputationModule'
 import Flowboard from '@/pages/flowboard/Flowboard'
 import IntegrationsHub from '@/pages/integrations/IntegrationsHub'
 import MobilePointage from '@/pages/pointage/MobilePointage'
+import SatisfactionSurvey from '@/pages/public/SatisfactionSurvey'
+import HousekeepingScan from '@/pages/public/HousekeepingScan'
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth()
@@ -73,6 +75,16 @@ const AppRoutes = () => {
       <Route path="/pointage/mobile" element={
         <ProtectedRoute>
           <MobilePointage />
+        </ProtectedRoute>
+      } />
+      
+      {/* Public Satisfaction Survey - No auth required */}
+      <Route path="/satisfaction/:token" element={<SatisfactionSurvey />} />
+      
+      {/* Housekeeping Scan - Needs auth for tracking */}
+      <Route path="/scan/:token" element={
+        <ProtectedRoute>
+          <HousekeepingScan />
         </ProtectedRoute>
       } />
       
