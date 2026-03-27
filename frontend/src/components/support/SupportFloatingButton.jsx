@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { useHotel } from '@/context/HotelContext'
 import { toast } from 'sonner'
@@ -13,7 +13,8 @@ import html2canvas from 'html2canvas'
 import { 
   MessageCircle, X, ChevronRight, ChevronLeft, Upload, Camera, Sparkles,
   CheckCircle, AlertCircle, Clock, Send, Loader2, HelpCircle, Zap,
-  Monitor, FileText, Image as ImageIcon, ArrowRight
+  Monitor, FileText, Image as ImageIcon, ArrowRight, Bell, BellRing,
+  Bot, RefreshCw, CheckCheck, Trash2, ExternalLink
 } from 'lucide-react'
 
 const MODULES = [
@@ -69,7 +70,36 @@ export const SupportFloatingButton = () => {
   const [showTickets, setShowTickets] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
   
+  // Notifications state
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [notifications, setNotifications] = useState([])
+  const [loadingNotifications, setLoadingNotifications] = useState(false)
+  const [previousNotificationIds, setPreviousNotificationIds] = useState(new Set())
+  
   const fileInputRef = useRef(null)
+  const pollingRef = useRef(null)
+
+  // Polling pour les notifications en temps réel (30 secondes)
+  const startPolling = useCallback(() => {
+    if (pollingRef.current) clearInterval(pollingRef.current)
+    
+    pollingRef.current = setInterval(() => {
+      if (currentHotel?.id) {
+        fetchNotificationsQuiet()
+      }
+    }, 30000) // 30 secondes
+  }, [currentHotel?.id])
+
+  useEffect(() => {
+    if (currentHotel?.id) {
+      fetchNotifications()
+      startPolling()
+    }
+    
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current)
+    }
+  }, [currentHotel?.id, startPolling])
 
   useEffect(() => {
     if (isOpen && currentHotel?.id) {
@@ -90,11 +120,86 @@ export const SupportFloatingButton = () => {
 
   const fetchNotifications = async () => {
     if (!currentHotel?.id) return
+    setLoadingNotifications(true)
     try {
-      const response = await api.get(`/support/hotels/${currentHotel.id}/notifications?unread_only=true`)
-      setUnreadCount(response.data.notifications?.length || 0)
+      const response = await api.get(`/support/hotels/${currentHotel.id}/notifications`)
+      const newNotifications = response.data.notifications || []
+      setNotifications(newNotifications)
+      const unreadNotifs = newNotifications.filter(n => !n.read)
+      setUnreadCount(unreadNotifs.length)
+      
+      // Store current IDs for comparison
+      setPreviousNotificationIds(new Set(newNotifications.map(n => n.id)))
     } catch (error) {
       console.error('Error fetching notifications:', error)
+    } finally {
+      setLoadingNotifications(false)
+    }
+  }
+
+  // Quiet fetch for polling - shows toast for new notifications
+  const fetchNotificationsQuiet = async () => {
+    if (!currentHotel?.id) return
+    try {
+      const response = await api.get(`/support/hotels/${currentHotel.id}/notifications`)
+      const newNotifications = response.data.notifications || []
+      
+      // Check for new notifications
+      const newIds = newNotifications.map(n => n.id)
+      const brandNew = newNotifications.filter(n => 
+        !previousNotificationIds.has(n.id) && !n.read
+      )
+      
+      // Show toast for each new notification
+      brandNew.forEach(notif => {
+        const icon = notif.notification_type === 'ai_response' ? '🤖' : 
+                     notif.notification_type === 'status_change' ? '📋' : '🔔'
+        toast(notif.title, {
+          description: notif.message,
+          icon: icon,
+          duration: 8000,
+          action: {
+            label: 'Voir',
+            onClick: () => {
+              setShowNotifications(true)
+              setIsOpen(true)
+            }
+          }
+        })
+      })
+      
+      setNotifications(newNotifications)
+      const unreadNotifs = newNotifications.filter(n => !n.read)
+      setUnreadCount(unreadNotifs.length)
+      setPreviousNotificationIds(new Set(newIds))
+    } catch (error) {
+      console.error('Error polling notifications:', error)
+    }
+  }
+
+  const markNotificationAsRead = async (notificationId) => {
+    if (!currentHotel?.id) return
+    try {
+      await api.post(`/support/hotels/${currentHotel.id}/notifications/${notificationId}/read`)
+      setNotifications(prev => 
+        prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+      )
+      setUnreadCount(prev => Math.max(0, prev - 1))
+    } catch (error) {
+      console.error('Error marking notification as read:', error)
+    }
+  }
+
+  const markAllAsRead = async () => {
+    if (!currentHotel?.id) return
+    try {
+      await api.post(`/support/hotels/${currentHotel.id}/notifications/read-all`)
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+      setUnreadCount(0)
+      toast.success('Toutes les notifications sont marquées comme lues')
+    } catch (error) {
+      console.error('Error marking all as read:', error)
+      toast.error('Erreur lors de la mise à jour')
     }
   }
 
@@ -543,9 +648,123 @@ export const SupportFloatingButton = () => {
     }
   }
 
+  // Render notification center
+  const renderNotificationCenter = () => (
+    <div className="space-y-3">
+      {/* Header with actions */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <BellRing className="w-5 h-5 text-violet-600" />
+          <span className="font-medium text-slate-800">Notifications</span>
+          {unreadCount > 0 && (
+            <Badge className="bg-red-500 text-white text-xs">{unreadCount}</Badge>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={fetchNotifications}
+            disabled={loadingNotifications}
+            className="h-8 px-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${loadingNotifications ? 'animate-spin' : ''}`} />
+          </Button>
+          {unreadCount > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={markAllAsRead}
+              className="h-8 text-xs text-violet-600 hover:text-violet-700"
+            >
+              <CheckCheck className="w-4 h-4 mr-1" />
+              Tout lire
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Notifications list */}
+      <div className="space-y-2 max-h-[300px] overflow-y-auto">
+        {notifications.length === 0 ? (
+          <div className="text-center py-8 text-slate-400">
+            <Bell className="w-10 h-10 mx-auto mb-2 opacity-50" />
+            <p className="text-sm">Aucune notification</p>
+          </div>
+        ) : (
+          notifications.map(notif => (
+            <div
+              key={notif.id}
+              onClick={() => !notif.read && markNotificationAsRead(notif.id)}
+              className={`p-3 rounded-lg border transition-all cursor-pointer hover:shadow-sm ${
+                notif.read 
+                  ? 'bg-slate-50 border-slate-200' 
+                  : 'bg-violet-50 border-violet-200 shadow-sm'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                  notif.notification_type === 'ai_response' 
+                    ? 'bg-violet-100 text-violet-600'
+                    : notif.notification_type === 'status_change'
+                    ? 'bg-blue-100 text-blue-600'
+                    : 'bg-slate-100 text-slate-600'
+                }`}>
+                  {notif.notification_type === 'ai_response' ? (
+                    <Bot className="w-4 h-4" />
+                  ) : notif.notification_type === 'status_change' ? (
+                    <RefreshCw className="w-4 h-4" />
+                  ) : (
+                    <Bell className="w-4 h-4" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className={`text-sm font-medium truncate ${notif.read ? 'text-slate-600' : 'text-slate-800'}`}>
+                      {notif.title}
+                    </p>
+                    {!notif.read && (
+                      <span className="w-2 h-2 bg-violet-500 rounded-full shrink-0" />
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{notif.message}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs text-slate-400">
+                      {new Date(notif.created_at).toLocaleString('fr-FR', {
+                        day: '2-digit',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
+                    {notif.ticket_id && (
+                      <Badge variant="outline" className="text-xs px-1.5 py-0">
+                        {notif.ticket_id}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Back button */}
+      <Button
+        variant="outline"
+        onClick={() => setShowNotifications(false)}
+        className="w-full"
+      >
+        <ChevronLeft className="w-4 h-4 mr-2" />
+        Retour
+      </Button>
+    </div>
+  )
+
   return (
     <>
-      {/* Floating Button */}
+      {/* Floating Button with notification badge */}
       <button
         onClick={() => setIsOpen(true)}
         className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-gradient-to-r from-violet-600 to-violet-500 text-white rounded-full shadow-lg shadow-violet-500/30 flex items-center justify-center hover:scale-105 transition-transform"
@@ -553,8 +772,8 @@ export const SupportFloatingButton = () => {
       >
         <MessageCircle className="w-6 h-6" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-            {unreadCount}
+          <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
+            {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
@@ -563,30 +782,54 @@ export const SupportFloatingButton = () => {
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-violet-600 to-violet-500 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-white" />
+            <DialogTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gradient-to-r from-violet-600 to-violet-500 rounded-lg flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <span className="text-lg">Flowtym AI Support</span>
+                  <p className="text-xs font-normal text-slate-500">Support intelligent et instantané</p>
+                </div>
               </div>
-              <div>
-                <span className="text-lg">Flowtym AI Support</span>
-                <p className="text-xs font-normal text-slate-500">Support intelligent et instantané</p>
-              </div>
+              {/* Notification bell icon */}
+              {!showNotifications && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowNotifications(true)}
+                  className="relative h-9 w-9 p-0"
+                >
+                  <Bell className="w-5 h-5 text-slate-500" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </Button>
+              )}
             </DialogTitle>
           </DialogHeader>
           
-          {/* Progress indicator */}
-          <div className="flex items-center gap-1 mb-4">
-            {[1, 2, 3, 4].map(s => (
-              <div
-                key={s}
-                className={`flex-1 h-1 rounded-full transition-colors ${
-                  s <= step ? 'bg-violet-500' : 'bg-slate-200'
-                }`}
-              />
-            ))}
-          </div>
-          
-          {renderStep()}
+          {showNotifications ? (
+            renderNotificationCenter()
+          ) : (
+            <>
+              {/* Progress indicator */}
+              <div className="flex items-center gap-1 mb-4">
+                {[1, 2, 3, 4].map(s => (
+                  <div
+                    key={s}
+                    className={`flex-1 h-1 rounded-full transition-colors ${
+                      s <= step ? 'bg-violet-500' : 'bg-slate-200'
+                    }`}
+                  />
+                ))}
+              </div>
+              
+              {renderStep()}
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </>

@@ -131,6 +131,13 @@ async def update_ticket(hotel_id: str, ticket_id: str, request: TicketUpdateRequ
     """Update a ticket"""
     database = get_db()
     
+    # Get current ticket to check status change
+    current_ticket = await database.support_tickets.find_one({
+        "hotel_id": hotel_id, 
+        "ticket_id": ticket_id
+    })
+    old_status = current_ticket.get("status") if current_ticket else None
+    
     update_data = {"updated_at": datetime.now(timezone.utc)}
     
     if request.status:
@@ -151,6 +158,33 @@ async def update_ticket(hotel_id: str, ticket_id: str, request: TicketUpdateRequ
     
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Ticket not found")
+    
+    # Create notification for status change
+    if request.status and old_status and request.status.value != old_status:
+        status_labels = {
+            "open": "Ouvert",
+            "in_progress": "En cours",
+            "ai_processing": "Analyse IA",
+            "resolved": "Résolu",
+            "closed": "Fermé"
+        }
+        status_emojis = {
+            "open": "📬",
+            "in_progress": "🔄",
+            "ai_processing": "🤖",
+            "resolved": "✅",
+            "closed": "📁"
+        }
+        new_status_label = status_labels.get(request.status.value, request.status.value)
+        emoji = status_emojis.get(request.status.value, "📋")
+        
+        await create_support_notification(
+            hotel_id=hotel_id,
+            ticket_id=ticket_id,
+            title=f"{emoji} Statut mis à jour",
+            message=f"Le ticket {ticket_id} est passé en statut: {new_status_label}",
+            notification_type="status_change"
+        )
     
     return {"success": True, "message": "Ticket updated"}
 
@@ -201,7 +235,7 @@ async def ai_diagnose(hotel_id: str, request: AIDiagnosticRequest):
     
     # Use Emergent LLM for diagnosis
     try:
-        from emergentintegrations.llm.chat import chat, UserMessage
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
         
         prompt = f"""Tu es un assistant support technique pour Flowtym, un PMS hôtelier.
         
@@ -222,16 +256,19 @@ Réponds en JSON avec:
     "recommendation": "Conseil pour l'utilisateur"
 }}"""
 
-        response = await chat(
+        # Initialize chat with Emergent LLM Key
+        chat = LlmChat(
             api_key=os.environ.get("EMERGENT_LLM_KEY", ""),
-            messages=[UserMessage(content=prompt)],
-            model="gpt-4o"
-        )
+            session_id=f"diagnose-{hotel_id}",
+            system_message="Tu es un expert support technique pour Flowtym PMS. Réponds toujours en JSON valide."
+        ).with_model("openai", "gpt-4o")
+        
+        user_message = UserMessage(text=prompt)
+        response_text = await chat.send_message(user_message)
         
         import json
         try:
             # Extract JSON from response
-            response_text = response.content
             json_start = response_text.find('{')
             json_end = response_text.rfind('}') + 1
             if json_start != -1 and json_end > json_start:
@@ -294,7 +331,7 @@ async def ai_analyze_ticket(hotel_id: str, ticket_id: str):
     )
     
     try:
-        from emergentintegrations.llm.chat import chat, UserMessage
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
         
         prompt = f"""Tu es un agent support IA pour Flowtym (PMS hôtelier).
 
@@ -313,13 +350,16 @@ Fournis:
 
 Réponds en français de manière claire et professionnelle."""
 
-        response = await chat(
+        # Initialize chat with Emergent LLM Key
+        chat = LlmChat(
             api_key=os.environ.get("EMERGENT_LLM_KEY", ""),
-            messages=[UserMessage(content=prompt)],
-            model="gpt-4o"
-        )
+            session_id=f"support-{ticket_id}",
+            system_message="Tu es un agent support IA expert pour Flowtym, un PMS hôtelier SaaS."
+        ).with_model("openai", "gpt-4o")
         
-        ai_response = response.content
+        # Send message and get response
+        user_message = UserMessage(text=prompt)
+        ai_response = await chat.send_message(user_message)
         
         # Add AI message to ticket
         ai_message = {
@@ -345,6 +385,15 @@ Réponds en français de manière claire et professionnelle."""
                 },
                 "$push": {"messages": ai_message}
             }
+        )
+        
+        # Create notification for AI response
+        await create_support_notification(
+            hotel_id=hotel_id,
+            ticket_id=ticket_id,
+            title="🤖 Réponse IA disponible",
+            message=f"L'IA a analysé votre ticket {ticket_id} et propose une solution.",
+            notification_type="ai_response"
         )
         
         return {"success": True, "ai_response": ai_response, "message": ai_message}
@@ -534,13 +583,14 @@ async def mark_notification_read(hotel_id: str, notification_id: str):
     return {"success": True}
 
 # Helper function to create notification
-async def create_support_notification(hotel_id: str, ticket_id: str, title: str, message: str):
+async def create_support_notification(hotel_id: str, ticket_id: str, title: str, message: str, notification_type: str = "info"):
     """Create a support notification"""
     database = get_db()
     
     notification = {
         "hotel_id": hotel_id,
         "type": "support",
+        "notification_type": notification_type,  # ai_response, status_change, new_message
         "ticket_id": ticket_id,
         "title": title,
         "message": message,
@@ -548,4 +598,31 @@ async def create_support_notification(hotel_id: str, ticket_id: str, title: str,
         "created_at": datetime.now(timezone.utc)
     }
     
-    await database.notifications.insert_one(notification)
+    result = await database.notifications.insert_one(notification)
+    notification["id"] = str(result.inserted_id)
+    return notification
+
+@router.post("/hotels/{hotel_id}/notifications/read-all", response_model=dict)
+async def mark_all_notifications_read(hotel_id: str):
+    """Mark all notifications as read for a hotel"""
+    database = get_db()
+    
+    result = await database.notifications.update_many(
+        {"hotel_id": hotel_id, "type": "support", "read": False},
+        {"$set": {"read": True}}
+    )
+    
+    return {"success": True, "updated_count": result.modified_count}
+
+@router.get("/hotels/{hotel_id}/notifications/count", response_model=dict)
+async def get_unread_notifications_count(hotel_id: str):
+    """Get count of unread notifications"""
+    database = get_db()
+    
+    count = await database.notifications.count_documents({
+        "hotel_id": hotel_id,
+        "type": "support",
+        "read": False
+    })
+    
+    return {"unread_count": count}
