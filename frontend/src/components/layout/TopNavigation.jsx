@@ -4,13 +4,14 @@ import { useHotel } from '@/context/HotelContext'
 import {
   LayoutDashboard, Building2, Network, TrendingUp, Star, Users, CalendarCheck,
   Brush, UsersRound, Wrench, Receipt, BarChart3, Code, Bell, Moon, ChevronDown,
-  LogOut, Settings, User, Check, Database, Cog, Link2
+  LogOut, Settings, User, Check, Database, Cog, Link2, ClipboardList
 } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
 const modules = [
   { id: 'flowboard', label: 'Flowboard', icon: LayoutDashboard, path: '/flowboard', disabled: false },
+  { id: 'consignes', label: 'Consignes', icon: ClipboardList, path: '/consignes', disabled: false },
   { id: 'pms', label: 'PMS', icon: Building2, path: '/pms/planning', disabled: false },
   { id: 'channel', label: 'Channel', icon: Network, path: '/channel', disabled: false },
   { id: 'rms', label: 'Hoptym', icon: TrendingUp, path: '/rms', disabled: false },
@@ -43,6 +44,7 @@ export const TopNavigation = () => {
     if (path === '/e-reputation') return location.pathname.startsWith('/e-reputation')
     if (path === '/flowboard') return location.pathname.startsWith('/flowboard')
     if (path === '/integrations') return location.pathname.startsWith('/integrations')
+    if (path === '/consignes') return location.pathname.startsWith('/consignes')
     return location.pathname.startsWith(path)
   }
 

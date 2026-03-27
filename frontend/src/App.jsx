@@ -44,6 +44,7 @@ import HousekeepingScan from '@/pages/public/HousekeepingScan'
 import SupportCenter from '@/pages/support/SupportCenter'
 import SupportDashboard from '@/pages/support/SupportDashboard'
 import SupportAgentApp from '@/pages/support-agent/SupportAgentApp'
+import ConsignesModule from '@/pages/consignes/ConsignesModule'
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth()
@@ -154,6 +155,9 @@ const AppRoutes = () => {
                   {/* Flowboard (Central Dashboard) Routes */}
                   <Route path="/flowboard" element={<Flowboard />} />
                   <Route path="/flowboard/*" element={<Flowboard />} />
+                  {/* Consignes (Operations Hub) Routes */}
+                  <Route path="/consignes" element={<ConsignesModule />} />
+                  <Route path="/consignes/*" element={<ConsignesModule />} />
                   {/* Integrations Hub Routes */}
                   <Route path="/integrations" element={<IntegrationsHub />} />
                   <Route path="/integrations/*" element={<IntegrationsHub />} />
