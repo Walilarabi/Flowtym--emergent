@@ -5130,6 +5130,10 @@ from satisfaction.routes import router as satisfaction_router, init_satisfaction
 init_satisfaction_db(db)
 api_router.include_router(satisfaction_router)
 
+# Include AI Support Center router
+from support.routes import router as support_router
+api_router.include_router(support_router)
+
 # Include the router in the main app
 app.include_router(api_router)
 
