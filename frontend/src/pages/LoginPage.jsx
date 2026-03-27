@@ -25,10 +25,10 @@ export const LoginPage = () => {
       // Redirection selon le rôle
       const role = response?.user?.role || 'admin'
       
-      if (role === 'superadmin') {
+      if (role === 'superadmin' || role === 'super_admin') {
         navigate('/superadmin')
       } else if (role === 'support') {
-        navigate('/support')
+        navigate('/support-agent')
       } else {
         navigate('/pms/planning')
       }

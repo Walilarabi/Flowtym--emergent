@@ -509,15 +509,15 @@ export const SuperAdminApp = () => {
   return (
     <div className="min-h-screen bg-slate-100 flex">
       {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 text-white flex flex-col">
-        <div className="p-4 border-b border-slate-700">
+      <aside className="w-64 bg-gradient-to-b from-slate-900 to-slate-800 text-white flex flex-col">
+        <div className="p-4 border-b border-slate-700/50">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-violet-600 rounded-xl flex items-center justify-center">
               <Building2 className="w-5 h-5" />
             </div>
             <div>
               <h2 className="font-bold">Flowtym</h2>
-              <p className="text-xs text-slate-400">Super Admin</p>
+              <p className="text-xs text-violet-400">Super Admin</p>
             </div>
           </div>
         </div>
@@ -533,7 +533,7 @@ export const SuperAdminApp = () => {
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
                   isActive 
                     ? 'bg-violet-600 text-white' 
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                 }`}
               >
                 <item.icon className="w-5 h-5" />
@@ -543,9 +543,9 @@ export const SuperAdminApp = () => {
           })}
         </nav>
 
-        <div className="p-4 border-t border-slate-700">
+        <div className="p-4 border-t border-slate-700/50">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-slate-700 rounded-full flex items-center justify-center text-sm font-medium">
+            <div className="w-8 h-8 bg-violet-600 rounded-full flex items-center justify-center text-sm font-medium">
               {user?.first_name?.[0]}{user?.last_name?.[0]}
             </div>
             <div className="flex-1 min-w-0">
@@ -557,7 +557,7 @@ export const SuperAdminApp = () => {
             variant="ghost" 
             size="sm" 
             onClick={handleLogout}
-            className="w-full mt-3 text-slate-400 hover:text-white"
+            className="w-full mt-3 text-slate-400 hover:text-white hover:bg-slate-700/50"
           >
             Déconnexion
           </Button>

@@ -43,6 +43,7 @@ import SatisfactionSurvey from '@/pages/public/SatisfactionSurvey'
 import HousekeepingScan from '@/pages/public/HousekeepingScan'
 import SupportCenter from '@/pages/support/SupportCenter'
 import SupportDashboard from '@/pages/support/SupportDashboard'
+import SupportAgentApp from '@/pages/support-agent/SupportAgentApp'
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth()
@@ -70,6 +71,9 @@ const AppRoutes = () => {
     <Routes>
       {/* Super Admin Routes */}
       <Route path="/superadmin/*" element={<SuperAdminApp />} />
+      
+      {/* Support Agent Routes - Interface dédiée */}
+      <Route path="/support-agent/*" element={<SupportAgentApp />} />
       
       <Route path="/login" element={<LoginPage />} />
       

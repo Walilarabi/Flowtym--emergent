@@ -8,10 +8,21 @@ from enum import Enum
 
 class TicketStatus(str, Enum):
     OPEN = "open"
-    IN_PROGRESS = "in_progress"
     AI_PROCESSING = "ai_processing"
+    ESCALATED_TO_HUMAN = "escalated_to_human"
+    IN_PROGRESS = "in_progress"
     RESOLVED = "resolved"
     CLOSED = "closed"
+
+class IssueDiagnosisType(str, Enum):
+    LOCAL_BROWSER = "local_browser"
+    LOCAL_CACHE = "local_cache"
+    LOCAL_CONNECTION = "local_connection"
+    SYSTEM_BUG = "system_bug"
+    SYSTEM_SYNC = "system_sync"
+    SYSTEM_CONFIG = "system_config"
+    USER_ERROR = "user_error"
+    UNKNOWN = "unknown"
 
 class TicketPriority(str, Enum):
     LOW = "low"
