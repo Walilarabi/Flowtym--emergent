@@ -487,8 +487,67 @@ Reproduction exacte du mockup fourni pour la page de connexion.
 - `/app/frontend/src/components/CommandPalette.jsx` - Command Palette component
 - `/app/frontend/src/components/layout/MainLayout.jsx` - Integration point
 
+### AI Support Center
+- `/app/backend/support/routes.py` - Support API endpoints (tickets, diagnose, stats)
+- `/app/backend/support/models.py` - Pydantic models for support
+- `/app/frontend/src/components/support/SupportFloatingButton.jsx` - Global floating button
+- `/app/frontend/src/pages/support/SupportCenter.jsx` - Hotel support center
+- `/app/frontend/src/pages/support/SupportDashboard.jsx` - Super Admin dashboard
+
 ---
 
-*Document Version: 11.0*
+## Phase 12: Flowtym AI Support Center (Completed - March 27, 2026)
+Module de support client intelligent avec auto-diagnostic IA.
+
+### 12.1 Bouton Flottant Global
+- [x] Bouton violet en bas à droite sur toutes les pages (après connexion)
+- [x] Badge de notifications non lues
+- [x] data-testid="support-floating-btn"
+
+### 12.2 Création de Ticket (4 étapes)
+- [x] Étape 1: Sélection du module (9 modules: PMS, Channel Manager, RMS, Housekeeping, CRM, Facturation, Staff, Configuration, Autre)
+- [x] Étape 2: Titre et description détaillée
+- [x] Étape 3: Capture d'écran optionnelle (auto via html2canvas ou upload manuel)
+- [x] Étape 4: Récapitulatif avec contexte automatique (page, navigateur, timestamp)
+
+### 12.3 Auto-Diagnostic IA
+- [x] Endpoint POST /api/support/hotels/{hotel_id}/diagnose
+- [x] Intégration GPT-4o via Emergent LLM Key
+- [x] Détection des problèmes connus
+- [x] Suggestions de solutions
+- [x] Fallback si API indisponible
+
+### 12.4 Support Center (Hôtels)
+- [x] Page /support accessible depuis le layout principal
+- [x] 4 KPIs: Total tickets, En attente, En cours, Résolus
+- [x] Liste des tickets avec filtres (statut, module)
+- [x] Recherche de tickets
+- [x] Panneau de détail avec conversation et diagnostic IA
+- [x] Bouton "Demander l'aide de l'IA"
+
+### 12.5 Dashboard Super Admin
+- [x] Route /superadmin/support
+- [x] Menu "Support IA" dans la barre latérale
+- [x] 5 KPI cards: Total, En attente, En cours, Résolus, Taux IA
+- [x] Graphiques: Tickets par Module, Tickets par Priorité
+- [x] Performance: Temps moyen résolution, Résolution IA, Taux satisfaction
+- [x] Liste des tickets récents avec actions rapides
+
+### 12.6 API Endpoints Support
+- `GET /api/support/stats` - Statistiques globales
+- `GET /api/support/hotels/{hotel_id}/stats` - Statistiques par hôtel
+- `POST /api/support/hotels/{hotel_id}/tickets` - Créer un ticket
+- `GET /api/support/hotels/{hotel_id}/tickets` - Lister les tickets
+- `GET /api/support/hotels/{hotel_id}/tickets/{ticket_id}` - Détail d'un ticket
+- `PUT /api/support/hotels/{hotel_id}/tickets/{ticket_id}` - Mettre à jour un ticket
+- `POST /api/support/hotels/{hotel_id}/tickets/{ticket_id}/messages` - Ajouter un message
+- `POST /api/support/hotels/{hotel_id}/diagnose` - Auto-diagnostic IA
+- `POST /api/support/hotels/{hotel_id}/tickets/{ticket_id}/ai-analyze` - Analyse IA d'un ticket
+- `GET /api/support/knowledge` - Base de connaissances
+- `GET /api/support/hotels/{hotel_id}/notifications` - Notifications
+
+---
+
+*Document Version: 12.0*
 *Last Updated: March 27, 2026*
-*Module Completed: Staff Configuration, Recrutement & Planning Enhancements*
+*Module Completed: Flowtym AI Support Center*
