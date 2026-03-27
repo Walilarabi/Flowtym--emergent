@@ -60,7 +60,7 @@ class UserResponse(BaseModel):
     last_name: str
     role: str
     hotel_id: Optional[str] = None
-    created_at: str
+    created_at: Optional[str] = None
 
 class HotelCreate(BaseModel):
     name: str
@@ -419,6 +419,9 @@ async def get_me(current_user: dict = Depends(get_current_user)):
     user = await db.users.find_one({"id": current_user["user_id"]}, {"_id": 0, "password": 0})
     if not user:
         raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+    # Convert datetime to string if needed
+    if user.get("created_at") and hasattr(user["created_at"], "isoformat"):
+        user["created_at"] = user["created_at"].isoformat()
     return UserResponse(**user)
 
 # ===================== HOTELS ROUTES =====================

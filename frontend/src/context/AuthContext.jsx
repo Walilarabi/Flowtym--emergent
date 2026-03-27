@@ -53,7 +53,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('flowtym_token', newToken)
     setToken(newToken)
     setUser(userData)
-    return userData
+    return { user: userData, token: newToken }
   }
 
   const register = async (userData) => {
