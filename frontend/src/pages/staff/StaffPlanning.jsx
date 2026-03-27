@@ -1,19 +1,23 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { useHotel } from '@/context/HotelContext'
 import { toast } from 'sonner'
-import { format, addDays, startOfWeek, startOfMonth, endOfMonth, addMonths, subMonths, isToday, isWeekend, parseISO } from 'date-fns'
+import { format, addDays, startOfWeek, startOfMonth, endOfMonth, addMonths, subMonths, isToday, isWeekend, parseISO, isSameMonth } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Badge } from '@/components/ui/badge'
+import { Calendar as CalendarComponent } from '@/components/ui/calendar'
+import { Checkbox } from '@/components/ui/checkbox'
 import { 
   Calendar, ChevronLeft, ChevronRight, Plus, Download, Printer, Search, 
-  Clock, Eye, History, Filter, Palmtree, UserPlus
+  Clock, Eye, History, Filter, Palmtree, UserPlus, FileSpreadsheet, Check, X,
+  AlertCircle
 } from 'lucide-react'
 
 // Shift types based on PDF design
@@ -60,6 +64,20 @@ export const StaffPlanning = () => {
   const [formData, setFormData] = useState({
     employee_id: '', date: '', start_time: '09:00', end_time: '17:00', break_duration: 60, shift_type: 'matin', notes: ''
   })
+
+  // Modals
+  const [showExtraModal, setShowExtraModal] = useState(false)
+  const [showBulkEditModal, setShowBulkEditModal] = useState(false)
+  const [extraForm, setExtraForm] = useState({
+    first_name: '', last_name: '', email: '', phone: '', position: '', 
+    shift_type: 'matin', date: format(new Date(), 'yyyy-MM-dd'), 
+    start_time: '09:00', end_time: '17:00', hourly_rate: ''
+  })
+  const [bulkEditForm, setBulkEditForm] = useState({
+    employee_id: '', shift_type: 'matin', dates: []
+  })
+  const [selectedDates, setSelectedDates] = useState([])
+  const printRef = useRef(null)
 
   // Generate days array based on timeframe
   const days = useMemo(() => {
@@ -184,6 +202,166 @@ export const StaffPlanning = () => {
     }
   }
 
+  // Extra employee handler
+  const handleAddExtra = async () => {
+    if (!extraForm.first_name || !extraForm.last_name) {
+      toast.error('Nom et prénom requis')
+      return
+    }
+    try {
+      // Create temporary extra employee and assign shift
+      const extraEmployee = {
+        first_name: extraForm.first_name,
+        last_name: extraForm.last_name,
+        email: extraForm.email || `extra.${Date.now()}@temp.local`,
+        phone: extraForm.phone,
+        position: extraForm.position || 'Extra',
+        contract_type: 'extra',
+        department: 'food_beverage',
+        is_active: true
+      }
+      
+      const empRes = await api.post(`/hotels/${currentHotel.id}/staff/employees`, extraEmployee)
+      
+      // Create shift for the extra
+      await api.post(`/hotels/${currentHotel.id}/staff/shifts`, {
+        employee_id: empRes.data.id,
+        date: extraForm.date,
+        start_time: extraForm.start_time,
+        end_time: extraForm.end_time,
+        shift_type: extraForm.shift_type,
+        notes: `Extra - Taux horaire: ${extraForm.hourly_rate}€`
+      })
+      
+      toast.success('Extra ajouté au planning')
+      setShowExtraModal(false)
+      setExtraForm({
+        first_name: '', last_name: '', email: '', phone: '', position: '',
+        shift_type: 'matin', date: format(new Date(), 'yyyy-MM-dd'),
+        start_time: '09:00', end_time: '17:00', hourly_rate: ''
+      })
+      fetchData()
+    } catch (error) {
+      toast.error('Erreur lors de l\'ajout')
+    }
+  }
+
+  // Bulk edit handler
+  const handleBulkEdit = async () => {
+    if (!bulkEditForm.employee_id || selectedDates.length === 0) {
+      toast.error('Sélectionnez un collaborateur et des dates')
+      return
+    }
+    
+    try {
+      // Create shifts for all selected dates
+      const promises = selectedDates.map(date => 
+        api.post(`/hotels/${currentHotel.id}/staff/shifts`, {
+          employee_id: bulkEditForm.employee_id,
+          date: format(date, 'yyyy-MM-dd'),
+          shift_type: bulkEditForm.shift_type,
+          start_time: bulkEditForm.shift_type === 'matin' ? '06:00' : bulkEditForm.shift_type === 'soir' ? '14:00' : '22:00',
+          end_time: bulkEditForm.shift_type === 'matin' ? '14:00' : bulkEditForm.shift_type === 'soir' ? '22:00' : '06:00'
+        })
+      )
+      
+      await Promise.all(promises)
+      toast.success(`${selectedDates.length} shifts ajoutés`)
+      setShowBulkEditModal(false)
+      setSelectedDates([])
+      setBulkEditForm({ employee_id: '', shift_type: 'matin', dates: [] })
+      fetchData()
+    } catch (error) {
+      toast.error('Erreur lors de la modification en masse')
+    }
+  }
+
+  // Export handler
+  const handleExport = () => {
+    const csvData = []
+    csvData.push(['Employe', 'Departement', 'Contrat', ...days.map(d => format(d, 'dd/MM'))])
+    
+    filteredEmployees.forEach(emp => {
+      const row = [
+        `${emp.first_name} ${emp.last_name}`,
+        emp.department,
+        emp.contract_type
+      ]
+      days.forEach(day => {
+        const shift = getShiftForCell(emp.id, day)
+        row.push(shift ? SHIFT_TYPES.find(s => s.value === shift.shift_type)?.abbr || '' : '')
+      })
+      csvData.push(row)
+    })
+    
+    const csvContent = csvData.map(row => row.join(';')).join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `planning_${format(currentDate, 'yyyy-MM')}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+    toast.success('Planning exporté')
+  }
+
+  // Print handler
+  const handlePrint = () => {
+    const printContent = document.getElementById('planning-grid')
+    if (!printContent) {
+      toast.error('Impossible d\'imprimer')
+      return
+    }
+    
+    const printWindow = window.open('', '_blank')
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Planning - ${format(currentDate, 'MMMM yyyy', { locale: fr })}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h1 { text-align: center; margin-bottom: 20px; }
+            table { width: 100%; border-collapse: collapse; font-size: 10px; }
+            th, td { border: 1px solid #ddd; padding: 4px; text-align: center; }
+            th { background: #f3f4f6; }
+            .shift-matin { background: #fed7aa; }
+            .shift-soir { background: #dbeafe; }
+            .shift-nuit { background: #e9d5ff; }
+            .shift-cp { background: #d1fae5; }
+            .shift-maladie { background: #fee2e2; }
+            @media print { body { -webkit-print-color-adjust: exact; } }
+          </style>
+        </head>
+        <body>
+          <h1>Planning - ${format(currentDate, 'MMMM yyyy', { locale: fr })}</h1>
+          ${printContent.outerHTML}
+        </body>
+      </html>
+    `)
+    printWindow.document.close()
+    printWindow.print()
+  }
+
+  // Toggle date selection for bulk edit
+  const toggleDateSelection = (date) => {
+    setSelectedDates(prev => {
+      const dateStr = date.toISOString()
+      if (prev.some(d => d.toISOString() === dateStr)) {
+        return prev.filter(d => d.toISOString() !== dateStr)
+      }
+      return [...prev, date]
+    })
+  }
+
+  // Get pointage status
+  const getPointageStatus = (employeeId, date) => {
+    const shift = getShiftForCell(employeeId, date)
+    if (!shift) return null
+    if (shift.check_in_time && shift.check_out_time) return 'validated'
+    if (shift.status === 'absent') return 'absent'
+    return 'pending'
+  }
+
   const getDeptLabel = (dept) => {
     const labels = {
       front_office: 'RECEPTION',
@@ -284,17 +462,42 @@ export const StaffPlanning = () => {
             
             <div className="w-px h-6 bg-slate-200 mx-1" />
             
-            <Button variant="default" size="sm" className="bg-violet-600 hover:bg-violet-700 text-xs gap-1.5">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-xs gap-1.5"
+              onClick={() => setShowBulkEditModal(true)}
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              Edition masse
+            </Button>
+            
+            <Button 
+              variant="default" 
+              size="sm" 
+              className="bg-violet-600 hover:bg-violet-700 text-xs gap-1.5"
+              onClick={() => setShowExtraModal(true)}
+            >
               <UserPlus className="w-3.5 h-3.5" />
               Extra
             </Button>
             
-            <Button variant="outline" size="sm" className="text-xs gap-1.5">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-xs gap-1.5"
+              onClick={handleExport}
+            >
               <Download className="w-3.5 h-3.5" />
               Exporter
             </Button>
             
-            <Button variant="outline" size="sm" className="text-xs gap-1.5">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-xs gap-1.5"
+              onClick={handlePrint}
+            >
               <Printer className="w-3.5 h-3.5" />
               Imprimer
             </Button>
@@ -317,7 +520,7 @@ export const StaffPlanning = () => {
       {/* Planning Grid */}
       <div className="flex-1 bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="overflow-auto h-full">
-          <table className="w-full border-collapse" style={{ minWidth: `${days.length * 50 + 250}px` }}>
+          <table id="planning-grid" className="w-full border-collapse" style={{ minWidth: `${days.length * 50 + 250}px` }}>
             <thead className="sticky top-0 z-20 bg-white">
               <tr>
                 {/* Employee Column Header */}
@@ -562,6 +765,220 @@ export const StaffPlanning = () => {
           </form>
         </SheetContent>
       </Sheet>
+
+      {/* Modal: Ajouter Extra */}
+      <Dialog open={showExtraModal} onOpenChange={setShowExtraModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="w-5 h-5 text-violet-600" />
+              Ajouter un Extra
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Prénom *</Label>
+                <Input 
+                  value={extraForm.first_name}
+                  onChange={e => setExtraForm({...extraForm, first_name: e.target.value})}
+                  placeholder="Jean"
+                />
+              </div>
+              <div>
+                <Label>Nom *</Label>
+                <Input 
+                  value={extraForm.last_name}
+                  onChange={e => setExtraForm({...extraForm, last_name: e.target.value})}
+                  placeholder="Dupont"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Email</Label>
+                <Input 
+                  type="email"
+                  value={extraForm.email}
+                  onChange={e => setExtraForm({...extraForm, email: e.target.value})}
+                  placeholder="jean@email.com"
+                />
+              </div>
+              <div>
+                <Label>Téléphone</Label>
+                <Input 
+                  value={extraForm.phone}
+                  onChange={e => setExtraForm({...extraForm, phone: e.target.value})}
+                  placeholder="06..."
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Poste</Label>
+                <Input 
+                  value={extraForm.position}
+                  onChange={e => setExtraForm({...extraForm, position: e.target.value})}
+                  placeholder="Serveur, Commis..."
+                />
+              </div>
+              <div>
+                <Label>Taux horaire (€)</Label>
+                <Input 
+                  type="number"
+                  value={extraForm.hourly_rate}
+                  onChange={e => setExtraForm({...extraForm, hourly_rate: e.target.value})}
+                  placeholder="12.50"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Date</Label>
+                <Input 
+                  type="date"
+                  value={extraForm.date}
+                  onChange={e => setExtraForm({...extraForm, date: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label>Type d'horaire</Label>
+                <Select value={extraForm.shift_type} onValueChange={v => setExtraForm({...extraForm, shift_type: v})}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {SHIFT_TYPES.filter(s => !['off', 'repos', 'cp', 'maladie', 'ferie'].includes(s.value)).map(s => (
+                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Heure début</Label>
+                <Input 
+                  type="time"
+                  value={extraForm.start_time}
+                  onChange={e => setExtraForm({...extraForm, start_time: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label>Heure fin</Label>
+                <Input 
+                  type="time"
+                  value={extraForm.end_time}
+                  onChange={e => setExtraForm({...extraForm, end_time: e.target.value})}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowExtraModal(false)}>Annuler</Button>
+            <Button onClick={handleAddExtra} className="bg-violet-600 hover:bg-violet-700">
+              Ajouter l'extra
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: Edition en masse */}
+      <Dialog open={showBulkEditModal} onOpenChange={setShowBulkEditModal}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-violet-600" />
+              Édition en masse des horaires
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>Collaborateur</Label>
+              <Select 
+                value={bulkEditForm.employee_id} 
+                onValueChange={v => setBulkEditForm({...bulkEditForm, employee_id: v})}
+              >
+                <SelectTrigger><SelectValue placeholder="Sélectionner un collaborateur" /></SelectTrigger>
+                <SelectContent>
+                  {employees.map(emp => (
+                    <SelectItem key={emp.id} value={emp.id}>
+                      {emp.first_name} {emp.last_name} - {emp.position}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label>Type d'horaire</Label>
+              <div className="grid grid-cols-4 gap-2 mt-2">
+                {SHIFT_TYPES.map(shift => (
+                  <button
+                    key={shift.value}
+                    onClick={() => setBulkEditForm({...bulkEditForm, shift_type: shift.value})}
+                    className={`p-2 rounded-lg border-2 text-center transition-all ${
+                      bulkEditForm.shift_type === shift.value
+                        ? 'border-violet-500 bg-violet-50'
+                        : 'border-slate-200 hover:border-violet-300'
+                    }`}
+                  >
+                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${shift.color}`}>
+                      {shift.abbr}
+                    </span>
+                    <p className="text-xs text-slate-600 mt-1">{shift.label}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div>
+              <Label>Sélectionnez les dates</Label>
+              <p className="text-xs text-slate-500 mb-2">Cliquez sur les jours pour les sélectionner</p>
+              <div className="border rounded-lg p-3">
+                <CalendarComponent
+                  mode="multiple"
+                  selected={selectedDates}
+                  onSelect={setSelectedDates}
+                  locale={fr}
+                  className="rounded-md"
+                />
+              </div>
+              {selectedDates.length > 0 && (
+                <p className="text-sm text-violet-600 mt-2">
+                  {selectedDates.length} date(s) sélectionnée(s)
+                </p>
+              )}
+            </div>
+            
+            {/* Pointage info */}
+            <div className="bg-slate-50 rounded-lg p-3 text-sm text-slate-600">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertCircle className="w-4 h-4 text-amber-500" />
+                <span className="font-medium">Gestion du pointage</span>
+              </div>
+              <ul className="space-y-1 text-xs">
+                <li className="flex items-center gap-2">
+                  <Check className="w-3 h-3 text-emerald-600" /> Pointage effectué = <span className="text-emerald-600 font-medium">Validé</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <X className="w-3 h-3 text-red-500" /> Pas de pointage = <span className="text-red-500 font-medium">Absent</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowBulkEditModal(false); setSelectedDates([]) }}>
+              Annuler
+            </Button>
+            <Button 
+              onClick={handleBulkEdit} 
+              className="bg-violet-600 hover:bg-violet-700"
+              disabled={!bulkEditForm.employee_id || selectedDates.length === 0}
+            >
+              Appliquer ({selectedDates.length} dates)
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

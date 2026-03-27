@@ -7,9 +7,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { 
   Building2, Clock, FileText, Users, FolderOpen, Settings, Plus, 
-  Trash2, Edit, Check, X, Save, Upload, Mail, Bell
+  Trash2, Edit, Check, X, Save, Upload, Mail, Bell, Briefcase
 } from 'lucide-react'
 
 const SECTIONS = [
@@ -32,6 +34,20 @@ const PERMISSION_LABELS = {
   configuration: 'Configuration',
 }
 
+const CONTRACT_TYPES = [
+  { value: 'cdi', label: 'CDI - Contrat à Durée Indéterminée' },
+  { value: 'cdd', label: 'CDD - Contrat à Durée Déterminée' },
+  { value: 'extra', label: 'Extra - Contrat Journalier' },
+  { value: 'stage', label: 'Stage / Alternance' },
+  { value: 'interim', label: 'Intérim' },
+]
+
+const CONTRACT_VARIABLES = [
+  '{{NOM_EMPLOYE}}', '{{PRENOM_EMPLOYE}}', '{{DATE_NAISSANCE}}', '{{ADRESSE}}',
+  '{{POSTE}}', '{{SERVICE}}', '{{DATE_DEBUT}}', '{{DATE_FIN}}', 
+  '{{SALAIRE_BRUT}}', '{{HORAIRE_HEBDO}}', '{{NOM_HOTEL}}', '{{DATE_SIGNATURE}}'
+]
+
 export const StaffConfiguration = () => {
   const { api } = useAuth()
   const { currentHotel } = useHotel()
@@ -45,6 +61,17 @@ export const StaffConfiguration = () => {
   const [roles, setRoles] = useState([])
   const [hrDocuments, setHrDocuments] = useState([])
   const [settings, setSettings] = useState(null)
+  
+  // Modal states
+  const [showDeptModal, setShowDeptModal] = useState(false)
+  const [showContractModal, setShowContractModal] = useState(false)
+  const [selectedContract, setSelectedContract] = useState(null)
+  const [deptForm, setDeptForm] = useState({ name: '', description: '', type: 'service', color: '#7c3aed', positions: [] })
+  const [contractForm, setContractForm] = useState({ 
+    name: '', description: '', contract_type: 'cdi', content: '', 
+    variables: [], status: 'draft' 
+  })
+  const [newPositionInput, setNewPositionInput] = useState('')
   
   // Edit states
   const [editingDept, setEditingDept] = useState(null)
@@ -103,6 +130,91 @@ export const StaffConfiguration = () => {
     } catch (error) {
       toast.error('Erreur')
     }
+  }
+
+  // Open modal to create new department with full form
+  const handleOpenDeptModal = () => {
+    setDeptForm({ name: '', description: '', type: 'service', color: '#7c3aed', positions: [] })
+    setNewPositionInput('')
+    setShowDeptModal(true)
+  }
+
+  const handleSaveDepartmentFull = async () => {
+    if (!deptForm.name.trim()) {
+      toast.error('Le nom du service est requis')
+      return
+    }
+    try {
+      await api.post(`/hotels/${currentHotel.id}/config/departments`, {
+        name: deptForm.name,
+        description: deptForm.description,
+        code: deptForm.name.substring(0, 4).toUpperCase(),
+        color: deptForm.color,
+        type: deptForm.type,
+        positions: deptForm.positions
+      })
+      setShowDeptModal(false)
+      fetchData()
+      toast.success('Service cree avec succes')
+    } catch (error) {
+      toast.error('Erreur lors de la creation')
+    }
+  }
+
+  const handleAddPositionToForm = () => {
+    if (!newPositionInput.trim()) return
+    setDeptForm(prev => ({ ...prev, positions: [...prev.positions, newPositionInput] }))
+    setNewPositionInput('')
+  }
+
+  const handleRemovePositionFromForm = (index) => {
+    setDeptForm(prev => ({ ...prev, positions: prev.positions.filter((_, i) => i !== index) }))
+  }
+
+  // Contract Modal handlers
+  const handleOpenContractModal = (contract = null) => {
+    if (contract) {
+      setSelectedContract(contract)
+      setContractForm({
+        name: contract.name,
+        description: contract.description || '',
+        contract_type: contract.contract_type,
+        content: contract.content || '',
+        variables: contract.variables || [],
+        status: contract.status
+      })
+    } else {
+      setSelectedContract(null)
+      setContractForm({ 
+        name: '', description: '', contract_type: 'cdi', content: '', 
+        variables: [], status: 'draft' 
+      })
+    }
+    setShowContractModal(true)
+  }
+
+  const handleSaveContractFull = async () => {
+    if (!contractForm.name.trim()) {
+      toast.error('Le nom du modele est requis')
+      return
+    }
+    try {
+      if (selectedContract) {
+        await api.put(`/hotels/${currentHotel.id}/config/contract-templates/${selectedContract.id}`, contractForm)
+        toast.success('Modele mis a jour')
+      } else {
+        await api.post(`/hotels/${currentHotel.id}/config/contract-templates`, contractForm)
+        toast.success('Modele cree avec succes')
+      }
+      setShowContractModal(false)
+      fetchData()
+    } catch (error) {
+      toast.error('Erreur lors de la sauvegarde')
+    }
+  }
+
+  const insertVariable = (variable) => {
+    setContractForm(prev => ({ ...prev, content: prev.content + ' ' + variable }))
   }
 
   const handleDeleteDepartment = async (id) => {
@@ -355,9 +467,13 @@ export const StaffConfiguration = () => {
                   value={newDeptName}
                   onChange={(e) => setNewDeptName(e.target.value)}
                   className="w-48"
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddDepartment()}
                 />
-                <Button onClick={handleAddDepartment} className="bg-violet-600 hover:bg-violet-700">
-                  <Plus className="w-4 h-4 mr-1" /> Ajouter
+                <Button onClick={handleAddDepartment} variant="outline" className="gap-1">
+                  <Plus className="w-4 h-4" /> Rapide
+                </Button>
+                <Button onClick={handleOpenDeptModal} className="bg-violet-600 hover:bg-violet-700 gap-1">
+                  <Plus className="w-4 h-4" /> Ajouter
                 </Button>
               </div>
             </div>
@@ -522,7 +638,7 @@ export const StaffConfiguration = () => {
                 <h2 className="text-lg font-semibold text-slate-800">Modeles de Contrats</h2>
                 <p className="text-sm text-slate-500">Editeur de blocs pour personnaliser vos modeles</p>
               </div>
-              <Button className="bg-violet-600 hover:bg-violet-700">
+              <Button onClick={() => handleOpenContractModal()} className="bg-violet-600 hover:bg-violet-700">
                 <Plus className="w-4 h-4 mr-1" /> Nouveau modele
               </Button>
             </div>
@@ -549,7 +665,7 @@ export const StaffConfiguration = () => {
                     </span>
                     <div className="flex items-center gap-1">
                       <button 
-                        onClick={() => handleEditContract(template)}
+                        onClick={() => handleOpenContractModal(template)}
                         className="p-1.5 hover:bg-violet-50 rounded text-violet-600"
                         title="Modifier le modele"
                       >
@@ -834,6 +950,174 @@ export const StaffConfiguration = () => {
           </div>
         )}
       </div>
+
+      {/* Modal: Nouveau Service/Poste */}
+      <Dialog open={showDeptModal} onOpenChange={setShowDeptModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-violet-600" />
+              Nouveau Service
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>Nom du service *</Label>
+              <Input 
+                value={deptForm.name} 
+                onChange={e => setDeptForm({...deptForm, name: e.target.value})}
+                placeholder="Ex: Réception, Cuisine, Étages..."
+              />
+            </div>
+            <div>
+              <Label>Description</Label>
+              <Textarea 
+                value={deptForm.description} 
+                onChange={e => setDeptForm({...deptForm, description: e.target.value})}
+                placeholder="Description du service..."
+                rows={2}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Type</Label>
+                <Select value={deptForm.type} onValueChange={v => setDeptForm({...deptForm, type: v})}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="service">Service</SelectItem>
+                    <SelectItem value="department">Département</SelectItem>
+                    <SelectItem value="unit">Unité</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Couleur</Label>
+                <Input 
+                  type="color" 
+                  value={deptForm.color} 
+                  onChange={e => setDeptForm({...deptForm, color: e.target.value})}
+                  className="h-10"
+                />
+              </div>
+            </div>
+            <div>
+              <Label>Postes</Label>
+              <div className="flex flex-wrap gap-1 mb-2">
+                {deptForm.positions.map((pos, i) => (
+                  <span key={i} className="inline-flex items-center gap-1 px-2 py-1 bg-violet-100 text-violet-700 rounded text-xs">
+                    {pos}
+                    <button onClick={() => handleRemovePositionFromForm(i)} className="hover:text-red-600">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Input 
+                  value={newPositionInput} 
+                  onChange={e => setNewPositionInput(e.target.value)}
+                  placeholder="Nom du poste..."
+                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAddPositionToForm())}
+                />
+                <Button type="button" variant="outline" onClick={handleAddPositionToForm}>
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeptModal(false)}>Annuler</Button>
+            <Button onClick={handleSaveDepartmentFull} className="bg-violet-600 hover:bg-violet-700">
+              Créer le service
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: Nouveau/Modifier Modèle de Contrat */}
+      <Dialog open={showContractModal} onOpenChange={setShowContractModal}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-violet-600" />
+              {selectedContract ? 'Modifier le modèle' : 'Nouveau modèle de contrat'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Nom du modèle *</Label>
+                <Input 
+                  value={contractForm.name} 
+                  onChange={e => setContractForm({...contractForm, name: e.target.value})}
+                  placeholder="Ex: CDI - Temps plein"
+                />
+              </div>
+              <div>
+                <Label>Type de contrat</Label>
+                <Select value={contractForm.contract_type} onValueChange={v => setContractForm({...contractForm, contract_type: v})}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {CONTRACT_TYPES.map(ct => (
+                      <SelectItem key={ct.value} value={ct.value}>{ct.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label>Description</Label>
+              <Input 
+                value={contractForm.description} 
+                onChange={e => setContractForm({...contractForm, description: e.target.value})}
+                placeholder="Description courte du modèle..."
+              />
+            </div>
+            <div>
+              <Label>Variables dynamiques</Label>
+              <div className="flex flex-wrap gap-1 p-2 bg-slate-50 rounded-lg border">
+                {CONTRACT_VARIABLES.map(v => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => insertVariable(v)}
+                    className="px-2 py-1 text-xs bg-violet-100 text-violet-700 rounded hover:bg-violet-200 transition-colors"
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-slate-500 mt-1">Cliquez sur une variable pour l'insérer dans le contenu</p>
+            </div>
+            <div>
+              <Label>Contenu du contrat</Label>
+              <Textarea 
+                value={contractForm.content} 
+                onChange={e => setContractForm({...contractForm, content: e.target.value})}
+                placeholder="Entre les soussignés:&#10;&#10;La société {{NOM_HOTEL}}, représentée par...&#10;&#10;Et&#10;&#10;{{PRENOM_EMPLOYE}} {{NOM_EMPLOYE}}, né(e) le {{DATE_NAISSANCE}}..."
+                rows={10}
+                className="font-mono text-sm"
+              />
+            </div>
+            <div>
+              <Label>Statut</Label>
+              <Select value={contractForm.status} onValueChange={v => setContractForm({...contractForm, status: v})}>
+                <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">Brouillon</SelectItem>
+                  <SelectItem value="active">Actif</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowContractModal(false)}>Annuler</Button>
+            <Button onClick={handleSaveContractFull} className="bg-violet-600 hover:bg-violet-700">
+              {selectedContract ? 'Mettre à jour' : 'Créer le modèle'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

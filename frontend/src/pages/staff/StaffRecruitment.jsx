@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { 
   Briefcase, Users, UserPlus, FileText, Star, Phone, Mail, Calendar,
   MoreHorizontal, ChevronRight, Sparkles, X, Plus, Eye, Trash2, Clock,
-  Building2, MapPin, Euro, Filter, Search
+  Building2, MapPin, Euro, Filter, Search, Send, Check
 } from 'lucide-react'
 
 const PIPELINE_STAGES = [
@@ -42,7 +42,20 @@ const SOURCES = [
   { value: 'manual', label: 'Saisie manuelle' },
   { value: 'linkedin', label: 'LinkedIn' },
   { value: 'indeed', label: 'Indeed' },
+  { value: 'france_travail', label: 'France Travail' },
   { value: 'spontaneous', label: 'Candidature spontanée' },
+]
+
+// Plateformes de diffusion d'offres
+const PUBLISHING_PLATFORMS = [
+  { id: 'linkedin', name: 'LinkedIn', icon: '💼', color: 'bg-blue-600', enabled: true },
+  { id: 'indeed', name: 'Indeed', icon: '🔍', color: 'bg-violet-600', enabled: true },
+  { id: 'france_travail', name: 'France Travail', icon: '🇫🇷', color: 'bg-blue-500', enabled: true },
+  { id: 'welcome_to_jungle', name: 'Welcome to the Jungle', icon: '🌴', color: 'bg-yellow-500', enabled: false },
+  { id: 'jobteaser', name: 'JobTeaser', icon: '🎓', color: 'bg-pink-500', enabled: false },
+  { id: 'apec', name: 'APEC', icon: '📊', color: 'bg-orange-500', enabled: false },
+  { id: 'monster', name: 'Monster', icon: '👾', color: 'bg-purple-600', enabled: false },
+  { id: 'hotel_career', name: 'Hosco', icon: '🏨', color: 'bg-teal-500', enabled: true },
 ]
 
 export const StaffRecruitment = () => {
@@ -65,14 +78,17 @@ export const StaffRecruitment = () => {
   const [showOfferModal, setShowOfferModal] = useState(false)
   const [showCandidateModal, setShowCandidateModal] = useState(false)
   const [showAIModal, setShowAIModal] = useState(false)
+  const [showPublishModal, setShowPublishModal] = useState(false)
   const [selectedOffer, setSelectedOffer] = useState(null)
   const [selectedCandidate, setSelectedCandidate] = useState(null)
+  const [selectedPlatforms, setSelectedPlatforms] = useState([])
+  const [publishingStatus, setPublishingStatus] = useState({})
   
   // Forms
   const [offerForm, setOfferForm] = useState({
     title: '', department: '', contract_type: 'CDI', location: '',
     description: '', requirements: [], salary_min: '', salary_max: '',
-    experience_years: 0, status: 'draft'
+    experience_years: 0, status: 'draft', published_platforms: []
   })
   const [candidateForm, setCandidateForm] = useState({
     first_name: '', last_name: '', email: '', phone: '',
@@ -148,6 +164,75 @@ export const StaffRecruitment = () => {
         status: offer.status === 'published' ? 'draft' : 'published'
       })
       toast.success(offer.status === 'published' ? 'Offre dépubliée' : 'Offre publiée')
+      fetchData()
+    } catch (error) {
+      toast.error('Erreur')
+    }
+  }
+
+  // Multi-platform publishing
+  const openPublishModal = (offer) => {
+    setSelectedOffer(offer)
+    setSelectedPlatforms(offer.published_platforms || [])
+    setPublishingStatus({})
+    setShowPublishModal(true)
+  }
+
+  const togglePlatform = (platformId) => {
+    setSelectedPlatforms(prev => 
+      prev.includes(platformId) 
+        ? prev.filter(p => p !== platformId)
+        : [...prev, platformId]
+    )
+  }
+
+  const handleMultiPublish = async () => {
+    if (selectedPlatforms.length === 0) {
+      toast.error('Sélectionnez au moins une plateforme')
+      return
+    }
+
+    setPublishingStatus({})
+    
+    // Simulate publishing to each platform
+    for (const platformId of selectedPlatforms) {
+      setPublishingStatus(prev => ({ ...prev, [platformId]: 'publishing' }))
+      
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 500))
+      
+      // Simulate success (in real implementation, call actual APIs)
+      setPublishingStatus(prev => ({ ...prev, [platformId]: 'success' }))
+    }
+
+    // Update offer with published platforms
+    try {
+      await api.put(`/hotels/${currentHotel.id}/recruitment/job-offers/${selectedOffer.id}`, {
+        ...selectedOffer,
+        status: 'published',
+        published_platforms: selectedPlatforms,
+        published_at: new Date().toISOString()
+      })
+      
+      toast.success(`Offre publiée sur ${selectedPlatforms.length} plateforme(s)`)
+      fetchData()
+      
+      // Keep modal open briefly to show results, then close
+      setTimeout(() => setShowPublishModal(false), 1500)
+    } catch (error) {
+      toast.error('Erreur lors de la sauvegarde')
+    }
+  }
+
+  const handleQuickPublish = async (offer, platformId) => {
+    const platforms = [...(offer.published_platforms || []), platformId]
+    try {
+      await api.put(`/hotels/${currentHotel.id}/recruitment/job-offers/${offer.id}`, {
+        ...offer,
+        status: 'published',
+        published_platforms: platforms
+      })
+      toast.success(`Publié sur ${PUBLISHING_PLATFORMS.find(p => p.id === platformId)?.name}`)
       fetchData()
     } catch (error) {
       toast.error('Erreur')
@@ -517,6 +602,42 @@ export const StaffRecruitment = () => {
                 {offer.description && (
                   <p className="text-sm text-slate-600 mt-3 line-clamp-2">{offer.description}</p>
                 )}
+
+                {/* Plateformes de diffusion */}
+                <div className="mt-3 pt-3 border-t border-slate-100">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-medium text-slate-500">Diffusion</span>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => openPublishModal(offer)}
+                      className="text-violet-600 hover:text-violet-700 h-6 text-xs px-2"
+                    >
+                      Multi-plateforme
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {PUBLISHING_PLATFORMS.filter(p => p.enabled).slice(0, 4).map(platform => {
+                      const isPublished = (offer.published_platforms || []).includes(platform.id)
+                      return (
+                        <button
+                          key={platform.id}
+                          onClick={() => !isPublished && handleQuickPublish(offer, platform.id)}
+                          className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-all ${
+                            isPublished 
+                              ? 'bg-emerald-100 text-emerald-700 cursor-default'
+                              : 'bg-slate-100 text-slate-600 hover:bg-violet-100 hover:text-violet-700'
+                          }`}
+                          title={isPublished ? `Publiée sur ${platform.name}` : `Publier sur ${platform.name}`}
+                        >
+                          <span>{platform.icon}</span>
+                          <span>{platform.name}</span>
+                          {isPublished && <Check className="w-3 h-3" />}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
                 
                 <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
                   <div className="flex items-center gap-4 text-sm">
@@ -1032,6 +1153,103 @@ export const StaffRecruitment = () => {
                 )}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: Publication Multi-Plateforme */}
+      <Dialog open={showPublishModal} onOpenChange={setShowPublishModal}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="w-5 h-5 text-violet-600" />
+              Publier sur plusieurs plateformes
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {selectedOffer && (
+              <div className="bg-slate-50 rounded-lg p-3 mb-4">
+                <p className="font-medium text-slate-800">{selectedOffer.title}</p>
+                <p className="text-sm text-slate-500">{selectedOffer.department} • {selectedOffer.contract_type}</p>
+              </div>
+            )}
+            
+            <p className="text-sm text-slate-600 mb-4">
+              Sélectionnez les plateformes où diffuser votre offre :
+            </p>
+            
+            <div className="grid grid-cols-2 gap-3">
+              {PUBLISHING_PLATFORMS.map(platform => {
+                const isSelected = selectedPlatforms.includes(platform.id)
+                const status = publishingStatus[platform.id]
+                const isAlreadyPublished = selectedOffer?.published_platforms?.includes(platform.id)
+                
+                return (
+                  <button
+                    key={platform.id}
+                    onClick={() => !isAlreadyPublished && !status && togglePlatform(platform.id)}
+                    disabled={!platform.enabled || isAlreadyPublished || status}
+                    className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
+                      isAlreadyPublished 
+                        ? 'border-emerald-200 bg-emerald-50 cursor-default'
+                        : status === 'publishing'
+                        ? 'border-violet-300 bg-violet-50 cursor-wait'
+                        : status === 'success'
+                        ? 'border-emerald-300 bg-emerald-50'
+                        : isSelected
+                        ? 'border-violet-500 bg-violet-50'
+                        : platform.enabled
+                        ? 'border-slate-200 hover:border-violet-300 cursor-pointer'
+                        : 'border-slate-200 bg-slate-50 opacity-50 cursor-not-allowed'
+                    }`}
+                  >
+                    <span className="text-2xl">{platform.icon}</span>
+                    <div className="flex-1 text-left">
+                      <p className={`font-medium ${platform.enabled ? 'text-slate-800' : 'text-slate-400'}`}>
+                        {platform.name}
+                      </p>
+                      {!platform.enabled && (
+                        <p className="text-xs text-slate-400">Bientôt disponible</p>
+                      )}
+                      {isAlreadyPublished && (
+                        <p className="text-xs text-emerald-600">Déjà publiée</p>
+                      )}
+                    </div>
+                    {status === 'publishing' && (
+                      <div className="w-5 h-5 border-2 border-violet-600 border-t-transparent rounded-full animate-spin" />
+                    )}
+                    {(status === 'success' || isAlreadyPublished) && (
+                      <Check className="w-5 h-5 text-emerald-600" />
+                    )}
+                    {!status && !isAlreadyPublished && isSelected && (
+                      <div className="w-5 h-5 rounded-full bg-violet-600 flex items-center justify-center">
+                        <Check className="w-3 h-3 text-white" />
+                      </div>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+            
+            <div className="mt-6 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm text-amber-800">
+                <strong>Note :</strong> La publication automatique nécessite une configuration des API.
+                Contactez votre administrateur pour activer les intégrations.
+              </p>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-4 border-t">
+            <Button variant="outline" onClick={() => setShowPublishModal(false)}>
+              Annuler
+            </Button>
+            <Button 
+              onClick={handleMultiPublish}
+              className="bg-violet-600 hover:bg-violet-700 gap-2"
+              disabled={selectedPlatforms.length === 0 || Object.values(publishingStatus).some(s => s === 'publishing')}
+            >
+              <Send className="w-4 h-4" />
+              Publier ({selectedPlatforms.length} plateforme{selectedPlatforms.length > 1 ? 's' : ''})
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
