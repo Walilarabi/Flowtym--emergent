@@ -379,6 +379,30 @@ Onglet "Pointage" dans le module STAFF avec système QR code et validation des h
 
 ---
 
+### Phase 11: Staff Configuration, Recrutement & Planning Enhancements (Completed - March 27, 2026)
+Correction de bugs et ajout de fonctionnalités dans les modules Staff.
+
+#### 11.1 Module Staff Configuration
+- [x] Section "Services & Postes": Bouton "+ Ajouter" ouvre modale complète (Nom, Description, Type, Couleur, Postes dynamiques)
+- [x] Section "Contrats (Modèles)": Bouton "+ Nouveau modèle" ouvre modale de création avec variables dynamiques
+- [x] Section "Contrats (Modèles)": Icône crayon (Edit) ouvre modale d'édition avec données pré-remplies
+- [x] Variables dynamiques cliquables: {{NOM_EMPLOYE}}, {{PRENOM_EMPLOYE}}, {{DATE_DEBUT}}, etc.
+
+#### 11.2 Module Recrutement
+- [x] Plateformes de diffusion réintégrées: LinkedIn, Indeed, France Travail, Hosco
+- [x] Boutons de publication rapide par plateforme
+- [x] Modale "Multi-plateforme" pour publication simultanée
+- [x] Statut de publication par plateforme (Publié / Non publié)
+
+#### 11.3 Module Planning
+- [x] Bouton "Ajouter Extra" - Modale complète (Prénom, Nom, Email, Téléphone, Poste, Taux horaire, Date, Horaires)
+- [x] Bouton "Edition masse" - Sélection collaborateur + types d'horaires visuels + calendrier multi-dates
+- [x] Gestion du pointage: Validé (✅) si pointage effectué, Absent (❌) sinon
+- [x] Bouton "Exporter" - Génère CSV avec données planning
+- [x] Bouton "Imprimer" - Ouvre fenêtre impression formatée
+
+---
+
 ### Phase 10: Login Page Final Redesign (Completed - March 27, 2026)
 Reproduction exacte du mockup fourni pour la page de connexion.
 
@@ -406,14 +430,13 @@ Reproduction exacte du mockup fourni pour la page de connexion.
 
 ## Testing Status
 
-### Last Test Report: iteration_29.json (March 27, 2026)
-- **Module Tested**: Login Page Redesign & UI Buttons Fix
-- **Success Rate**: 100%
-- **Features Tested**: Login page visual conformity, button styling, form functionality
-- **Changes Made**: 
-  - Login page redesigned to match exact mockup (gradient violet/rose, hotel image, FLOWTYM logo badge)
-  - All buttons now use #A855F7 violet background with white text
-  - Login form fully functional with connexion réussie
+### Last Test Report: iteration_30.json (March 27, 2026)
+- **Module Tested**: Staff Configuration & Planning - Buttons and Modals
+- **Success Rate**: 100% (7/7 tests passed)
+- **Features Tested**: 
+  - Services & Postes: "+ Ajouter" modal with full form
+  - Contrats: "+ Nouveau modele" and Edit (pencil icon) modals
+  - Planning: Extra modal, Edition masse (bulk edit), Exporter (CSV), Imprimer
 - **Issues Found**: None
 - **Retest Needed**: No
 
@@ -466,6 +489,6 @@ Reproduction exacte du mockup fourni pour la page de connexion.
 
 ---
 
-*Document Version: 10.0*
+*Document Version: 11.0*
 *Last Updated: March 27, 2026*
-*Module Completed: Login Page Final Redesign (Mockup Exact)*
+*Module Completed: Staff Configuration, Recrutement & Planning Enhancements*
