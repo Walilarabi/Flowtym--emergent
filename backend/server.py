@@ -5136,8 +5136,10 @@ api_router.include_router(satisfaction_router)
 # Include AI Support Center router
 from support.routes import router as support_router
 from support.remote_access import router as remote_access_router
+from consignes.routes import router as consignes_router
 api_router.include_router(support_router)
 api_router.include_router(remote_access_router)
+api_router.include_router(consignes_router)
 
 # Include the router in the main app
 app.include_router(api_router)
