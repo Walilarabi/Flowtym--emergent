@@ -42,8 +42,9 @@ const MODULES = {
   autre: { label: 'Autre', icon: '❓', color: 'bg-gray-500' },
 }
 
-export const SupportDashboard = () => {
-  const { api } = useAuth()
+export const SupportDashboard = ({ apiOverride = null }) => {
+  const auth = useAuth()
+  const api = apiOverride || auth?.api
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState(null)
   const [selectedTicket, setSelectedTicket] = useState(null)

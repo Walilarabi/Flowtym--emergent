@@ -3,6 +3,7 @@ import { SubNavigation } from './SubNavigation'
 import { useHotel } from '@/context/HotelContext'
 import { SetupWizard } from '@/components/setup/SetupWizard'
 import { CommandPalette } from '@/components/CommandPalette'
+import { SupportFloatingButton } from '@/components/support/SupportFloatingButton'
 
 export const MainLayout = ({ children }) => {
   const { currentHotel, loading } = useHotel()
@@ -31,6 +32,8 @@ export const MainLayout = ({ children }) => {
       </main>
       {/* Command Palette - CTRL+K */}
       <CommandPalette />
+      {/* Support Floating Button - Global */}
+      <SupportFloatingButton />
     </div>
   )
 }

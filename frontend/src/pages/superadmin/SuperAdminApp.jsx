@@ -5,7 +5,7 @@ import axios from 'axios'
 import {
   Building2, Users, CreditCard, FileText, Settings, BarChart3,
   ChevronRight, Plus, Search, MoreHorizontal, Download, Eye,
-  CheckCircle, XCircle, Clock, AlertTriangle, TrendingUp, Package
+  CheckCircle, XCircle, Clock, AlertTriangle, TrendingUp, Package, Sparkles
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -502,6 +502,7 @@ export const SuperAdminApp = () => {
     { path: '/superadmin/subscriptions', label: 'Abonnements', icon: CreditCard },
     { path: '/superadmin/users', label: 'Utilisateurs', icon: Users },
     { path: '/superadmin/invoices', label: 'Facturation', icon: FileText },
+    { path: '/superadmin/support', label: 'Support IA', icon: Sparkles },
     { path: '/superadmin/logs', label: 'Logs', icon: Clock },
   ]
 
@@ -574,6 +575,7 @@ export const SuperAdminApp = () => {
           <Route path="/subscriptions" element={<SASubscriptionsLifecyclePage api={api} />} />
           <Route path="/users" element={<SAUsersPage api={api} />} />
           <Route path="/invoices" element={<SAInvoicesPage api={api} />} />
+          <Route path="/support" element={<SASupportDashboard api={api} />} />
           <Route path="/logs" element={<SALogs api={api} />} />
         </Routes>
       </main>
@@ -588,6 +590,13 @@ import { SACatalog as SACatalogPage } from './SACatalog'
 import { SASubscriptionsLifecycle as SASubscriptionsLifecyclePage } from './SASubscriptionsLifecycle'
 // Import hotel management page
 import { SAHotelManagement } from './SAHotelManagement'
+// Import Support Dashboard
+import SupportDashboard from '@/pages/support/SupportDashboard'
+
+// Wrapper for Support Dashboard in Super Admin context
+const SASupportDashboard = ({ api }) => {
+  return <SupportDashboard apiOverride={api} />
+}
 
 const SALogs = ({ api }) => {
   const [logs, setLogs] = useState([])

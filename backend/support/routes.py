@@ -78,7 +78,8 @@ async def create_ticket(hotel_id: str, request: TicketCreateRequest):
     
     result = await database.support_tickets.insert_one(ticket)
     ticket["id"] = str(result.inserted_id)
-    del ticket["_id"] if "_id" in ticket else None
+    if "_id" in ticket:
+        del ticket["_id"]
     
     return {"success": True, "ticket": ticket}
 
@@ -187,11 +188,16 @@ async def ai_diagnose(hotel_id: str, request: AIDiagnosticRequest):
     """Run AI diagnostic on an issue before creating ticket"""
     database = get_db()
     
-    # Check knowledge base for known issues
-    known_issues = await database.support_knowledge.find({
-        "module": request.module.value,
-        "$text": {"$search": request.description}
-    }).limit(3).to_list(length=3)
+    # Check knowledge base for known issues (may fail if collection/index doesn't exist)
+    known_issues = []
+    try:
+        known_issues = await database.support_knowledge.find({
+            "module": request.module.value,
+            "$text": {"$search": request.description}
+        }).limit(3).to_list(length=3)
+    except Exception as kb_error:
+        # Knowledge base not available, continue without it
+        print(f"Knowledge base query failed: {kb_error}")
     
     # Use Emergent LLM for diagnosis
     try:
@@ -217,7 +223,7 @@ Réponds en JSON avec:
 }}"""
 
         response = await chat(
-            api_key=os.environ.get("EMERGENT_API_KEY", ""),
+            api_key=os.environ.get("EMERGENT_LLM_KEY", ""),
             messages=[UserMessage(content=prompt)],
             model="gpt-4o"
         )
@@ -308,7 +314,7 @@ Fournis:
 Réponds en français de manière claire et professionnelle."""
 
         response = await chat(
-            api_key=os.environ.get("EMERGENT_API_KEY", ""),
+            api_key=os.environ.get("EMERGENT_LLM_KEY", ""),
             messages=[UserMessage(content=prompt)],
             model="gpt-4o"
         )

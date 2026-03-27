@@ -41,6 +41,8 @@ import IntegrationsHub from '@/pages/integrations/IntegrationsHub'
 import MobilePointage from '@/pages/pointage/MobilePointage'
 import SatisfactionSurvey from '@/pages/public/SatisfactionSurvey'
 import HousekeepingScan from '@/pages/public/HousekeepingScan'
+import SupportCenter from '@/pages/support/SupportCenter'
+import SupportDashboard from '@/pages/support/SupportDashboard'
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth()
@@ -151,6 +153,9 @@ const AppRoutes = () => {
                   {/* Integrations Hub Routes */}
                   <Route path="/integrations" element={<IntegrationsHub />} />
                   <Route path="/integrations/*" element={<IntegrationsHub />} />
+                  {/* Support Center Routes */}
+                  <Route path="/support" element={<SupportCenter />} />
+                  <Route path="/support/*" element={<SupportCenter />} />
                   {/* Settings */}
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="*" element={<Navigate to="/pms/planning" replace />} />
