@@ -583,6 +583,74 @@ Système de notifications push en temps réel pour le Support Center.
 
 ---
 
-*Document Version: 12.1*
+## Phase 13: Support Agent Interface & Remote Access (Completed - March 27, 2026)
+Interface dédiée pour les agents de support Flowtym avec accès à distance sécurisé.
+
+### 13.1 Interface Support Agent (/support-agent)
+- [x] Layout dédié avec sidebar gradient (from-slate-900 to-slate-800)
+- [x] Authentification séparée pour rôle "support"
+- [x] Redirection automatique depuis /login vers /support-agent
+
+### 13.2 Pages Support Agent
+- [x] **Dashboard** : KPIs (Tickets ouverts, En cours, Résolus, Sessions à distance)
+- [x] **Performance IA** : Métriques circulaires (Traités IA, Escaladés, Temps moyen, Satisfaction)
+- [x] **Alertes critiques** : Section d'alertes en temps réel
+- [x] **Tickets** : Liste filtrable avec détails et actions
+- [x] **Accès distant** : Gestion des demandes d'accès à distance
+- [x] **IA Assistant** : Chat intelligent pour diagnostic (simulation locale)
+- [x] **Historique** : Sessions de support terminées
+- [x] **Logs** : Audit trail des actions
+
+### 13.3 Accès à Distance Sécurisé
+- [x] Workflow de demande : Support sélectionne hôtel → module → rôle → raison
+- [x] Notification in-app côté hôtel pour approbation
+- [x] Sessions temporaires avec expiration (5, 15, 30, 60 min)
+- [x] Statuts : pending, approved, active, completed, rejected, expired
+- [x] Traçabilité complète des sessions
+
+### 13.4 API Endpoints Remote Access
+- `GET /api/support/remote/stats` - Statistiques accès distant
+- `POST /api/support/remote/request` - Créer demande d'accès
+- `GET /api/support/remote/requests` - Liste des demandes
+- `GET /api/support/remote/requests/{id}` - Détail d'une demande
+- `POST /api/support/remote/requests/{id}/approve` - Approuver demande
+- `POST /api/support/remote/requests/{id}/reject` - Refuser demande
+- `POST /api/support/remote/session/start/{id}` - Démarrer session
+- `POST /api/support/remote/session/end/{id}` - Terminer session
+- `POST /api/support/remote/session/{id}/screenshot` - Sauvegarder capture
+- `GET /api/support/remote/session/{id}/screenshots` - Liste captures
+
+### 13.5 Session Replay
+- [x] Endpoint POST /api/support/remote/replay/record - Enregistrer actions
+- [x] Endpoint GET /api/support/remote/replay/sessions/{hotel_id} - Liste sessions
+- [x] Endpoint GET /api/support/remote/replay/session/{session_id} - Replay complet
+- [x] Collection session_recordings dans MongoDB
+
+### 13.6 Super Admin Améliorations
+- [x] Sidebar avec gradient (from-slate-900 to-slate-800)
+- [x] Menu "Support IA" ajouté avec icône Sparkles
+- [x] Style cohérent avec l'interface Support Agent
+
+### 13.7 Nouveaux Statuts de Tickets
+- open : Ticket ouvert
+- ai_processing : IA en cours de traitement
+- escalated_to_human : Escaladé vers support humain
+- in_progress : En cours de traitement
+- resolved : Résolu
+- closed : Fermé
+
+### 13.8 Types de Diagnostic IA
+- local_browser : Problème navigateur local
+- local_cache : Problème de cache
+- local_connection : Problème de connexion
+- system_bug : Bug système Flowtym
+- system_sync : Erreur de synchronisation
+- system_config : Problème de configuration
+- user_error : Erreur utilisateur
+- unknown : Non identifié
+
+---
+
+*Document Version: 13.0*
 *Last Updated: March 27, 2026*
-*Module Completed: Flowtym AI Support Center + Notifications Temps Réel*
+*Module Completed: Support Agent Interface & Remote Access*
