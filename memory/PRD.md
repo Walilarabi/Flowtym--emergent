@@ -544,10 +544,45 @@ Module de support client intelligent avec auto-diagnostic IA.
 - `POST /api/support/hotels/{hotel_id}/diagnose` - Auto-diagnostic IA
 - `POST /api/support/hotels/{hotel_id}/tickets/{ticket_id}/ai-analyze` - Analyse IA d'un ticket
 - `GET /api/support/knowledge` - Base de connaissances
-- `GET /api/support/hotels/{hotel_id}/notifications` - Notifications
+- `GET /api/support/hotels/{hotel_id}/notifications` - Liste des notifications
+- `GET /api/support/hotels/{hotel_id}/notifications/count` - Compteur de notifications non lues
+- `POST /api/support/hotels/{hotel_id}/notifications/read-all` - Marquer toutes comme lues
+- `POST /api/support/hotels/{hotel_id}/notifications/{id}/read` - Marquer une notification comme lue
 
 ---
 
-*Document Version: 12.0*
+## Phase 12.1: Notifications Temps Réel Support (Completed - March 27, 2026)
+Système de notifications push en temps réel pour le Support Center.
+
+### 12.1.1 Badge de Notification
+- [x] Badge rouge sur le bouton flottant Support
+- [x] Animation pulse quand nouvelles notifications
+- [x] Affiche le nombre de notifications non lues (9+ si > 9)
+
+### 12.1.2 Centre de Notifications
+- [x] Accessible via icône cloche dans le modal Support
+- [x] Liste des notifications avec icônes selon type
+- [x] Bouton "Tout lire" pour marquer toutes comme lues
+- [x] Bouton refresh pour actualiser
+- [x] Bouton "Retour" pour revenir au formulaire
+
+### 12.1.3 Types de Notifications
+- [x] `ai_response` : Quand l'IA répond à un ticket (icône Bot 🤖)
+- [x] `status_change` : Quand le statut d'un ticket change (icône RefreshCw avec emoji selon statut)
+
+### 12.1.4 Polling Intelligent
+- [x] Vérification toutes les 30 secondes
+- [x] Toast notification pour nouvelles notifications
+- [x] Bouton "Voir" dans le toast pour ouvrir le centre
+- [x] Tracking des IDs déjà vus pour éviter les doublons
+
+### 12.1.5 Persistance en Base de Données
+- [x] Collection `notifications` dans MongoDB
+- [x] Champs: hotel_id, type, notification_type, ticket_id, title, message, read, created_at
+- [x] Statut lu/non lu persisté
+
+---
+
+*Document Version: 12.1*
 *Last Updated: March 27, 2026*
-*Module Completed: Flowtym AI Support Center*
+*Module Completed: Flowtym AI Support Center + Notifications Temps Réel*
