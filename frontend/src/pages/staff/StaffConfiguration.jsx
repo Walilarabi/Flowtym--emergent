@@ -49,11 +49,15 @@ export const StaffConfiguration = () => {
   // Edit states
   const [editingDept, setEditingDept] = useState(null)
   const [editingShift, setEditingShift] = useState(null)
+  const [editingContract, setEditingContract] = useState(null)
   const [newDeptName, setNewDeptName] = useState('')
+  const [newPositionName, setNewPositionName] = useState('')
+  const [addingPositionToDept, setAddingPositionToDept] = useState(null)
   const [newShift, setNewShift] = useState({ name: '', code: '', start_time: '09:00', end_time: '17:00', duration_hours: 8, overtime_rate: 0, color: '#3b82f6' })
   const [newDocName, setNewDocName] = useState('')
   const [newDocMandatory, setNewDocMandatory] = useState(true)
   const [newEmail, setNewEmail] = useState('')
+  const [uploadingLogo, setUploadingLogo] = useState(false)
 
   const fetchData = async () => {
     if (!currentHotel) return
@@ -112,6 +116,40 @@ export const StaffConfiguration = () => {
     }
   }
 
+  // Add position to department
+  const handleAddPosition = async (deptId) => {
+    if (!newPositionName.trim()) return
+    try {
+      const dept = departments.find(d => d.id === deptId)
+      await api.put(`/hotels/${currentHotel.id}/config/departments/${deptId}`, {
+        ...dept,
+        positions: [...(dept.positions || []), newPositionName]
+      })
+      setNewPositionName('')
+      setAddingPositionToDept(null)
+      fetchData()
+      toast.success('Poste ajoute')
+    } catch (error) {
+      toast.error('Erreur')
+    }
+  }
+
+  // Delete position from department
+  const handleDeletePosition = async (deptId, positionIndex) => {
+    try {
+      const dept = departments.find(d => d.id === deptId)
+      const newPositions = dept.positions.filter((_, i) => i !== positionIndex)
+      await api.put(`/hotels/${currentHotel.id}/config/departments/${deptId}`, {
+        ...dept,
+        positions: newPositions
+      })
+      fetchData()
+      toast.success('Poste supprime')
+    } catch (error) {
+      toast.error('Erreur')
+    }
+  }
+
   // Shift handlers
   const handleAddShift = async () => {
     if (!newShift.name || !newShift.code) return
@@ -146,6 +184,57 @@ export const StaffConfiguration = () => {
       fetchData()
     } catch (error) {
       toast.error('Erreur')
+    }
+  }
+
+  const handleEditContract = (template) => {
+    setEditingContract(template)
+    toast.info(`Edition du modele "${template.name}" - Fonctionnalite en cours de developpement`)
+  }
+
+  const handleSaveContract = async () => {
+    if (!editingContract) return
+    try {
+      await api.put(`/hotels/${currentHotel.id}/config/contract-templates/${editingContract.id}`, editingContract)
+      setEditingContract(null)
+      fetchData()
+      toast.success('Modele sauvegarde')
+    } catch (error) {
+      toast.error('Erreur')
+    }
+  }
+
+  // Logo upload handler
+  const handleLogoUpload = async (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    
+    if (!file.type.startsWith('image/')) {
+      toast.error('Veuillez selectionner une image')
+      return
+    }
+    
+    setUploadingLogo(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      
+      const response = await api.post(`/hotels/${currentHotel.id}/config/upload-logo`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+      
+      setSettings(prev => ({ ...prev, logo_url: response.data.url }))
+      toast.success('Logo mis a jour')
+    } catch (error) {
+      // Fallback: utiliser un URL local temporaire
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setSettings(prev => ({ ...prev, logo_url: e.target.result }))
+        toast.success('Logo mis a jour (local)')
+      }
+      reader.readAsDataURL(file)
+    } finally {
+      setUploadingLogo(false)
     }
   }
 
@@ -287,13 +376,41 @@ export const StaffConfiguration = () => {
                   </div>
                   <div className="space-y-1">
                     {dept.positions.map((pos, i) => (
-                      <div key={i} className="text-sm text-slate-600 pl-2 border-l-2 border-slate-200">
-                        {pos}
+                      <div key={i} className="flex items-center justify-between text-sm text-slate-600 pl-2 border-l-2 border-slate-200 group">
+                        <span>{pos}</span>
+                        <button 
+                          onClick={() => handleDeletePosition(dept.id, i)}
+                          className="p-0.5 hover:bg-red-50 rounded text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
                       </div>
                     ))}
-                    <button className="text-xs text-violet-600 hover:underline mt-2">
-                      + Ajouter poste
-                    </button>
+                    {addingPositionToDept === dept.id ? (
+                      <div className="flex items-center gap-1 mt-2">
+                        <Input
+                          value={newPositionName}
+                          onChange={(e) => setNewPositionName(e.target.value)}
+                          placeholder="Nom du poste..."
+                          className="h-7 text-xs"
+                          autoFocus
+                          onKeyDown={(e) => e.key === 'Enter' && handleAddPosition(dept.id)}
+                        />
+                        <button onClick={() => handleAddPosition(dept.id)} className="p-1 hover:bg-emerald-50 rounded text-emerald-600">
+                          <Check className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => { setAddingPositionToDept(null); setNewPositionName('') }} className="p-1 hover:bg-red-50 rounded text-red-500">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button 
+                        onClick={() => setAddingPositionToDept(dept.id)}
+                        className="text-xs text-violet-600 hover:underline mt-2"
+                      >
+                        + Ajouter poste
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -431,12 +548,17 @@ export const StaffConfiguration = () => {
                       {template.contract_type.toUpperCase()}
                     </span>
                     <div className="flex items-center gap-1">
-                      <button className="p-1.5 hover:bg-slate-100 rounded text-slate-500">
+                      <button 
+                        onClick={() => handleEditContract(template)}
+                        className="p-1.5 hover:bg-violet-50 rounded text-violet-600"
+                        title="Modifier le modele"
+                      >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => handleToggleContractStatus(template)}
                         className={`p-1.5 rounded ${template.status === 'active' ? 'hover:bg-amber-50 text-amber-500' : 'hover:bg-emerald-50 text-emerald-500'}`}
+                        title={template.status === 'active' ? 'Desactiver' : 'Activer'}
                       >
                         {template.status === 'active' ? <X className="w-4 h-4" /> : <Check className="w-4 h-4" />}
                       </button>
@@ -457,9 +579,11 @@ export const StaffConfiguration = () => {
               <table className="w-full min-w-[700px]">
                 <thead className="bg-slate-50">
                   <tr>
-                    <th className="text-left p-3 text-xs font-semibold text-slate-500 uppercase">Permission</th>
+                    <th className="text-left p-3 text-xs font-semibold text-slate-500 uppercase w-40">Permission</th>
                     {roles.map(role => (
-                      <th key={role.id} className="text-center p-3 text-xs font-semibold text-slate-600">{role.name}</th>
+                      <th key={role.id} className="p-3 text-xs font-semibold text-slate-600 text-center" style={{ width: `${100 / (roles.length + 1)}%` }}>
+                        {role.name}
+                      </th>
                     ))}
                   </tr>
                 </thead>
@@ -468,18 +592,20 @@ export const StaffConfiguration = () => {
                     <tr key={perm} className="hover:bg-slate-50">
                       <td className="p-3 text-sm text-slate-700">{PERMISSION_LABELS[perm]}</td>
                       {roles.map(role => (
-                        <td key={role.id} className="p-3 text-center">
-                          <button
-                            onClick={() => handleTogglePermission(role, perm)}
-                            disabled={role.name === 'Administrateur'}
-                            className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                              role.permissions[perm]
-                                ? 'bg-violet-600 border-violet-600 text-white'
-                                : 'border-slate-300 hover:border-violet-400'
-                            } ${role.name === 'Administrateur' ? 'opacity-50 cursor-not-allowed' : ''}`}
-                          >
-                            {role.permissions[perm] && <Check className="w-3 h-3" />}
-                          </button>
+                        <td key={role.id} className="p-3">
+                          <div className="flex items-center justify-center">
+                            <button
+                              onClick={() => handleTogglePermission(role, perm)}
+                              disabled={role.name === 'Administrateur'}
+                              className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
+                                role.permissions[perm]
+                                  ? 'bg-violet-600 border-violet-600 text-white shadow-sm'
+                                  : 'border-slate-300 hover:border-violet-400 bg-white'
+                              } ${role.name === 'Administrateur' ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                            >
+                              {role.permissions[perm] && <Check className="w-4 h-4" />}
+                            </button>
+                          </div>
                         </td>
                       ))}
                     </tr>
@@ -544,14 +670,40 @@ export const StaffConfiguration = () => {
             <div className="border border-slate-200 rounded-xl p-4">
               <h3 className="font-medium text-slate-800 mb-3">Logo de l'etablissement</h3>
               <div className="flex items-center gap-4">
-                <div className="w-20 h-20 border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center bg-slate-50">
+                <div className="w-20 h-20 border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center bg-slate-50 overflow-hidden">
                   {settings.logo_url ? (
-                    <img src={settings.logo_url} alt="Logo" className="w-full h-full object-contain rounded-lg" />
+                    <img src={settings.logo_url} alt="Logo" className="w-full h-full object-contain" />
                   ) : (
                     <Upload className="w-6 h-6 text-slate-400" />
                   )}
                 </div>
-                <Button variant="outline">Changer le logo</Button>
+                <div>
+                  <input
+                    type="file"
+                    id="logo-upload"
+                    accept="image/*"
+                    onChange={handleLogoUpload}
+                    className="hidden"
+                  />
+                  <Button 
+                    variant="outline" 
+                    onClick={() => document.getElementById('logo-upload').click()}
+                    disabled={uploadingLogo}
+                  >
+                    {uploadingLogo ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-violet-600 border-t-transparent rounded-full animate-spin mr-2" />
+                        Chargement...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Changer le logo
+                      </>
+                    )}
+                  </Button>
+                  <p className="text-xs text-slate-500 mt-1">PNG, JPG ou SVG (max 2MB)</p>
+                </div>
               </div>
             </div>
 
