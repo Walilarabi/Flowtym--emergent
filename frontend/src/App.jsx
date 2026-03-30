@@ -45,6 +45,9 @@ import SupportCenter from '@/pages/support/SupportCenter'
 import SupportDashboard from '@/pages/support/SupportDashboard'
 import SupportAgentApp from '@/pages/support-agent/SupportAgentApp'
 import ConsignesModule from '@/pages/consignes/ConsignesModule'
+import MaintenanceModule from '@/pages/maintenance/MaintenanceModule'
+import SimulationModule from '@/pages/simulation/SimulationModule'
+import FinanceModule from '@/pages/finance/FinanceModule'
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth()
@@ -102,8 +105,11 @@ const AppRoutes = () => {
             <HotelProvider>
               <MainLayout>
                 <Routes>
-                  <Route path="/" element={<Navigate to="/pms/planning" replace />} />
-                  {/* PMS Routes */}
+                  <Route path="/" element={<Navigate to="/flowboard" replace />} />
+                  {/* Flowboard (Central Dashboard) Routes */}
+                  <Route path="/flowboard" element={<Flowboard />} />
+                  <Route path="/flowboard/*" element={<Flowboard />} />
+                  {/* Operations - PMS Routes */}
                   <Route path="/pms/planning" element={<PlanningPage />} />
                   <Route path="/pms/reservations" element={<ReservationsPage />} />
                   <Route path="/pms/clients" element={<ClientsPage />} />
@@ -111,7 +117,16 @@ const AppRoutes = () => {
                   <Route path="/pms/departures" element={<DeparturesPage />} />
                   <Route path="/pms/night-audit" element={<NightAuditPage />} />
                   <Route path="/pms/reports" element={<ReportsPage />} />
-                  {/* Staff Routes */}
+                  {/* Operations - Housekeeping */}
+                  <Route path="/housekeeping" element={<HousekeepingModule />} />
+                  <Route path="/housekeeping/*" element={<HousekeepingModule />} />
+                  {/* Operations - Maintenance */}
+                  <Route path="/maintenance" element={<MaintenanceModule />} />
+                  <Route path="/maintenance/*" element={<MaintenanceModule />} />
+                  {/* Operations - Consignes */}
+                  <Route path="/consignes" element={<ConsignesModule />} />
+                  <Route path="/consignes/*" element={<ConsignesModule />} />
+                  {/* Operations - Staff Routes */}
                   <Route path="/staff" element={<Navigate to="/staff/dashboard" replace />} />
                   <Route path="/staff/dashboard" element={<StaffDashboard />} />
                   <Route path="/staff/planning" element={<StaffPlanning />} />
@@ -123,19 +138,30 @@ const AppRoutes = () => {
                   <Route path="/staff/reporting" element={<StaffReporting />} />
                   <Route path="/staff/configuration" element={<StaffConfiguration />} />
                   <Route path="/staff/recruitment" element={<StaffRecruitment />} />
-                  {/* CRM Routes */}
-                  <Route path="/crm" element={<CRMPage />} />
-                  <Route path="/crm/*" element={<CRMPage />} />
-                  {/* Channel Manager Routes */}
-                  <Route path="/channel" element={<ChannelView />} />
-                  <Route path="/channel/*" element={<ChannelView />} />
-                  {/* Booking Engine Routes */}
+                  {/* Distribution - Booking Engine Routes */}
                   <Route path="/booking" element={<BookingEngine />} />
                   <Route path="/booking/*" element={<BookingEngine />} />
-                  {/* Hoptym RMS Routes */}
+                  {/* Distribution - Channel Manager Routes */}
+                  <Route path="/channel" element={<ChannelView />} />
+                  <Route path="/channel/*" element={<ChannelView />} />
+                  {/* Guest Experience - CRM Routes */}
+                  <Route path="/crm" element={<CRMPage />} />
+                  <Route path="/crm/*" element={<CRMPage />} />
+                  {/* Guest Experience - E-Reputation Module Routes */}
+                  <Route path="/e-reputation" element={<EReputationModule />} />
+                  <Route path="/e-reputation/*" element={<EReputationModule />} />
+                  {/* Finance Module Routes */}
+                  <Route path="/finance" element={<FinanceModule />} />
+                  <Route path="/finance/*" element={<FinanceModule />} />
+                  {/* Platform - Data Hub Routes */}
+                  {/* Revenue - RMS Routes */}
                   <Route path="/rms" element={<RMS />} />
                   <Route path="/rms/*" element={<RMS />} />
-                  {/* Data Hub Routes */}
+                  {/* Revenue - Simulation & Devis */}
+                  <Route path="/simulation" element={<SimulationModule />} />
+                  <Route path="/simulation/*" element={<SimulationModule />} />
+                  {/* Distribution - Booking Engine Routes */}
+                  {/* Platform - Data Hub Routes */}
                   <Route path="/datahub" element={<DataHubOverview />} />
                   <Route path="/datahub/connectors" element={<DataHubConnectors />} />
                   <Route path="/datahub/sync" element={<DataHubSync />} />
@@ -143,22 +169,10 @@ const AppRoutes = () => {
                   <Route path="/datahub/data/*" element={<DataHubData />} />
                   <Route path="/datahub/api" element={<DataHubAPI />} />
                   <Route path="/datahub/monitoring" element={<DataHubMonitoring />} />
-                  {/* Configuration Module Routes */}
+                  {/* Platform - Configuration Module Routes */}
                   <Route path="/config" element={<ConfigurationPage />} />
                   <Route path="/config/*" element={<ConfigurationPage />} />
-                  {/* Housekeeping Module Routes */}
-                  <Route path="/housekeeping" element={<HousekeepingModule />} />
-                  <Route path="/housekeeping/*" element={<HousekeepingModule />} />
-                  {/* E-Reputation Module Routes */}
-                  <Route path="/e-reputation" element={<EReputationModule />} />
-                  <Route path="/e-reputation/*" element={<EReputationModule />} />
-                  {/* Flowboard (Central Dashboard) Routes */}
-                  <Route path="/flowboard" element={<Flowboard />} />
-                  <Route path="/flowboard/*" element={<Flowboard />} />
-                  {/* Consignes (Operations Hub) Routes */}
-                  <Route path="/consignes" element={<ConsignesModule />} />
-                  <Route path="/consignes/*" element={<ConsignesModule />} />
-                  {/* Integrations Hub Routes */}
+                  {/* Platform - Integrations Hub Routes */}
                   <Route path="/integrations" element={<IntegrationsHub />} />
                   <Route path="/integrations/*" element={<IntegrationsHub />} />
                   {/* Support Center Routes */}
