@@ -180,7 +180,7 @@ const AppRoutes = () => {
                   <Route path="/support/*" element={<SupportCenter />} />
                   {/* Settings */}
                   <Route path="/settings" element={<SettingsPage />} />
-                  <Route path="*" element={<Navigate to="/pms/planning" replace />} />
+                  <Route path="*" element={<Navigate to="/flowboard" replace />} />
                 </Routes>
               </MainLayout>
             </HotelProvider>

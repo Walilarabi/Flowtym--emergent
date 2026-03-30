@@ -30,7 +30,7 @@ export const LoginPage = () => {
       } else if (role === 'support') {
         navigate('/support-agent')
       } else {
-        navigate('/pms/planning')
+        navigate('/flowboard')
       }
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Email ou mot de passe incorrect')
