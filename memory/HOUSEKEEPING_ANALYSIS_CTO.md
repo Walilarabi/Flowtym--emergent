@@ -2005,39 +2005,299 @@ export const useHousekeepingStore = create<HousekeepingState>()(
 
 ---
 
-# 7. ROADMAP IMPLÉMENTATION
+# 7. MVP SCOPE (V1 vs REPORTÉ)
 
-## Phase 1 : Foundation (Semaines 1-2)
-- [ ] Setup projet NestJS avec structure modules
-- [ ] Configuration MongoDB + Mongoose schemas
-- [ ] Module Auth (JWT, guards)
-- [ ] Setup projet Next.js 14 avec App Router
-- [ ] Design system Tailwind + composants de base
+## 7.1 Définition du MVP
 
-## Phase 2 : Core Housekeeping (Semaines 3-6)
-- [ ] Backend : Modules Rooms, Tasks, Staff
-- [ ] Backend : WebSocket Gateway
-- [ ] Frontend : Vue Direction
-- [ ] Frontend : Vue Gouvernante
-- [ ] Frontend : Vue Mobile Femme de chambre
+**Objectif MVP** : Produit testable en hôtel réel avec les fonctionnalités critiques business.
 
-## Phase 3 : Réception & Features (Semaines 7-10)
-- [ ] Backend : Inspections, Assignments
-- [ ] Frontend : Vue Réception (tableau complexe)
-- [ ] Frontend : Import CSV/Excel
-- [ ] Intégration temps réel complète
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         MVP V1 - PÉRIMÈTRE                                  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ✅ INCLUS DANS V1 (Livrable immédiat)                                      │
+│  ════════════════════════════════════                                       │
+│                                                                             │
+│  1. VUE RÉCEPTION (Priorité #1 - Cœur PMS)                                 │
+│     ├── Tableau complet 16 colonnes                                        │
+│     ├── Mode Plan (grille étages) + Mode Tableau                           │
+│     ├── Filtres : étage, statut, badge, assignée                           │
+│     ├── Recherche instantanée                                               │
+│     ├── Sélection multiple + actions en masse (Assignation, Départ)        │
+│     ├── Édition client inline (nom, dates, chambre)                        │
+│     ├── Toggle PDJ inclus/non inclus                                       │
+│     ├── Statut propreté éditable                                           │
+│     ├── KPI Strip (8 indicateurs)                                          │
+│     └── Dark mode                                                           │
+│                                                                             │
+│  2. VUE MOBILE FEMME DE CHAMBRE (Priorité #2 - Impact opérationnel)        │
+│     ├── Hero section personnalisée                                         │
+│     ├── Summary card (progression, stats)                                  │
+│     ├── Liste chambres par étage (SectionList)                             │
+│     ├── Cartes swipeable (droite: commencer/terminer, gauche: NPD)        │
+│     ├── Scanner QR code (ou saisie manuelle)                               │
+│     ├── Timer nettoyage en temps réel                                      │
+│     ├── Filtres rapides (Toutes, Départs, Recouches)                       │
+│     └── Badges visuels (VIP, Prioritaire, Départ, Recouche)               │
+│                                                                             │
+│  3. VUE GOUVERNANTE (Priorité #3)                                          │
+│     ├── Onglet Validation : Liste inspections + filtres + KPIs            │
+│     ├── Page validation chambre : checklist, notes, rating, photos        │
+│     ├── Boutons Valider (vert) / Refuser (rouge + raison)                 │
+│     ├── Onglet Équipe : Liste staff avec charge + chambres assignées      │
+│     └── Navigation rapide (Plan, Répartition)                              │
+│                                                                             │
+│  4. BACKEND CORE                                                            │
+│     ├── API Rooms (CRUD, bulk update, filtres)                             │
+│     ├── API Tasks (start, complete, assign)                                │
+│     ├── API Inspections (create, validate, refuse)                         │
+│     ├── API Staff (list, workload)                                         │
+│     ├── API Stats (aggregations optimisées)                                │
+│     └── WebSocket Gateway (room:updated, stats:updated)                    │
+│                                                                             │
+│  5. TEMPS RÉEL                                                              │
+│     ├── WebSocket : MAJ instantanée statuts chambres                       │
+│     ├── Sync Réception ↔ Housekeeping                                      │
+│     └── Notifications push (optionnel V1)                                  │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
 
-## Phase 4 : Modules annexes (Semaines 11-14)
-- [ ] Backend : Maintenance, Breakfast, Lost & Found
-- [ ] Frontend : Vues Mobile Maintenance & Breakfast
-- [ ] Frontend : Économat / Stocks
-- [ ] Tests E2E
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         REPORTÉ (V2+)                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ❌ HORS SCOPE V1 (À développer ultérieurement)                             │
+│  ════════════════════════════════════════════                               │
+│                                                                             │
+│  VUE DIRECTION                                                              │
+│     └── Dashboard KPIs, widgets, Staff Forecast → V2                       │
+│                                                                             │
+│  VUE MOBILE MAINTENANCE                                                     │
+│     └── Tickets, suivi interventions → V2                                  │
+│                                                                             │
+│  VUE MOBILE PETIT-DÉJEUNER                                                  │
+│     └── Workflow cuisine/livraison/servi → V2                              │
+│                                                                             │
+│  IMPORT CSV/EXCEL/PDF/IMAGE                                                 │
+│     └── Parser avec OCR → V2                                               │
+│                                                                             │
+│  OBJETS TROUVÉS                                                             │
+│     └── Gestion lifecycle → V2                                             │
+│                                                                             │
+│  ÉCONOMAT / STOCKS                                                          │
+│     └── Inventaire, consommations → V2                                     │
+│                                                                             │
+│  SIGNALEMENTS (Maintenance non périodique)                                  │
+│     └── Interface dédiée → V2                                              │
+│                                                                             │
+│  ONGLET STOCKS GOUVERNANTE                                                  │
+│     └── Alertes stock bas → V2                                             │
+│                                                                             │
+│  CHECKLIST NETTOYAGE CONFIGURABLE                                           │
+│     └── Admin checklist → V2                                               │
+│                                                                             │
+│  PHOTOS AVANT/APRÈS                                                         │
+│     └── Upload S3 + galerie → V2                                           │
+│                                                                             │
+│  HISTORIQUE & RAPPORTS                                                      │
+│     └── Export, analytics → V2                                             │
+│                                                                             │
+│  SOURCE RÉSERVATION (OTA, GDS)                                              │
+│     └── Dropdown complet → V1.5 (quick win)                                │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
-## Phase 5 : Polish & Migration (Semaines 15-16)
-- [ ] Migration données production
-- [ ] Tests de charge
-- [ ] Documentation API
-- [ ] Décommissionnement ancien backend
+## 7.2 Critères de succès MVP
+
+| Critère | Métrique | Cible |
+|---------|----------|-------|
+| **Utilisabilité Réception** | Temps pour marquer un départ | < 3 clics |
+| **Utilisabilité Mobile** | Temps pour terminer une chambre | < 5 secondes (swipe) |
+| **Performance tableau** | Render 50 chambres | < 1 seconde |
+| **Temps réel** | Propagation statut | < 500ms |
+| **Fiabilité** | Uptime en test hôtel | > 99% |
+
+---
+
+# 8. ROADMAP IMPLÉMENTATION (RÉVISÉE)
+
+## 8.1 Priorités ajustées (Orienté produit)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    ORDRE DE DÉVELOPPEMENT MVP                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  #1  ██████████████████████████████████████████████  RÉCEPTION             │
+│      Critique business / Cœur PMS                                          │
+│                                                                             │
+│  #2  ████████████████████████████████  MOBILE FEMME DE CHAMBRE             │
+│      Impact opérationnel direct / Terrain                                  │
+│                                                                             │
+│  #3  ██████████████████████  GOUVERNANTE                                   │
+│      Supervision & Qualité                                                  │
+│                                                                             │
+│  #4  ██████████████  DIRECTION                                             │
+│      Dashboard stratégique (V2)                                            │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+## 8.2 Phases de développement
+
+### Phase 1 : Foundation + Backend Core (Semaine 1)
+```
+Backend NestJS :
+├── [ ] Setup projet NestJS avec structure modules
+├── [ ] Configuration MongoDB + Mongoose schemas (8 collections)
+├── [ ] Module Auth (JWT, guards, rôles)
+├── [ ] Module Rooms (CRUD, filtres, bulk)
+├── [ ] Module Tasks (start, complete, assign)
+├── [ ] Module Inspections (create, validate)
+├── [ ] Module Staff (list, workload)
+├── [ ] API Stats (aggregations)
+└── [ ] WebSocket Gateway (events temps réel)
+
+Frontend Next.js :
+├── [ ] Setup projet Next.js 14 App Router
+├── [ ] Design system Tailwind + FT constants
+├── [ ] Composants UI de base (Button, Card, Badge, etc.)
+└── [ ] Hook useHousekeepingSocket
+```
+
+### Phase 2 : Vue Réception (Semaines 2-3)
+```
+Priorité #1 - Cœur PMS :
+├── [ ] Layout page /housekeeping/reception
+├── [ ] Composant RoomTable (16 colonnes)
+├── [ ] Composant FloorSection (mode Plan)
+├── [ ] Composant FilterBar (5 filtres dropdown)
+├── [ ] Composant KPIStrip (8 KPIs)
+├── [ ] Composant SelectionBar (actions masse)
+├── [ ] Composant EditClientModal
+├── [ ] Toggle PDJ inline
+├── [ ] Statut propreté dropdown
+├── [ ] Dark mode toggle
+└── [ ] Intégration WebSocket (room:updated)
+```
+
+### Phase 3 : Vue Mobile Femme de chambre (Semaine 4)
+```
+Priorité #2 - Impact opérationnel :
+├── [ ] Layout page /housekeeping/mobile
+├── [ ] Composant HeroSection
+├── [ ] Composant SummaryCard
+├── [ ] Composant FilterTabs (Toutes/Départs/Recouches)
+├── [ ] Composant SwipeableRoomCard (framer-motion)
+├── [ ] Composant ScanModal (QR ou saisie)
+├── [ ] Timer temps réel
+├── [ ] Gestion swipe droite/gauche
+└── [ ] Intégration WebSocket
+```
+
+### Phase 4 : Vue Gouvernante (Semaine 5)
+```
+Priorité #3 - Supervision :
+├── [ ] Layout page /housekeeping/gouvernante
+├── [ ] Onglet Validation (InspectionCard, filtres)
+├── [ ] Page /validate-room (checklist, rating)
+├── [ ] Onglet Équipe (TeamCard, charge)
+├── [ ] Boutons action (Valider, Refuser)
+└── [ ] Navigation rapide
+```
+
+### Phase 5 : Polish & Tests (Semaine 6)
+```
+Finalisation MVP :
+├── [ ] Tests E2E critiques (Playwright)
+├── [ ] Optimisations performance
+├── [ ] Bug fixes
+├── [ ] Documentation utilisateur basique
+└── [ ] Déploiement environnement test hôtel
+```
+
+---
+
+# 9. PLAN DE DÉCOMMISSIONNEMENT FASTAPI
+
+## 9.1 Principes directeurs
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    RÈGLES DE MIGRATION                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ✅ AUTORISÉ                                                                │
+│  ───────────                                                                │
+│  • Nouvelles features → NestJS uniquement                                   │
+│  • Bug fixes critiques → FastAPI (si pas d'équivalent NestJS)              │
+│  • Maintenance minimale FastAPI                                             │
+│                                                                             │
+│  ❌ INTERDIT                                                                │
+│  ──────────                                                                 │
+│  • Nouvelles routes FastAPI                                                 │
+│  • Nouvelles collections via FastAPI                                        │
+│  • Refactoring FastAPI                                                      │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+## 9.2 Coexistence technique
+
+```
+                    NGINX / API GATEWAY
+                           │
+           ┌───────────────┼───────────────┐
+           │               │               │
+           ▼               ▼               ▼
+    /api/v1/*        /api/v2/*        /api/ws/*
+    (FastAPI)        (NestJS)         (NestJS WS)
+    EXISTANT         NOUVEAU          TEMPS RÉEL
+           │               │               │
+           └───────────────┼───────────────┘
+                           │
+                           ▼
+                       MongoDB
+                    (Base commune)
+```
+
+**Configuration Nginx** :
+```nginx
+location /api/v1/ {
+    proxy_pass http://fastapi:8001/api/;
+}
+
+location /api/v2/ {
+    proxy_pass http://nestjs:3001/api/;
+}
+
+location /socket.io/ {
+    proxy_pass http://nestjs:3001/socket.io/;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+}
+```
+
+## 9.3 Timeline de décommissionnement
+
+| Phase | Actions | Condition de passage |
+|-------|---------|---------------------|
+| **T0** | Coexistence active | NestJS opérationnel |
+| **T+1 mois** | Frontend migre vers /api/v2 | 100% features Housekeeping sur NestJS |
+| **T+2 mois** | Désactivation routes FastAPI Housekeeping | Aucun appel /api/v1/housekeeping |
+| **T+3 mois** | Migration autres modules | Module par module |
+| **T+6 mois** | Décommissionnement total FastAPI | 0 dépendance |
+
+## 9.4 Checklist avant décommissionnement
+
+- [ ] Toutes les routes /api/v1/housekeeping/* ont un équivalent /api/v2/*
+- [ ] Frontend ne fait plus d'appels à /api/v1/housekeeping/*
+- [ ] Tests E2E passent sur /api/v2/*
+- [ ] Monitoring confirme 0 requêtes sur anciennes routes
+- [ ] Backup de sécurité du code FastAPI
 
 ---
 
