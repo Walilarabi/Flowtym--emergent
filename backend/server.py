@@ -1,4 +1,5 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, status
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, Request
+from fastapi.responses import Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -12,6 +13,7 @@ import uuid
 from datetime import datetime, timezone, timedelta
 import jwt
 import bcrypt
+import httpx
 
 # Import ConfigService for PMS integration
 from shared.config_service import get_config_service, ConfigService
@@ -5165,3 +5167,43 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
+# ===================== NESTJS PROXY =====================
+# Proxy all /api/v2/* requests to NestJS backend
+
+NEST_BACKEND_URL = os.environ.get('NEST_BACKEND_URL', 'http://localhost:8002')
+
+@app.api_route("/api/v2/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
+async def proxy_to_nest(path: str, request: Request):
+    """Proxy requests to NestJS backend for Housekeeping V2 API"""
+    async with httpx.AsyncClient() as http_client:
+        target_url = f"{NEST_BACKEND_URL}/api/v2/{path}"
+        
+        # Forward headers
+        headers = dict(request.headers)
+        headers.pop('host', None)
+        
+        try:
+            # Get request body for POST/PUT/PATCH
+            body = None
+            if request.method in ["POST", "PUT", "PATCH"]:
+                body = await request.body()
+            
+            response = await http_client.request(
+                method=request.method,
+                url=target_url,
+                headers=headers,
+                content=body,
+                params=dict(request.query_params),
+                timeout=30.0
+            )
+            
+            return Response(
+                content=response.content,
+                status_code=response.status_code,
+                headers=dict(response.headers),
+                media_type=response.headers.get('content-type')
+            )
+        except httpx.RequestError as e:
+            logger.error(f"NestJS proxy error: {e}")
+            raise HTTPException(status_code=502, detail=f"NestJS backend unavailable: {str(e)}")

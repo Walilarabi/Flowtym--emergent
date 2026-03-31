@@ -3,7 +3,7 @@
  * Reproduction fidèle des interfaces Rorck avec interactivité complète
  * 
  * VUES:
- * - Réception: Tableau interactif avec checkboxes et assignation en masse
+ * - Réception: Tableau interactif temps réel avec NestJS + WebSocket
  * - Direction: Dashboard KPIs, plan chambres, équipe active
  * - Gouvernante: Validation inspections, équipe, stocks (3 onglets)
  * - Femme de chambre: Mobile avec scan QR code
@@ -20,7 +20,7 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import {
   MapPin, Zap, Grid3X3, CheckCircle, Wrench, Coffee, RefreshCw,
-  Loader2, LayoutGrid, QrCode, Settings
+  Loader2, LayoutGrid, QrCode, Settings, Wifi
 } from 'lucide-react'
 import axios from 'axios'
 
@@ -31,8 +31,12 @@ import MobileHousekeepingView from '@/components/housekeeping/MobileHousekeeping
 import MobileMaintenanceView from '@/components/housekeeping/MobileMaintenanceView'
 import MobileBreakfastView from '@/components/housekeeping/MobileBreakfastView'
 import InteractiveReceptionView from '@/components/housekeeping/InteractiveReceptionView'
+import ReceptionViewV2 from '@/components/housekeeping/ReceptionViewV2'
 import QRCodeManager from '@/components/housekeeping/QRCodeManager'
 import SatisfactionConfig from '@/components/housekeeping/SatisfactionConfig'
+
+// Hook V2 pour NestJS
+import useHousekeepingV2 from '@/hooks/useHousekeepingV2'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL
 
@@ -223,18 +227,38 @@ const useHousekeepingData = () => {
 
 export default function HousekeepingModule() {
   const [activeView, setActiveView] = useState('reception')
-  const data = useHousekeepingData()
+  const [useV2Api, setUseV2Api] = useState(true) // Toggle for V2 API
+  
+  // Use V2 hook for NestJS API
+  const dataV2 = useHousekeepingV2()
+  // Fallback to legacy hook
+  const dataLegacy = useHousekeepingData()
+  
+  // Select data source based on toggle
+  const data = useV2Api ? dataV2 : dataLegacy
 
-  const actions = {
-    refresh: data.refresh,
-    seedData: data.seedData,
-    startTask: data.startTask,
-    completeTask: data.completeTask,
-    validateInspection: data.validateInspection,
-    autoAssign: data.autoAssign,
-    updateBreakfast: data.updateBreakfast,
-    updateMaintenance: data.updateMaintenance
+  const actionsV2 = {
+    refresh: dataV2.refresh,
+    seedData: dataV2.seedData,
+    startTask: dataV2.startTask,
+    completeTask: dataV2.completeTask,
+    validateInspection: dataV2.validateInspection,
+    autoAssign: dataV2.autoAssign,
+    assignTasks: dataV2.assignTasks,
   }
+
+  const actionsLegacy = {
+    refresh: dataLegacy.refresh,
+    seedData: dataLegacy.seedData,
+    startTask: dataLegacy.startTask,
+    completeTask: dataLegacy.completeTask,
+    validateInspection: dataLegacy.validateInspection,
+    autoAssign: dataLegacy.autoAssign,
+    updateBreakfast: dataLegacy.updateBreakfast,
+    updateMaintenance: dataLegacy.updateMaintenance
+  }
+
+  const actions = useV2Api ? actionsV2 : actionsLegacy
 
   // Navigation handler for Direction view
   const handleNavigate = (view) => {
@@ -250,7 +274,7 @@ export default function HousekeepingModule() {
     setActiveView(viewMap[view] || view)
   }
 
-  if (data.loading && !data.stats) {
+  if (data.loading && !data.stats && data.rooms?.length === 0) {
     return (
       <div className="h-[calc(100vh-200px)] flex items-center justify-center">
         <div className="text-center">
@@ -355,6 +379,19 @@ export default function HousekeepingModule() {
 
           {/* Actions */}
           <div className="flex items-center gap-3">
+            {/* V2 API Toggle */}
+            <button 
+              onClick={() => setUseV2Api(!useV2Api)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                useV2Api 
+                  ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' 
+                  : 'bg-slate-100 text-slate-500 border border-slate-200'
+              }`}
+              title={useV2Api ? 'API NestJS V2 active' : 'API FastAPI Legacy'}
+            >
+              <Wifi size={12} />
+              {useV2Api ? 'V2 Temps réel' : 'Legacy'}
+            </button>
             <Button variant="outline" size="sm" onClick={actions.refresh}>
               <RefreshCw size={14} className="mr-1" /> Actualiser
             </Button>
@@ -368,7 +405,9 @@ export default function HousekeepingModule() {
       {/* Content Area */}
       <div className="flex-1 overflow-hidden">
         {activeView === 'reception' && (
-          <InteractiveReceptionView data={data} actions={actions} />
+          useV2Api 
+            ? <ReceptionViewV2 data={data} actions={actions} />
+            : <InteractiveReceptionView data={data} actions={actions} />
         )}
         {activeView === 'direction' && (
           <div className="h-full overflow-auto">

@@ -1,0 +1,86 @@
+{
+  "summary": "Tested FLOWTYM Housekeeping V2 NestJS API integration. Backend APIs (NestJS) are working correctly via proxy /api/v2/*. All 13 backend tests passed. CRITICAL ISSUE: Frontend shows empty state because hotel_id format mismatch between FastAPI (UUID) and NestJS (MongoDB ObjectId).",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "/api/v2/hotels/{hotelId}/housekeeping/seed",
+        "issue": "Seed endpoint fails with BSONError when hotelId is UUID format. NestJS expects MongoDB ObjectId (24 char hex) but FastAPI uses UUID format",
+        "priority": "CRITICAL"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Housekeeping V2 data loading",
+        "issue": "Frontend shows 'Aucune chambre' (empty state) because useHousekeepingV2 hook uses currentHotel.id from FastAPI (UUID format: 4f02769a-5f63-4121-bb97-a7061563d934) but NestJS has data for different hotel_id (ObjectId format: 69c26ab888a82645fcca6d69)",
+        "affected_selectors": ["[data-testid='reception-view-v2']", "table"]
+      }
+    ],
+    "design_issues": []
+  },
+  "passed_tests": [
+    "Login with admin@flowtym.com / admin123 - SUCCESS",
+    "GET /api/v2/hotels/{hotelId}/housekeeping/stats - SUCCESS (returns 40 rooms, 25 tasks)",
+    "GET /api/v2/hotels/{hotelId}/rooms - SUCCESS (returns 40 rooms with all fields)",
+    "GET /api/v2/hotels/{hotelId}/rooms?floor=1 - SUCCESS (filters by floor)",
+    "GET /api/v2/hotels/{hotelId}/staff - SUCCESS (returns 9 staff members)",
+    "GET /api/v2/hotels/{hotelId}/staff?role=femme_de_chambre - SUCCESS (filters housekeepers)",
+    "GET /api/v2/hotels/{hotelId}/housekeeping/tasks - SUCCESS (returns 25 tasks)",
+    "POST /api/v2/hotels/{hotelId}/housekeeping/seed - Endpoint accessible",
+    "FastAPI proxy to NestJS /api/v2/* - WORKING",
+    "Frontend login flow - SUCCESS",
+    "Navigation to /housekeeping - SUCCESS",
+    "V2 Temps réel button visible - SUCCESS",
+    "Actualiser button visible - SUCCESS"
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_housekeeping_v2.py",
+    "/app/test_reports/pytest/pytest_housekeeping_v2.xml"
+  ],
+  "action_items": [
+    "CRITICAL: Fix hotel_id format mismatch between FastAPI and NestJS. Options: (1) Modify NestJS schemas to use string hotel_id instead of ObjectId, (2) Create hotel in FastAPI with ObjectId-compatible ID, (3) Add hotel_id mapping layer in proxy",
+    "Recommended: Modify NestJS Room/Staff/Task schemas to use 'hotel_id: string' instead of 'hotel_id: Types.ObjectId'",
+    "Update NestJS services (rooms.service.ts, staff.service.ts, housekeeping.service.ts) to query by string hotel_id",
+    "After fix, seed demo data for the FastAPI hotel ID (4f02769a-5f63-4121-bb97-a7061563d934)"
+  ],
+  "critical_code_review_comments": [
+    "NestJS schemas use Types.ObjectId for hotel_id but FastAPI uses UUID strings - fundamental architecture mismatch",
+    "rooms.service.ts line 131: new Types.ObjectId(hotelId) throws BSONError for UUID input",
+    "housekeeping.service.ts uses same ObjectId pattern throughout",
+    "staff.service.ts uses same ObjectId pattern throughout",
+    "Frontend useHousekeepingV2.js correctly uses currentHotel.id from HotelContext but receives UUID from FastAPI"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_housekeeping_v2.py"
+  ],
+  "success_rate": {
+    "backend": "100% (13/13 tests passed for NestJS API with test ObjectId)",
+    "frontend": "50% (UI loads but no data due to hotel_id mismatch)"
+  },
+  "test_credentials": {
+    "admin": "admin@flowtym.com / admin123",
+    "test_hotel_id_nestjs": "69c26ab888a82645fcca6d69",
+    "test_hotel_id_fastapi": "4f02769a-5f63-4121-bb97-a7061563d934"
+  },
+  "seed_data_creation": "NestJS has demo data for hotel_id 69c26ab888a82645fcca6d69 (40 rooms, 25 tasks, 9 staff)",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "NestJS Housekeeping V2 API works correctly when called with MongoDB ObjectId format hotel_id. The integration issue is that FastAPI uses UUID hotel IDs while NestJS expects ObjectId format. Main agent needs to modify NestJS schemas to accept string hotel_id or implement a mapping layer.",
+  "rca_of_the_issue": {
+    "root_cause": "Architecture mismatch: FastAPI backend uses UUID format for hotel IDs (e.g., 4f02769a-5f63-4121-bb97-a7061563d934) while NestJS backend schemas define hotel_id as Types.ObjectId which requires 24-character hex string format (e.g., 69c26ab888a82645fcca6d69)",
+    "reproduction_steps": [
+      "1. Login to frontend with admin@flowtym.com",
+      "2. Navigate to /housekeeping",
+      "3. Frontend calls useHousekeepingV2 hook which gets currentHotel.id from HotelContext",
+      "4. HotelContext fetches hotels from FastAPI /api/hotels which returns UUID format IDs",
+      "5. useHousekeepingV2 calls /api/v2/hotels/{uuid}/rooms",
+      "6. NestJS tries to convert UUID to ObjectId: new Types.ObjectId(uuid)",
+      "7. BSONError thrown because UUID is not valid ObjectId format",
+      "8. API returns empty array, frontend shows 'Aucune chambre'"
+    ],
+    "mitigation": "Modify NestJS schemas (room.schema.ts, staff.schema.ts, task.schema.ts) to use 'hotel_id: string' instead of 'hotel_id: Types.ObjectId'. Update all service methods to query by string instead of ObjectId."
+  }
+}

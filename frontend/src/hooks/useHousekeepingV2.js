@@ -1,0 +1,238 @@
+/**
+ * useHousekeepingV2 - Hook pour l'API NestJS Housekeeping V2
+ * Utilise l'API /api/v2 avec support WebSocket temps réel
+ */
+
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { useHotel } from '@/context/HotelContext'
+import { io } from 'socket.io-client'
+import { toast } from 'sonner'
+import axios from 'axios'
+
+const API_URL = import.meta.env.VITE_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL
+
+export function useHousekeepingV2() {
+  const { currentHotel } = useHotel()
+  const hotelId = currentHotel?.id
+  const socketRef = useRef(null)
+  
+  const [data, setData] = useState({
+    stats: null,
+    tasks: [],
+    rooms: [],
+    staff: [],
+    inspections: [],
+    loading: true,
+    error: null,
+    connected: false,
+  })
+
+  // Fetch all data
+  const fetchData = useCallback(async () => {
+    if (!hotelId) return
+    
+    setData(d => ({ ...d, loading: true, error: null }))
+    const token = localStorage.getItem('flowtym_token')
+    const headers = { Authorization: `Bearer ${token}` }
+    
+    try {
+      const [statsRes, tasksRes, roomsRes, staffRes, inspectionsRes] = await Promise.all([
+        axios.get(`${API_URL}/api/v2/hotels/${hotelId}/housekeeping/stats`, { headers }).catch(() => ({ data: null })),
+        axios.get(`${API_URL}/api/v2/hotels/${hotelId}/housekeeping/tasks`, { headers }).catch(() => ({ data: [] })),
+        axios.get(`${API_URL}/api/v2/hotels/${hotelId}/rooms`, { headers }).catch(() => ({ data: [] })),
+        axios.get(`${API_URL}/api/v2/hotels/${hotelId}/staff?role=femme_de_chambre`, { headers }).catch(() => ({ data: [] })),
+        axios.get(`${API_URL}/api/v2/hotels/${hotelId}/housekeeping/inspections`, { headers }).catch(() => ({ data: [] })),
+      ])
+      
+      setData(d => ({
+        ...d,
+        stats: statsRes.data,
+        tasks: tasksRes.data || [],
+        rooms: roomsRes.data || [],
+        staff: staffRes.data || [],
+        inspections: inspectionsRes.data || [],
+        loading: false,
+        error: null,
+      }))
+    } catch (error) {
+      console.error('Error fetching housekeeping V2 data:', error)
+      setData(d => ({ ...d, loading: false, error: error.message }))
+    }
+  }, [hotelId])
+
+  // Initialize WebSocket connection
+  useEffect(() => {
+    if (!hotelId) return
+
+    // Connect to WebSocket
+    const wsUrl = API_URL.replace('https://', 'wss://').replace('http://', 'ws://')
+    socketRef.current = io(`${wsUrl}/housekeeping`, {
+      transports: ['websocket'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    })
+
+    const socket = socketRef.current
+
+    socket.on('connect', () => {
+      console.log('WebSocket connected')
+      socket.emit('join_hotel', { hotelId, role: 'reception' })
+      setData(d => ({ ...d, connected: true }))
+    })
+
+    socket.on('disconnect', () => {
+      console.log('WebSocket disconnected')
+      setData(d => ({ ...d, connected: false }))
+    })
+
+    // Real-time updates
+    socket.on('room_updated', (update) => {
+      console.log('Room update received:', update)
+      setData(d => ({
+        ...d,
+        rooms: d.rooms.map(room =>
+          room._id === update.roomId ? { ...room, ...update } : room
+        ),
+      }))
+    })
+
+    socket.on('task_updated', (update) => {
+      console.log('Task update received:', update)
+      setData(d => ({
+        ...d,
+        tasks: d.tasks.map(task =>
+          task._id === update.taskId ? { ...task, status: update.status } : task
+        ),
+      }))
+    })
+
+    socket.on('stats_refresh', () => {
+      console.log('Stats refresh signal received')
+      fetchData()
+    })
+
+    socket.on('assignment_updated', (update) => {
+      console.log('Assignment update received:', update)
+      fetchData() // Refresh all data
+    })
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.emit('leave_hotel', { hotelId })
+        socketRef.current.disconnect()
+      }
+    }
+  }, [hotelId, fetchData])
+
+  // Initial fetch
+  useEffect(() => {
+    fetchData()
+    const interval = setInterval(fetchData, 30000) // Refresh every 30s
+    return () => clearInterval(interval)
+  }, [fetchData])
+
+  // Actions
+  const seedData = useCallback(async () => {
+    if (!hotelId) return
+    const token = localStorage.getItem('flowtym_token')
+    try {
+      const res = await axios.post(`${API_URL}/api/v2/hotels/${hotelId}/housekeeping/seed`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      toast.success(`Données créées: ${res.data.rooms_created} chambres, ${res.data.tasks_created} tâches`)
+      fetchData()
+    } catch (error) {
+      toast.error('Erreur lors de la création des données')
+    }
+  }, [hotelId, fetchData])
+
+  const startTask = useCallback(async (taskId) => {
+    if (!hotelId) return
+    const token = localStorage.getItem('flowtym_token')
+    try {
+      await axios.post(`${API_URL}/api/v2/hotels/${hotelId}/housekeeping/tasks/${taskId}/start`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      toast.success('Nettoyage démarré')
+      fetchData()
+    } catch (error) {
+      toast.error('Erreur lors du démarrage')
+    }
+  }, [hotelId, fetchData])
+
+  const completeTask = useCallback(async (taskId, photosAfter = [], notes = '') => {
+    if (!hotelId) return
+    const token = localStorage.getItem('flowtym_token')
+    try {
+      await axios.post(`${API_URL}/api/v2/hotels/${hotelId}/housekeeping/tasks/${taskId}/complete`, 
+        { photos_after: photosAfter, notes },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      toast.success('Nettoyage terminé')
+      fetchData()
+    } catch (error) {
+      toast.error('Erreur lors de la complétion')
+    }
+  }, [hotelId, fetchData])
+
+  const assignTasks = useCallback(async (taskIds, staffId, staffName) => {
+    if (!hotelId) return
+    const token = localStorage.getItem('flowtym_token')
+    try {
+      const res = await axios.post(`${API_URL}/api/v2/hotels/${hotelId}/housekeeping/tasks/assign`, 
+        { task_ids: taskIds, staff_id: staffId, staff_name: staffName },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      toast.success(`${res.data.assigned} tâche(s) assignée(s)`)
+      fetchData()
+      return res.data
+    } catch (error) {
+      toast.error('Erreur lors de l\'assignation')
+    }
+  }, [hotelId, fetchData])
+
+  const autoAssign = useCallback(async (strategy = 'balanced') => {
+    if (!hotelId) return
+    const token = localStorage.getItem('flowtym_token')
+    try {
+      const res = await axios.post(`${API_URL}/api/v2/hotels/${hotelId}/housekeeping/assignments/auto`, 
+        { strategy },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      toast.success(`${res.data.assigned} chambre(s) assignée(s) automatiquement`)
+      fetchData()
+      return res.data
+    } catch (error) {
+      toast.error('Erreur lors de l\'assignation automatique')
+    }
+  }, [hotelId, fetchData])
+
+  const validateInspection = useCallback(async (inspectionId, approved, rating, comments, refusedReason) => {
+    if (!hotelId) return
+    const token = localStorage.getItem('flowtym_token')
+    try {
+      await axios.post(`${API_URL}/api/v2/hotels/${hotelId}/housekeeping/inspections/${inspectionId}/validate`,
+        { approved, rating, comments, refused_reason: refusedReason },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      toast.success(approved ? 'Chambre validée' : 'Chambre refusée')
+      fetchData()
+    } catch (error) {
+      toast.error('Erreur lors de la validation')
+    }
+  }, [hotelId, fetchData])
+
+  return {
+    ...data,
+    refresh: fetchData,
+    seedData,
+    startTask,
+    completeTask,
+    assignTasks,
+    autoAssign,
+    validateInspection,
+  }
+}
+
+export default useHousekeepingV2
