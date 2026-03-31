@@ -80,10 +80,17 @@ FLOWTYM est un PMS (Property Management System) SaaS hôtelier moderne, structur
 └── DirectionDashboard.jsx   # Dashboard KPIs, Alertes, Activité
 ```
 
+### Module Direction - Phase 2 (NEW) ✅
+```
+/app/frontend/src/components/housekeeping/direction/
+├── PlanChambresView.jsx     # Vue par étage, détail chambre
+└── RepartitionView.jsx      # Drag & drop, répartition auto
+```
+
 **Onglets Direction** :
 1. ✅ Centre de contrôle (Dashboard complet)
-2. ⏳ Plan Chambres (Phase 2)
-3. ⏳ Répartition (Phase 2)
+2. ✅ Plan Chambres (Vue par étage, filtres, détail chambre)
+3. ✅ Répartition (Drag & drop, répartition auto)
 4. ✅ Objets trouvés (Fonctionnel)
 5. ✅ Signalements (Fonctionnel)
 6. ⏳ Historique (Phase 4)
@@ -99,6 +106,19 @@ FLOWTYM est un PMS (Property Management System) SaaS hôtelier moderne, structur
 - État des chambres
 - Housekeeping du jour
 - Satisfaction clients
+
+**Plan Chambres** :
+- Compteurs de statuts cliquables (Propre, À nettoyer, En cours, Occupée, Inspection, H.S.)
+- Vue par étage avec accordéon
+- Recherche de chambre
+- Modal détail chambre (type, étage, assignation, historique)
+- Alertes chambres en retard
+
+**Répartition** :
+- Équipe du jour avec charge de travail par employé
+- Drag & drop des chambres vers les employés
+- Répartition automatique (équilibrage par temps estimé)
+- Compteurs (Total, En attente, Assignées, Départs, Recouches)
 
 ## Données de Démo
 - **40 chambres** sur 4 étages
