@@ -35,6 +35,7 @@ import MobileBreakfastView from '@/components/housekeeping/MobileBreakfastView'
 import InteractiveReceptionView from '@/components/housekeeping/InteractiveReceptionView'
 import ReceptionViewV2 from '@/components/housekeeping/ReceptionViewV2'
 import DirectionViewV2 from '@/components/housekeeping/DirectionViewV2'
+import { DirectionModule } from '@/components/housekeeping/direction'
 import QRCodeManager from '@/components/housekeeping/QRCodeManager'
 import SatisfactionConfig from '@/components/housekeeping/SatisfactionConfig'
 import HousekeepingNotifications from '@/components/housekeeping/HousekeepingNotifications'
@@ -435,7 +436,12 @@ export default function HousekeepingModule() {
         )}
         {activeView === 'direction' && (
           useV2Api
-            ? <DirectionViewV2 data={data} actions={actions} onNavigate={handleNavigate} />
+            ? <DirectionModule 
+                data={data} 
+                actions={actions} 
+                v2Data={dataV2}
+                v2Actions={actionsV2}
+              />
             : <DirectionView data={data} actions={actions} onNavigate={handleNavigate} />
         )}
         {activeView === 'gouvernante' && (
