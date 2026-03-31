@@ -10,22 +10,22 @@ export class RoomsService {
   ) {}
 
   async findAllByHotel(hotelId: string): Promise<Room[]> {
-    if (!hotelId || !Types.ObjectId.isValid(hotelId)) {
+    if (!hotelId) {
       return [];
     }
     return this.roomModel
-      .find({ hotel_id: new Types.ObjectId(hotelId) })
+      .find({ hotel_id: hotelId })
       .sort({ floor: 1, room_number: 1 })
       .lean()
       .exec();
   }
 
   async findByFloor(hotelId: string, floor: number): Promise<Room[]> {
-    if (!hotelId || !Types.ObjectId.isValid(hotelId)) {
+    if (!hotelId) {
       return [];
     }
     return this.roomModel
-      .find({ hotel_id: new Types.ObjectId(hotelId), floor })
+      .find({ hotel_id: hotelId, floor })
       .sort({ room_number: 1 })
       .lean()
       .exec();
@@ -77,8 +77,8 @@ export class RoomsService {
   }
 
   async getStatsByHotel(hotelId: string): Promise<any> {
-    // Validate ObjectId format
-    if (!hotelId || !Types.ObjectId.isValid(hotelId)) {
+    // Validate hotelId exists
+    if (!hotelId) {
       return {
         total: 0,
         libre: 0,
@@ -95,7 +95,7 @@ export class RoomsService {
     }
     
     const pipeline = [
-      { $match: { hotel_id: new Types.ObjectId(hotelId) } },
+      { $match: { hotel_id: hotelId } },
       {
         $group: {
           _id: null,
@@ -128,7 +128,7 @@ export class RoomsService {
   // Seed demo data
   async seedDemoRooms(hotelId: string): Promise<number> {
     const existingCount = await this.roomModel.countDocuments({
-      hotel_id: new Types.ObjectId(hotelId),
+      hotel_id: hotelId,
     });
 
     if (existingCount > 0) return existingCount;
@@ -150,7 +150,7 @@ export class RoomsService {
         const hasReservation = status !== RoomStatus.LIBRE;
 
         rooms.push({
-          hotel_id: new Types.ObjectId(hotelId),
+          hotel_id: hotelId as any,
           room_number: roomNumber,
           room_type: roomTypes[Math.floor(Math.random() * roomTypes.length)],
           room_category: Math.random() > 0.7 ? 'Premium' : 'Classique',

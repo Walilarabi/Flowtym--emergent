@@ -23,8 +23,8 @@ export enum TaskStatus {
 
 @Schema({ timestamps: true, collection: 'hk_tasks' })
 export class HousekeepingTask {
-  @Prop({ type: Types.ObjectId, required: true, index: true })
-  hotel_id: Types.ObjectId;
+  @Prop({ type: String, required: true, index: true })
+  hotel_id: string;
 
   @Prop({ type: Types.ObjectId, ref: 'Room', required: true })
   room_id: Types.ObjectId;

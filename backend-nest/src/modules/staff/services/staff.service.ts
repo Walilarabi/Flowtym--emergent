@@ -10,10 +10,10 @@ export class StaffService {
   ) {}
 
   async findAllByHotel(hotelId: string, role?: StaffRole): Promise<Staff[]> {
-    if (!hotelId || !Types.ObjectId.isValid(hotelId)) {
+    if (!hotelId) {
       return [];
     }
-    const filter: any = { hotel_id: new Types.ObjectId(hotelId), active: true };
+    const filter: any = { hotel_id: hotelId, active: true };
     if (role) filter.role = role;
     
     return this.staffModel.find(filter).sort({ last_name: 1 }).lean().exec();
@@ -51,14 +51,14 @@ export class StaffService {
 
   async resetDailyStats(hotelId: string): Promise<void> {
     await this.staffModel.updateMany(
-      { hotel_id: new Types.ObjectId(hotelId) },
+      { hotel_id: hotelId },
       { $set: { current_load: 0, completed_today: 0 } },
     );
   }
 
   async seedDemoStaff(hotelId: string): Promise<number> {
     const existingCount = await this.staffModel.countDocuments({
-      hotel_id: new Types.ObjectId(hotelId),
+      hotel_id: hotelId,
     });
 
     if (existingCount > 0) return existingCount;
@@ -81,7 +81,7 @@ export class StaffService {
 
     const docsToInsert = staff.map((s) => ({
       ...s,
-      hotel_id: new Types.ObjectId(hotelId),
+      hotel_id: hotelId,
       active: true,
     }));
 

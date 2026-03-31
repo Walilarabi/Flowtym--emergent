@@ -1,225 +1,92 @@
-# FLOWTYM V4 - Product Requirements Document
+# FLOWTYM PMS - Product Requirements Document
 
-## Vision Produit
-**FLOWTYM** = Le système d'exploitation des hôtels modernes
-- Plus simple que Cloudbeds
-- Plus moderne que Mews
-- Plus puissant et intuitif qu'Opera
+## Vision
+FLOWTYM est un PMS (Property Management System) SaaS hôtelier moderne, structuré en 8 piliers modulaires, avec une priorité sur le module Housekeeping.
 
-**Cible:** Hôtels indépendants, petits groupes, boutique hotels, hôtels premium
+## Architecture Technique
 
----
+### Stack Actuelle (Hybride/Transition)
+- **Backend Legacy (FastAPI)**: Port 8001 - API existante pour PMS, Auth, Booking
+- **Backend Cible (NestJS)**: Port 8002 - API V2 pour Housekeeping avec WebSocket temps réel
+- **Frontend (React/Vite)**: Port 3000 - Interface unifiée
+- **Base de données**: MongoDB
+- **Proxy**: FastAPI route `/api/v2/*` vers NestJS
 
-## Architecture 8 Menus Métiers
+### Décisions d'Architecture
+1. **Coexistence temporaire**: FastAPI (legacy) + NestJS (cible)
+2. **Migration progressive**: Nouvelles features sur NestJS uniquement
+3. **UUID comme identifiant hotel**: Compatible avec FastAPI et NestJS
 
+## Module Housekeeping - MVP Réception ✅
+
+### Backend NestJS (TERMINÉ)
 ```
-┌────────────────────────────────────────────────────────────────────────────────┐
-│  FLOWBOARD │ OPERATIONS │ REVENUE │ DISTRIBUTION │ GUEST │ MARKETING │ FINANCE │ PLATFORM │
-└────────────────────────────────────────────────────────────────────────────────┘
-```
-
-### 1. FLOWBOARD
-- Dashboard stratégique central
-- KPIs temps réel (TO, ADR, RevPAR, CA)
-- Arrivées/Départs du jour
-- Alertes critiques
-
-### 2. OPERATIONS (Cœur Opérationnel)
-- **PMS & Planning** - Réservations & Planning visuel
-- **Check-in/out** - Arrivées & Départs (OCR Phase 2)
-- **Housekeeping** - Ménage & Chambres
-- **Maintenance** - Tickets & Interventions
-- **Staff** - Personnel & Planning (Complet)
-- **Consignes** - Cahier de consignes intelligent
-- **Groups & MICE** - Groupes & Séminaires (Phase 2)
-
-### 3. REVENUE (Pilotage Tarifaire)
-- **RMS & Pricing** - Yield Management
-- **Simulation & Devis** - Multi-chambres, Multi-périodes, Conversion (DIFFÉRENCIATEUR)
-- **Rapports** - Analytics & KPIs
-
-### 4. DISTRIBUTION (Vente)
-- **Booking Engine** - Réservation directe
-- **Channel Manager** - OTA & Partenaires (Phase 2)
-
-### 5. GUEST EXPERIENCE
-- **CRM & Clients** - Base clients
-- **E-Réputation** - Avis & Satisfaction
-- **Conciergerie** - Services premium (Phase 2)
-
-### 6. MARKETING
-- **Campagnes** - Email & SMS (Phase 2)
-- **Fidélité** - Programme points (Phase 3)
-
-### 7. FINANCE
-- **Facturation** - Factures & Paiements
-- **Comptabilité** - P&L & Exports (Phase 2)
-
-### 8. PLATFORM
-- **Configuration** - Paramètres hôtel
-- **Data Hub** - Données & Exports
-- **Intégrations** - API & Partenaires
-- **Utilisateurs** - Accès & Permissions (Phase 2)
-
----
-
-## Implémentation Complétée
-
-### ✅ Session du 30 Mars 2026
-
-#### Navigation Restructurée
-- [x] 8 menus métiers avec mega menu dropdowns
-- [x] Sous-menus avec icônes et descriptions
-- [x] Badges "Nouveau" et "Bientôt"
-- [x] Redirection par défaut vers Flowboard
-
-#### Nouveaux Modules
-- [x] **Simulation & Devis** (`/simulation`)
-  - 5 KPIs (Total, Brouillons, Envoyés, Convertis, Taux conversion)
-  - Workflow visuel (Simulation → Devis PDF → Réservation)
-  - Tableau multi-chambres et multi-périodes
-  - Actions rapides (Envoyer, Convertir, Télécharger)
-
-- [x] **Finance** (`/finance`)
-  - 4 KPIs (CA Total, Encaissé, En attente, En retard)
-  - 3 onglets (Factures, Paiements, Comptabilité)
-  - Tableau factures avec statuts
-
-- [x] **Maintenance** (`/maintenance`)
-  - 5 KPIs (Total, Ouverts, En cours, Résolus, Urgents)
-  - Tableau tickets avec priorités et assignations
-
-#### Modules Existants Préservés
-- [x] Flowboard (Dashboard stratégique)
-- [x] PMS & Planning
-- [x] Housekeeping (Complet - style Rorck)
-- [x] Staff (Complet - non simplifié)
-- [x] Consignes (Cahier intelligent avec IA)
-- [x] CRM
-- [x] E-Réputation
-- [x] Booking Engine
-- [x] RMS
-- [x] Data Hub
-- [x] Configuration
-- [x] Intégrations
-
-### Sessions Précédentes
-- [x] Flowtym AI Support Center (Auto-diagnostic IA)
-- [x] Notifications Push temps réel
-- [x] Interface Support Agent dédiée
-- [x] Système d'accès à distance
-- [x] Login Page design propre
-
----
-
-## Roadmap Par Phase
-
-### 🔴 MVP (Actuel)
-| Module | Statut | Notes |
-|--------|--------|-------|
-| Flowboard | ✅ | KPIs + Dashboard |
-| PMS Planning | ✅ | Planning visuel |
-| Check-in/out | ✅ | Manuel (sans OCR) |
-| Housekeeping | ✅ | Complet style Rorck |
-| Maintenance | ✅ | Tickets basiques |
-| Staff | ✅ | Complet |
-| Consignes | ✅ | IA intégrée |
-| Simulation & Devis | ✅ | UI créée (données mock) |
-| Finance | ✅ | UI créée (données mock) |
-| Booking Engine | ✅ | Widget réservation |
-
-### 🟡 Phase 2
-| Module | Priorité | Description |
-|--------|----------|-------------|
-| Planning KPIs | P0 | TO/ADR/RevPAR intégrés entre Événements et Chambres |
-| Check-in OCR | P1 | Scan ID avec auto-remplissage |
-| Channel Manager | P1 | Sync Booking, Expedia, Airbnb |
-| Groups & MICE | P1 | Allotements, Rooming list |
-| Conciergerie | P2 | Taxi APIs, TheFork |
-| Comptabilité | P2 | P&L, Exports |
-
-### 🟢 Phase 3
-| Module | Description |
-|--------|-------------|
-| Procurement | Fournisseurs, Stock, Commandes |
-| Compliance | Contrôles réglementaires |
-| Marketing Automation | Workflows automatisés |
-| Fidélité | Programme points |
-| Multi-hôtels | Vue consolidée groupe |
-
----
-
-## Data Models (MongoDB)
-
-### Collections Principales
-```javascript
-// Voir /app/memory/FLOWTYM_V4_ARCHITECTURE.md pour le schéma complet
-- hotels
-- reservations
-- rooms
-- clients
-- consignes (implémenté)
-- housekeeping_tasks
-- maintenance_tickets
-- invoices
-- staff
+/app/backend-nest/
+├── src/
+│   ├── modules/
+│   │   ├── housekeeping/  # Gestion tâches, inspections, WebSocket
+│   │   ├── rooms/         # CRUD chambres, stats
+│   │   └── staff/         # Personnel housekeeping
 ```
 
----
+### Endpoints V2 Disponibles
+- `GET /api/v2/hotels/:hotelId/housekeeping/stats` - Statistiques temps réel
+- `GET /api/v2/hotels/:hotelId/rooms` - Liste des chambres
+- `GET /api/v2/hotels/:hotelId/staff` - Personnel
+- `GET /api/v2/hotels/:hotelId/housekeeping/tasks` - Tâches du jour
+- `POST /api/v2/hotels/:hotelId/housekeeping/seed` - Données démo
+- `POST /api/v2/hotels/:hotelId/housekeeping/tasks/assign` - Assignation en masse
+- `POST /api/v2/hotels/:hotelId/housekeeping/assignments/auto` - Auto-assignation
+- WebSocket `/housekeeping` - Temps réel
 
-## Design System
+### Frontend React (TERMINÉ)
+- `ReceptionViewV2.jsx` - Tableau interactif des chambres
+- `useHousekeepingV2.js` - Hook avec WebSocket
 
-### Couleurs
-- Primary: #7C8CF8 (Violet doux)
-- Background: #F8F9FB
-- Success: #10B981
-- Warning: #F59E0B
-- Error: #EF4444
+## Données de Démo
+- **40 chambres** sur 4 étages
+- **9 membres staff** (4 femmes de chambre, 1 gouvernante, 2 maintenance, 2 petit-déj)
+- **21 tâches** quotidiennes (8 départs, 13 recouches)
 
-### Principes UX
-- Actions en 1 clic maximum
-- Animations fluides (200-300ms)
-- Interface épurée et moderne
-- Mobile-first pour modules terrain
+## Priorités Restantes
 
----
+### P0 - Court terme
+- [ ] Tests frontend ReceptionViewV2 complets
+- [ ] Connecter useHousekeepingV2 au HotelContext existant
 
-## Credentials de Test
+### P1 - Vue Mobile Femme de Chambre
+- [ ] Interface swipe cards
+- [ ] Scanner QR code
+- [ ] Timer de nettoyage
+- [ ] Upload photos
 
-| Rôle | Email | Mot de passe |
-|------|-------|--------------|
-| Admin | admin@flowtym.com | admin123 |
-| Super Admin | superadmin@flowtym.com | super123 |
-| Support | support@flowtym.com | Flowtym@Support2026! |
+### P1 - Vue Gouvernante
+- [ ] Validation inspections
+- [ ] Gestion équipe
+- [ ] Stocks
 
----
+### P2 - Dashboard Direction
+- [ ] KPIs temps réel
+- [ ] Graphiques performance
+- [ ] Historique
 
-## Fichiers Clés
+## Credentials Test
+- Admin: `admin@flowtym.com` / `admin123`
+- Super Admin: `superadmin@flowtym.com` / `super123`
+- Hotel ID (UUID): `4f02769a-5f63-4121-bb97-a7061563d934`
 
-### Frontend
-- `/app/frontend/src/components/layout/TopNavigation.jsx` - Navigation 8 menus
-- `/app/frontend/src/pages/simulation/SimulationModule.jsx` - Module Devis
-- `/app/frontend/src/pages/finance/FinanceModule.jsx` - Module Finance
-- `/app/frontend/src/pages/maintenance/MaintenanceModule.jsx` - Module Maintenance
-- `/app/frontend/src/pages/consignes/ConsignesModule.jsx` - Module Consignes
+## Changelog
 
-### Backend
-- `/app/backend/consignes/routes.py` - API Consignes
-- `/app/backend/housekeeping/routes.py` - API Housekeeping
+### 2026-03-31
+- ✅ Backend NestJS Housekeeping complet (modules rooms, staff, housekeeping)
+- ✅ WebSocket Gateway temps réel
+- ✅ Proxy FastAPI → NestJS sur /api/v2/*
+- ✅ Support UUID comme hotel_id (compatible FastAPI)
+- ✅ Données démo: 40 chambres, 9 staff, 21 tâches
+- ✅ Vue ReceptionViewV2.jsx avec hook useHousekeepingV2.js
+- ✅ Tests API validés (stats, rooms, staff, tasks)
 
-### Documentation
-- `/app/memory/FLOWTYM_V4_ARCHITECTURE.md` - Architecture détaillée
-
----
-
-## Prochaines Tâches Prioritaires
-
-1. **P0** - Implémenter les KPIs (TO, ADR, RevPAR) dans le Planning entre "Événements" et "Chambres libres"
-2. **P0** - Connecter le backend pour Simulation & Devis (CRUD, génération PDF)
-3. **P0** - Connecter le backend pour Finance (facturation réelle)
-4. **P1** - Connecter le backend pour Maintenance (tickets)
-5. **P2** - Intégrer le Channel Manager (Phase 2)
-
----
-
-*Dernière mise à jour: 30 Mars 2026*
+### Précédent
+- Module Configuration intégré au PMS
+- Booking Engine connecté
+- Page Login refaite

@@ -21,10 +21,10 @@ export class HousekeepingService {
   // ==================== TASKS ====================
 
   async getTasks(hotelId: string, date?: string): Promise<HousekeepingTask[]> {
-    if (!hotelId || !Types.ObjectId.isValid(hotelId)) {
+    if (!hotelId) {
       return [];
     }
-    const filter: any = { hotel_id: new Types.ObjectId(hotelId) };
+    const filter: any = { hotel_id: hotelId };
     if (date) {
       const startOfDay = new Date(date);
       startOfDay.setHours(0, 0, 0, 0);
@@ -41,7 +41,7 @@ export class HousekeepingService {
   }
 
   async getTasksByStaff(hotelId: string, staffId: string): Promise<HousekeepingTask[]> {
-    if (!hotelId || !Types.ObjectId.isValid(hotelId)) {
+    if (!hotelId) {
       return [];
     }
     const today = new Date();
@@ -49,7 +49,7 @@ export class HousekeepingService {
 
     return this.taskModel
       .find({
-        hotel_id: new Types.ObjectId(hotelId),
+        hotel_id: hotelId,
         assigned_to: new Types.ObjectId(staffId),
         cleaning_date: { $gte: today },
         status: { $in: [TaskStatus.A_FAIRE, TaskStatus.EN_COURS] },
@@ -168,7 +168,7 @@ export class HousekeepingService {
     const result = await this.taskModel.updateMany(
       {
         _id: { $in: taskIds.map((id) => new Types.ObjectId(id)) },
-        hotel_id: new Types.ObjectId(hotelId),
+        hotel_id: hotelId,
       },
       {
         assigned_to: new Types.ObjectId(staffId),
@@ -192,7 +192,7 @@ export class HousekeepingService {
 
   async createInspection(hotelId: string, task: any): Promise<Inspection> {
     const inspection = new this.inspectionModel({
-      hotel_id: new Types.ObjectId(hotelId),
+      hotel_id: hotelId,
       room_id: task.room_id,
       room_number: task.room_number,
       room_type: task.room_type,
@@ -208,10 +208,10 @@ export class HousekeepingService {
   }
 
   async getInspections(hotelId: string, status?: InspectionResult): Promise<Inspection[]> {
-    if (!hotelId || !Types.ObjectId.isValid(hotelId)) {
+    if (!hotelId) {
       return [];
     }
-    const filter: any = { hotel_id: new Types.ObjectId(hotelId) };
+    const filter: any = { hotel_id: hotelId };
     if (status) filter.status = status;
 
     return this.inspectionModel
@@ -280,7 +280,7 @@ export class HousekeepingService {
   // ==================== STATS ====================
 
   async getStats(hotelId: string): Promise<any> {
-    if (!hotelId || !Types.ObjectId.isValid(hotelId)) {
+    if (!hotelId) {
       return {
         rooms: { total: 0, libre: 0, occupe: 0, depart: 0, recouche: 0, hors_service: 0 },
         tasks: { total: 0, a_faire: 0, en_cours: 0, termine: 0, inspecte: 0, departs: 0, recouches: 0 },
@@ -291,6 +291,7 @@ export class HousekeepingService {
       };
     }
 
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -299,7 +300,7 @@ export class HousekeepingService {
       this.taskModel.aggregate([
         {
           $match: {
-            hotel_id: new Types.ObjectId(hotelId),
+            hotel_id: hotelId,
             cleaning_date: { $gte: today },
           },
         },
@@ -319,7 +320,7 @@ export class HousekeepingService {
       this.inspectionModel.aggregate([
         {
           $match: {
-            hotel_id: new Types.ObjectId(hotelId),
+            hotel_id: hotelId,
             inspection_date: { $gte: today },
           },
         },
@@ -360,7 +361,7 @@ export class HousekeepingService {
     today.setHours(0, 0, 0, 0);
 
     const unassignedTasks: any[] = await this.taskModel.find({
-      hotel_id: new Types.ObjectId(hotelId),
+      hotel_id: hotelId,
       cleaning_date: { $gte: today },
       assigned_to: { $exists: false },
       status: TaskStatus.A_FAIRE,
@@ -437,7 +438,7 @@ export class HousekeepingService {
     today.setHours(0, 0, 0, 0);
 
     await this.taskModel.deleteMany({
-      hotel_id: new Types.ObjectId(hotelId),
+      hotel_id: hotelId,
       cleaning_date: { $gte: today },
     });
 
@@ -450,7 +451,7 @@ export class HousekeepingService {
         const randomStaff = staff[Math.floor(Math.random() * staff.length)];
 
         tasks.push({
-          hotel_id: new Types.ObjectId(hotelId),
+          hotel_id: hotelId,
           room_id: room._id,
           room_number: room.room_number,
           task_type: taskType,

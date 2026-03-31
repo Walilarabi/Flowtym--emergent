@@ -27,8 +27,8 @@ export enum ClientBadge {
 
 @Schema({ timestamps: true, collection: 'rooms' })
 export class Room {
-  @Prop({ type: Types.ObjectId, required: true, index: true })
-  hotel_id: Types.ObjectId;
+  @Prop({ type: String, required: true, index: true })
+  hotel_id: string;
 
   @Prop({ required: true })
   room_number: string;

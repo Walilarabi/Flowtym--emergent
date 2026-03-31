@@ -15,8 +15,8 @@ export enum StaffRole {
 
 @Schema({ timestamps: true, collection: 'hk_staff' })
 export class Staff {
-  @Prop({ type: Types.ObjectId, required: true, index: true })
-  hotel_id: Types.ObjectId;
+  @Prop({ type: String, required: true, index: true })
+  hotel_id: string;
 
   @Prop({ type: Types.ObjectId, ref: 'User' })
   user_id: Types.ObjectId;
