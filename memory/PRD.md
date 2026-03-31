@@ -73,6 +73,21 @@ FLOWTYM est un PMS (Property Management System) SaaS hôtelier moderne, structur
 
 ## Changelog
 
+### 2026-03-31 - Notifications Push Gouvernante ✅
+- ✅ **HousekeepingNotifications** : Composant complet avec icône de cloche
+  - Panneau popover avec liste des notifications
+  - Badge rouge animé quand nouvelles notifications
+  - Toggle son (Web Audio API bip 800Hz)
+  - Boutons Valider/Ignorer par notification
+  - État vide "Aucune notification"
+- ✅ **Backend NestJS** : Émission événement `cleaning_completed` 
+  - housekeeping.gateway.ts : `emitCleaningCompletedNotification()`
+  - housekeeping.service.ts : Appel à la complétion d'une tâche
+- ✅ **Hook useHousekeepingV2** : Gestion état notifications
+  - Écoute événement WebSocket `cleaning_completed`
+  - Fonctions : clearAllNotifications, dismissNotification, toggleSound
+- ⚠️ **WebSocket limitation** : Fallback HTTP polling (30s) car proxy K8s bloque WSS
+
 ### 2026-03-31 - Module Housekeeping V2 COMPLET ✅
 - ✅ **GouvernanteViewV2** : Vue gouvernante complète avec 3 onglets
   - Onglet Validation : Inspections en attente avec Valider/Refuser
