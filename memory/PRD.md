@@ -26,7 +26,10 @@ FLOWTYM est un PMS (Property Management System) SaaS hôtelier moderne, structur
 │   ├── modules/
 │   │   ├── housekeeping/  # Gestion tâches, inspections, WebSocket
 │   │   ├── rooms/         # CRUD chambres, stats
-│   │   └── staff/         # Personnel housekeeping
+│   │   ├── staff/         # Personnel housekeeping
+│   │   ├── reports/       # (NEW) Signalements techniques ✅
+│   │   ├── found-items/   # (NEW) Objets trouvés ✅
+│   │   └── settings/      # (NEW) Configuration catégories ✅
 ```
 
 ### Endpoints V2 Disponibles
@@ -39,14 +42,42 @@ FLOWTYM est un PMS (Property Management System) SaaS hôtelier moderne, structur
 - `POST /api/v2/hotels/:hotelId/housekeeping/assignments/auto` - Auto-assignation
 - WebSocket `/housekeeping` - Temps réel
 
+### Endpoints Signalements (NEW) ✅
+- `GET /api/v2/hotels/:hotelId/reports` - Liste des signalements
+- `GET /api/v2/hotels/:hotelId/reports/stats` - Stats signalements
+- `POST /api/v2/hotels/:hotelId/reports` - Créer signalement
+- `POST /api/v2/hotels/:hotelId/reports/:id/take-over` - Prise en charge
+- `POST /api/v2/hotels/:hotelId/reports/:id/resolve` - Résoudre
+
+### Endpoints Objets Trouvés (NEW) ✅
+- `GET /api/v2/hotels/:hotelId/found-items` - Liste des objets
+- `GET /api/v2/hotels/:hotelId/found-items/stats` - Stats objets
+- `POST /api/v2/hotels/:hotelId/found-items` - Déclarer objet
+- `POST /api/v2/hotels/:hotelId/found-items/:id/consign` - Consigner
+- `POST /api/v2/hotels/:hotelId/found-items/:id/return` - Restituer
+
+### Endpoints Configuration (NEW) ✅
+- `GET /api/v2/hotels/:hotelId/settings/categories` - Toutes catégories
+- `GET /api/v2/hotels/:hotelId/settings/categories/reports` - Cat. signalements
+- `GET /api/v2/hotels/:hotelId/settings/categories/found-items` - Cat. objets
+- `POST /api/v2/hotels/:hotelId/settings/categories` - Créer catégorie
+- `PUT /api/v2/hotels/:hotelId/settings/categories/:id` - Modifier catégorie
+- `DELETE /api/v2/hotels/:hotelId/settings/categories/:id` - Supprimer catégorie
+
 ### Frontend React (TERMINÉ)
 - `ReceptionViewV2.jsx` - Tableau interactif des chambres
+- `ReportsTab.jsx` - (NEW) Onglet Signalements ✅
+- `FoundItemsTab.jsx` - (NEW) Onglet Objets Trouvés ✅
+- `CategoriesConfig.jsx` - (NEW) Config catégories ✅
+- `DirectionViewV2.jsx` - (UPDATED) Inclut onglet Configuration ✅
 - `useHousekeepingV2.js` - Hook avec WebSocket
 
 ## Données de Démo
 - **40 chambres** sur 4 étages
 - **9 membres staff** (4 femmes de chambre, 1 gouvernante, 2 maintenance, 2 petit-déj)
 - **21 tâches** quotidiennes (8 départs, 13 recouches)
+- **(NEW) 10 catégories de signalements** (WC bouché, Ampoule grillée, Clim en panne, etc.)
+- **(NEW) 9 catégories d'objets trouvés** (Téléphone, Bijoux, Vêtements, etc.)
 
 ## Priorités Restantes
 

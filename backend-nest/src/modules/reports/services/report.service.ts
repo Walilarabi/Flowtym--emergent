@@ -28,7 +28,9 @@ export class ReportService {
     const report = new this.reportModel({
       hotel_id: hotelId,
       ...dto,
-      category_id: dto.category_id ? new Types.ObjectId(dto.category_id) : undefined,
+      category_id: dto.category_id && Types.ObjectId.isValid(dto.category_id) 
+        ? new Types.ObjectId(dto.category_id) 
+        : undefined,
       status: ReportStatus.PENDING,
       comments: [],
       created_at: new Date(),

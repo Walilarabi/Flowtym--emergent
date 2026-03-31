@@ -26,7 +26,9 @@ export class FoundItemService {
     const foundItem = new this.foundItemModel({
       hotel_id: hotelId,
       ...dto,
-      category_id: dto.category_id ? new Types.ObjectId(dto.category_id) : undefined,
+      category_id: dto.category_id && Types.ObjectId.isValid(dto.category_id) 
+        ? new Types.ObjectId(dto.category_id) 
+        : undefined,
       status: FoundItemStatus.PENDING,
       days_until_consign: daysUntilConsign,
       created_at: new Date(),
