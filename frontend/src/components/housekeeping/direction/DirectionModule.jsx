@@ -28,6 +28,8 @@ import axios from 'axios'
 
 // Import des sous-composants
 import DirectionDashboard from './DirectionDashboard'
+import PlanChambresView from './PlanChambresView'
+import RepartitionView from './RepartitionView'
 import CategoriesConfig from '../CategoriesConfig'
 import ReportsTab from '../ReportsTab'
 import FoundItemsTab from '../FoundItemsTab'
@@ -193,17 +195,19 @@ export default function DirectionModule({ data, actions, v2Data, v2Actions }) {
       
       case 'plan-chambres':
         return (
-          <PlaceholderView 
-            title="Plan des Chambres" 
-            description="Vue détaillée par étage avec statuts visuels. À implémenter dans la Phase 2."
+          <PlanChambresView
+            data={dashboardData}
+            actions={{ ...actions, ...(v2Actions || {}) }}
+            onNavigate={handleNavigate}
           />
         )
       
       case 'repartition':
         return (
-          <PlaceholderView 
-            title="Répartition des Chambres" 
-            description="Assignation automatique et manuelle des chambres au staff. À implémenter dans la Phase 2."
+          <RepartitionView
+            data={dashboardData}
+            actions={{ ...actions, ...(v2Actions || {}) }}
+            onNavigate={handleNavigate}
           />
         )
       
