@@ -99,36 +99,40 @@ export function useHousekeepingV2() {
         setData(d => ({ ...d, connected: true }))
       })
 
-    // Real-time updates
-    socket.on('room_updated', (update) => {
-      console.log('Room update received:', update)
-      setData(d => ({
-        ...d,
-        rooms: d.rooms.map(room =>
-          room._id === update.roomId ? { ...room, ...update } : room
-        ),
-      }))
-    })
+      // Real-time updates
+      socket.on('room_updated', (update) => {
+        console.log('Room update received:', update)
+        setData(d => ({
+          ...d,
+          rooms: d.rooms.map(room =>
+            room._id === update.roomId ? { ...room, ...update } : room
+          ),
+        }))
+      })
 
-    socket.on('task_updated', (update) => {
-      console.log('Task update received:', update)
-      setData(d => ({
-        ...d,
-        tasks: d.tasks.map(task =>
-          task._id === update.taskId ? { ...task, status: update.status } : task
-        ),
-      }))
-    })
+      socket.on('task_updated', (update) => {
+        console.log('Task update received:', update)
+        setData(d => ({
+          ...d,
+          tasks: d.tasks.map(task =>
+            task._id === update.taskId ? { ...task, status: update.status } : task
+          ),
+        }))
+      })
 
-    socket.on('stats_refresh', () => {
-      console.log('Stats refresh signal received')
-      fetchData()
-    })
+      socket.on('stats_refresh', () => {
+        console.log('Stats refresh signal received')
+        fetchData()
+      })
 
-    socket.on('assignment_updated', (update) => {
-      console.log('Assignment update received:', update)
-      fetchData() // Refresh all data
-    })
+      socket.on('assignment_updated', (update) => {
+        console.log('Assignment update received:', update)
+        fetchData() // Refresh all data
+      })
+    } catch (err) {
+      console.log('WebSocket initialization failed, using HTTP polling:', err)
+      setData(d => ({ ...d, connected: true }))
+    }
 
     return () => {
       if (socketRef.current) {

@@ -27,6 +27,7 @@ import axios from 'axios'
 // Import des vues
 import DirectionView from '@/components/housekeeping/DirectionView'
 import GouvernanteView from '@/components/housekeeping/GouvernanteView'
+import GouvernanteViewV2 from '@/components/housekeeping/GouvernanteViewV2'
 import MobileHousekeepingView from '@/components/housekeeping/MobileHousekeepingView'
 import MobileHousekeepingViewV2 from '@/components/housekeeping/MobileHousekeepingViewV2'
 import MobileMaintenanceView from '@/components/housekeeping/MobileMaintenanceView'
@@ -417,7 +418,9 @@ export default function HousekeepingModule() {
             : <DirectionView data={data} actions={actions} onNavigate={handleNavigate} />
         )}
         {activeView === 'gouvernante' && (
-          <GouvernanteView data={data} actions={actions} />
+          useV2Api
+            ? <GouvernanteViewV2 data={data} actions={actions} />
+            : <GouvernanteView data={data} actions={actions} />
         )}
         {activeView === 'femme_chambre' && (
           useV2Api
