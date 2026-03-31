@@ -69,9 +69,12 @@ const SOURCE_CONFIG = {
   'Airbnb': { color: '#FF5A5F', abbrev: 'Ab' },
 }
 
-// Generate room color based on room number
+// Generate room color based on room number (with null safety)
 const getRoomColor = (roomNumber) => {
   const colors = ['#5B4ED1', '#22C55E', '#A855F7', '#F59E0B', '#EF4444', '#3B82F6', '#EC4899', '#14B8A6']
+  if (!roomNumber || typeof roomNumber !== 'string') {
+    return colors[0] // fallback color
+  }
   const hash = roomNumber.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
   return colors[hash % colors.length]
 }
@@ -81,6 +84,7 @@ const getRoomColor = (roomNumber) => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const RoomCell = ({ room }) => {
+  if (!room) return <span className="text-slate-300">—</span>
   const bgColor = getRoomColor(room.room_number)
   
   return (
@@ -89,10 +93,10 @@ const RoomCell = ({ room }) => {
         className="w-11 h-11 rounded-xl flex items-center justify-center font-bold text-[15px] text-white shadow-sm"
         style={{ background: bgColor }}
       >
-        {room.room_number}
+        {room.room_number || '?'}
       </div>
       <div className="flex flex-col">
-        <span className="font-semibold text-[13px] text-slate-900">{room.room_type}</span>
+        <span className="font-semibold text-[13px] text-slate-900">{room.room_type || 'Standard'}</span>
         <span className="text-[11px] text-slate-400">
           {room.room_category || 'Standard'} · {room.room_size || '?'}m²
         </span>
@@ -133,8 +137,8 @@ const SourceBadge = ({ source }) => {
 }
 
 const StaffAvatar = ({ name }) => {
-  if (!name) return <span className="text-slate-300">—</span>
-  const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+  if (!name || typeof name !== 'string') return <span className="text-slate-300">—</span>
+  const initials = name.split(' ').map(n => n?.[0] || '').join('').toUpperCase().slice(0, 2) || '?'
   
   return (
     <div className="flex items-center gap-2">

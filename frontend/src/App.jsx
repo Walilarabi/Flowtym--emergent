@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { AuthProvider, useAuth } from '@/context/AuthContext'
 import { HotelProvider } from '@/context/HotelContext'
+import ErrorBoundary from '@/components/ErrorBoundary'
 import { LoginPage } from '@/pages/LoginPage'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { PlanningPage } from '@/pages/PlanningPage'
@@ -193,12 +194,14 @@ const AppRoutes = () => {
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-        <Toaster position="top-right" richColors closeButton />
-      </AuthProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AuthProvider>
+          <AppRoutes />
+          <Toaster position="top-right" richColors closeButton />
+        </AuthProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   )
 }
 

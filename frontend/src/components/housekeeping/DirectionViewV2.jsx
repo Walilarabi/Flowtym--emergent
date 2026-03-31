@@ -454,9 +454,13 @@ export default function DirectionViewV2({ data, actions, onNavigate }) {
                 Étage {floor}
               </div>
               <div className="flex flex-wrap gap-2">
-                {floorRooms.sort((a, b) => a.room_number.localeCompare(b.room_number)).map(room => (
-                  <RoomChip key={room._id} room={room} onClick={handleRoomClick} />
-                ))}
+                {floorRooms
+                  .filter(r => r && r.room_number)
+                  .sort((a, b) => (a.room_number || '').localeCompare(b.room_number || ''))
+                  .map(room => (
+                    <RoomChip key={room._id || room.room_number} room={room} onClick={handleRoomClick} />
+                  ))
+                }
               </div>
             </div>
           ))}

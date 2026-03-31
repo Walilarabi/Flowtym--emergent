@@ -52,7 +52,13 @@ export function useHousekeepingV2() {
         ...d,
         stats: statsRes.data,
         tasks: tasksRes.data || [],
-        rooms: roomsRes.data || [],
+        // Normalize room data: API returns 'number' but frontend expects 'room_number'
+        rooms: (roomsRes.data || []).map(room => ({
+          ...room,
+          room_number: room.room_number || room.number || room._id,
+          cleaning_status: room.cleaning_status || 'none',
+          status: room.status || 'libre',
+        })),
         staff: staffRes.data || [],
         inspections: inspectionsRes.data || [],
         loading: false,
