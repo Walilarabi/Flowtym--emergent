@@ -50,25 +50,21 @@ FLOWTYM est un PMS (Property Management System) SaaS hôtelier moderne, structur
 
 ## Priorités Restantes
 
-### P0 - Court terme
-- [ ] Tests frontend ReceptionViewV2 complets
-- [ ] Connecter useHousekeepingV2 au HotelContext existant
+### ✅ COMPLÉTÉ - Module Housekeeping V2
+- [x] **ReceptionViewV2** : Tableau interactif 40 chambres avec filtres
+- [x] **DirectionViewV2** : Dashboard KPIs temps réel, plan chambres, équipe
+- [x] **GouvernanteViewV2** : 3 onglets (Validation/Équipe/Stocks), Valider/Refuser
+- [x] **MobileHousekeepingViewV2** : Timer, Démarrer/Terminer, progression
+- [x] Tests complets passés (100% backend, 100% frontend)
 
-### P1 - Vue Mobile Femme de Chambre
-- [ ] Interface swipe cards
-- [ ] Scanner QR code
-- [ ] Timer de nettoyage
-- [ ] Upload photos
+### P1 - Améliorations en attente
+- [ ] WebSockets temps réel (actuellement HTTP polling 30s)
+- [ ] Scanner QR code physique
+- [ ] Upload photos vers Object Storage
 
-### P1 - Vue Gouvernante
-- [ ] Validation inspections
-- [ ] Gestion équipe
-- [ ] Stocks
-
-### P2 - Dashboard Direction
-- [ ] KPIs temps réel
-- [ ] Graphiques performance
-- [ ] Historique
+### P2 - Phases futures
+- [ ] Phase 2: Marketing, Guest Experience, Channel Manager
+- [ ] Phase 3: Conciergerie IA, automatisations avancées
 
 ## Credentials Test
 - Admin: `admin@flowtym.com` / `admin123`
@@ -76,6 +72,16 @@ FLOWTYM est un PMS (Property Management System) SaaS hôtelier moderne, structur
 - Hotel ID (UUID): `4f02769a-5f63-4121-bb97-a7061563d934`
 
 ## Changelog
+
+### 2026-03-31 - Module Housekeeping V2 COMPLET ✅
+- ✅ **GouvernanteViewV2** : Vue gouvernante complète avec 3 onglets
+  - Onglet Validation : Inspections en attente avec Valider/Refuser
+  - Onglet Équipe : 4 membres avec progression et tâches assignées
+  - Onglet Stocks : 6 items inventaire avec alertes stock bas
+  - Dialogues de validation (étoiles 1-5, commentaires) et refus (raison requise)
+- ✅ **Intégration HousekeepingModule** : Toggle V2 Temps réel actif par défaut
+- ✅ **Fix useHousekeepingV2.jsx** : Correction extension .js → .jsx et bloc try/catch WebSocket
+- ✅ **Tests complets** : 100% backend (16 tests) + 100% frontend (toutes vues)
 
 ### 2026-03-31 - Vue Mobile & Dashboard Direction & Excel Import
 - ✅ **MobileHousekeepingViewV2** : Vue mobile femme de chambre complète
