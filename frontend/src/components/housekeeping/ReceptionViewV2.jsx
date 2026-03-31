@@ -15,8 +15,11 @@ import { toast } from 'sonner'
 import {
   Search, ChevronDown, Eye, FileText, Star, Plus, RefreshCw,
   Grid3X3, List, Check, AlertTriangle, MapPin, Zap, Clock, CheckCircle,
-  ArrowRight, Coffee, AlertCircle, Bed, Users, Wifi, WifiOff, Loader2
+  ArrowRight, Coffee, AlertCircle, Bed, Users, Wifi, WifiOff, Loader2,
+  Package
 } from 'lucide-react'
+import ReportsTab from './ReportsTab'
+import FoundItemsTab from './FoundItemsTab'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // STYLES & CONSTANTS (Rorck Design System)
@@ -177,6 +180,7 @@ export default function ReceptionViewV2({ data, actions }) {
   const [selectedStaff, setSelectedStaff] = useState('')
   const [filterFloor, setFilterFloor] = useState('all')
   const [filterStatus, setFilterStatus] = useState('all')
+  const [activeSubTab, setActiveSubTab] = useState('plan') // plan, repartition, signalement, objets
 
   // Merge rooms with their tasks
   const enrichedRooms = useMemo(() => {
@@ -338,40 +342,97 @@ export default function ReceptionViewV2({ data, actions }) {
       <div className="px-5 py-3 bg-white border-b border-slate-200">
         <div className="flex items-center justify-between">
           <div className="inline-flex bg-slate-100 p-1 rounded-xl gap-1">
-            <button className="flex items-center gap-2 px-4 py-2.5 bg-white rounded-lg shadow-sm text-sm font-medium text-slate-900">
+            <button 
+              onClick={() => setActiveSubTab('plan')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                activeSubTab === 'plan' 
+                  ? 'bg-white shadow-sm text-slate-900' 
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
               <MapPin size={16} /> Plan Chambres
             </button>
-            <button className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-700">
+            <button 
+              onClick={() => setActiveSubTab('repartition')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                activeSubTab === 'repartition' 
+                  ? 'bg-white shadow-sm text-slate-900' 
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
               <Zap size={16} /> Répartition
+            </button>
+            <button 
+              onClick={() => setActiveSubTab('signalement')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                activeSubTab === 'signalement' 
+                  ? 'bg-white shadow-sm text-slate-900' 
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+              data-testid="subtab-signalement"
+            >
+              <AlertTriangle size={16} /> Signalement
+            </button>
+            <button 
+              onClick={() => setActiveSubTab('objets')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                activeSubTab === 'objets' 
+                  ? 'bg-white shadow-sm text-slate-900' 
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+              data-testid="subtab-objets-trouves"
+            >
+              <Package size={16} /> Objets Trouvés
             </button>
           </div>
           
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={refresh}>
-              <RefreshCw size={14} className={`mr-1 ${loading ? 'animate-spin' : ''}`} />
-              Actualiser
-            </Button>
-            <Button variant="outline" size="sm" onClick={autoAssign}>
-              <Zap size={14} className="mr-1" />
-              Auto-Assign
-            </Button>
-          </div>
+          {(activeSubTab === 'plan' || activeSubTab === 'repartition') && (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={refresh}>
+                <RefreshCw size={14} className={`mr-1 ${loading ? 'animate-spin' : ''}`} />
+                Actualiser
+              </Button>
+              <Button variant="outline" size="sm" onClick={autoAssign}>
+                <Zap size={14} className="mr-1" />
+                Auto-Assign
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* KPIs Strip */}
-      <div className="flex gap-6 px-5 py-4 bg-white border-b border-slate-200 overflow-x-auto">
-        <KPICard icon={Bed} value={kpis.total} label="Chambres" color={FT.brand} bg={FT.brandSoft} />
-        <KPICard icon={ArrowRight} value={kpis.departures} label="Départs" color={FT.danger} bg={FT.dangerSoft} />
-        <KPICard icon={RefreshCw} value={kpis.recouches} label="Recouches" color={FT.warning} bg={FT.warningSoft} />
-        <KPICard icon={Clock} value={kpis.enCours} label="En cours" color={FT.teal} bg="rgba(20,184,166,0.08)" />
-        <KPICard icon={CheckCircle} value={kpis.terminees} label="Terminées" color={FT.success} bg={FT.successSoft} />
-        <KPICard icon={AlertTriangle} value={kpis.aValider} label="À valider" color={FT.warning} bg={FT.warningSoft} />
-        <KPICard icon={AlertCircle} value={`${kpis.cleanliness}%`} label="Propreté" color={FT.success} bg={FT.successSoft} />
-      </div>
+      {/* KPIs Strip - Only for plan/repartition tabs */}
+      {(activeSubTab === 'plan' || activeSubTab === 'repartition') && (
+        <div className="flex gap-6 px-5 py-4 bg-white border-b border-slate-200 overflow-x-auto">
+          <KPICard icon={Bed} value={kpis.total} label="Chambres" color={FT.brand} bg={FT.brandSoft} />
+          <KPICard icon={ArrowRight} value={kpis.departures} label="Départs" color={FT.danger} bg={FT.dangerSoft} />
+          <KPICard icon={RefreshCw} value={kpis.recouches} label="Recouches" color={FT.warning} bg={FT.warningSoft} />
+          <KPICard icon={Clock} value={kpis.enCours} label="En cours" color={FT.teal} bg="rgba(20,184,166,0.08)" />
+          <KPICard icon={CheckCircle} value={kpis.terminees} label="Terminées" color={FT.success} bg={FT.successSoft} />
+          <KPICard icon={AlertTriangle} value={kpis.aValider} label="À valider" color={FT.warning} bg={FT.warningSoft} />
+          <KPICard icon={AlertCircle} value={`${kpis.cleanliness}%`} label="Propreté" color={FT.success} bg={FT.successSoft} />
+        </div>
+      )}
 
-      {/* Filters */}
-      <div className="flex items-center gap-3 px-5 py-3 bg-white border-b border-slate-200">
+      {/* Signalement Tab */}
+      {activeSubTab === 'signalement' && (
+        <div className="flex-1 overflow-auto p-5">
+          <ReportsTab currentUser={{ id: 'current-user', name: 'Réception' }} />
+        </div>
+      )}
+
+      {/* Objets Trouvés Tab */}
+      {activeSubTab === 'objets' && (
+        <div className="flex-1 overflow-auto p-5">
+          <FoundItemsTab currentUser={{ id: 'current-user', name: 'Réception' }} />
+        </div>
+      )}
+
+      {/* Plan/Repartition content */}
+      {(activeSubTab === 'plan' || activeSubTab === 'repartition') && (
+        <>
+          {/* Filters */}
+          <div className="flex items-center gap-3 px-5 py-3 bg-white border-b border-slate-200">
         <div className="flex-1 max-w-[250px] relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <Input 
@@ -555,6 +616,8 @@ export default function ReceptionViewV2({ data, actions }) {
           </tbody>
         </table>
       </div>
+        </>
+      )}
 
       {/* Assign Dialog */}
       <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>

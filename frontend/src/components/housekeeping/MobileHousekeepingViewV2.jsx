@@ -8,12 +8,20 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
+import axios from 'axios'
+import { useHotel } from '@/context/HotelContext'
 import {
   Camera, Search, ChevronRight, X, Play, CheckCircle, ScanLine,
   Clock, Pause, Upload, MessageSquare, AlertTriangle, ChevronLeft,
-  QrCode, Timer, Image, Send, Wifi, WifiOff, Loader2
+  QrCode, Timer, Image, Send, Wifi, WifiOff, Loader2,
+  Package, Lightbulb, Wind, Lock, Droplet, Droplets, Tv, Armchair,
+  Smartphone, Laptop, Key, Shirt, Briefcase, Footprints, Gem, Banknote
 } from 'lucide-react'
+
+const API_URL = import.meta.env.VITE_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // DESIGN TOKENS (Rorck Mobile)
@@ -31,6 +39,35 @@ const COLORS = {
   dangerSoft: '#FEE2E2',
   teal: '#14B8A6',
   slate: '#64748B',
+}
+
+// Default categories (loaded from API)
+const DEFAULT_REPORT_CATEGORIES = [
+  { name: 'WC bouché', icon: 'Droplets', color: '#3B82F6' },
+  { name: 'Ampoule grillée', icon: 'Lightbulb', color: '#F59E0B' },
+  { name: 'Clim en panne', icon: 'Wind', color: '#06B6D4' },
+  { name: 'Serrure cassée', icon: 'Lock', color: '#EF4444' },
+  { name: 'Fuite robinet', icon: 'Droplet', color: '#3B82F6' },
+  { name: 'Mobilier abîmé', icon: 'Armchair', color: '#8B5CF6' },
+  { name: 'TV ne marche pas', icon: 'Tv', color: '#6366F1' },
+  { name: 'Autre problème', icon: 'AlertTriangle', color: '#64748B' },
+]
+
+const DEFAULT_FOUND_ITEM_CATEGORIES = [
+  { name: 'Téléphone', icon: 'Smartphone', color: '#3B82F6' },
+  { name: 'PC portable', icon: 'Laptop', color: '#6366F1' },
+  { name: 'Clés', icon: 'Key', color: '#F59E0B' },
+  { name: 'Vêtement', icon: 'Shirt', color: '#EC4899' },
+  { name: 'Sac', icon: 'Briefcase', color: '#8B5CF6' },
+  { name: 'Chaussures', icon: 'Footprints', color: '#64748B' },
+  { name: 'Bijoux', icon: 'Gem', color: '#F59E0B' },
+  { name: 'Argent', icon: 'Banknote', color: '#22C55E' },
+  { name: 'Autre', icon: 'Package', color: '#64748B' },
+]
+
+const ICON_MAP = {
+  Droplets, Lightbulb, Wind, Lock, Droplet, Armchair, Tv, AlertTriangle,
+  Smartphone, Laptop, Key, Shirt, Briefcase, Footprints, Gem, Banknote, Package,
 }
 
 const TASK_STATUS = {
@@ -260,6 +297,8 @@ const StatsHeader = ({ tasks, connected }) => {
 export default function MobileHousekeepingViewV2({ data, actions }) {
   const { tasks = [], staff = [], loading, connected } = data
   const { startTask, completeTask, refresh } = actions
+  const { currentHotel } = useHotel()
+  const hotelId = currentHotel?.id
   
   const [activeTaskId, setActiveTaskId] = useState(null)
   const [elapsedTimes, setElapsedTimes] = useState({})
@@ -268,6 +307,20 @@ export default function MobileHousekeepingViewV2({ data, actions }) {
   const [taskToComplete, setTaskToComplete] = useState(null)
   const [completionNotes, setCompletionNotes] = useState('')
   const intervalRef = useRef(null)
+
+  // Report/FoundItem modals
+  const [reportModalOpen, setReportModalOpen] = useState(false)
+  const [foundItemModalOpen, setFoundItemModalOpen] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState(null)
+  const [reportDescription, setReportDescription] = useState('')
+  const [reportRoom, setReportRoom] = useState('')
+  const [foundItemName, setFoundItemName] = useState('')
+  const [foundItemDescription, setFoundItemDescription] = useState('')
+  const [foundItemRoom, setFoundItemRoom] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  
+  // Mock current user (in real app, get from auth context)
+  const currentUser = { id: 'femme-chambre-1', name: 'Sophie Martin' }
 
   // Filter tasks assigned to current user (for now, show all)
   const myTasks = useMemo(() => {
@@ -332,6 +385,72 @@ export default function MobileHousekeepingViewV2({ data, actions }) {
     setActiveTaskId(null)
     if (intervalRef.current) clearInterval(intervalRef.current)
   }, [taskToComplete, completionNotes, completeTask])
+
+  // Submit Report
+  const handleSubmitReport = useCallback(async () => {
+    if (!selectedCategory || !reportRoom) {
+      toast.error('Veuillez sélectionner une catégorie et une chambre')
+      return
+    }
+    setSubmitting(true)
+    try {
+      const token = localStorage.getItem('flowtym_token')
+      await axios.post(
+        `${API_URL}/api/v2/hotels/${hotelId}/reports`,
+        {
+          room_number: reportRoom,
+          category_name: selectedCategory.name,
+          category_icon: selectedCategory.icon,
+          description: reportDescription,
+          reporter_id: currentUser.id,
+          reporter_name: currentUser.name,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      toast.success('Signalement envoyé')
+      setReportModalOpen(false)
+      setSelectedCategory(null)
+      setReportDescription('')
+      setReportRoom('')
+    } catch (e) {
+      toast.error('Erreur lors de l\'envoi')
+    }
+    setSubmitting(false)
+  }, [hotelId, selectedCategory, reportRoom, reportDescription, currentUser])
+
+  // Submit Found Item
+  const handleSubmitFoundItem = useCallback(async () => {
+    if (!selectedCategory || !foundItemRoom) {
+      toast.error('Veuillez sélectionner une catégorie et une chambre')
+      return
+    }
+    setSubmitting(true)
+    try {
+      const token = localStorage.getItem('flowtym_token')
+      await axios.post(
+        `${API_URL}/api/v2/hotels/${hotelId}/found-items`,
+        {
+          room_number: foundItemRoom,
+          category_name: selectedCategory.name,
+          category_icon: selectedCategory.icon,
+          name: foundItemName || selectedCategory.name,
+          description: foundItemDescription,
+          reporter_id: currentUser.id,
+          reporter_name: currentUser.name,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      toast.success('Objet déclaré')
+      setFoundItemModalOpen(false)
+      setSelectedCategory(null)
+      setFoundItemName('')
+      setFoundItemDescription('')
+      setFoundItemRoom('')
+    } catch (e) {
+      toast.error('Erreur lors de la déclaration')
+    }
+    setSubmitting(false)
+  }, [hotelId, selectedCategory, foundItemRoom, foundItemName, foundItemDescription, currentUser])
 
   // Loading state
   if (loading && tasks.length === 0) {
