@@ -74,8 +74,9 @@ export class AddCommentDto {
 }
 
 export class AddInvoiceDto {
+  @IsOptional()
   @IsString()
-  invoice_url: string;
+  invoice_url?: string;
 
   @IsOptional()
   @IsNumber()

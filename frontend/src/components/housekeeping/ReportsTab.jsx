@@ -24,6 +24,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import axios from 'axios'
 import { useHotel } from '@/context/HotelContext'
+import ReportDetailPanel from './ReportDetailPanel'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL
 
@@ -578,13 +579,21 @@ export default function ReportsTab({ currentUser }) {
         )}
       </div>
 
-      {/* Detail Modal */}
-      <ReportDetailModal
+      {/* Detail Panel */}
+      <ReportDetailPanel
         report={selectedReport}
         open={!!selectedReport}
         onClose={() => setSelectedReport(null)}
-        onUpdate={handleUpdateReport}
+        onUpdate={(updatedReport) => {
+          // Update local list
+          setReports(prev => prev.map(r => 
+            r._id === updatedReport._id ? updatedReport : r
+          ))
+          // Refresh stats
+          fetchData()
+        }}
         currentUser={currentUser}
+        hotelId={hotelId}
       />
     </div>
   )
