@@ -7,7 +7,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field, EmailStr, ConfigDict
+from pydantic import BaseModel, Field, EmailStr, ConfigDict, model_validator
 from typing import List, Optional, Dict, Any
 import uuid
 from datetime import datetime, timezone, timedelta
@@ -97,17 +97,30 @@ class RoomCreate(BaseModel):
     status: str = "available"  # available, occupied, cleaning, maintenance, out_of_service
 
 class RoomResponse(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    id: str
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
+    id: Optional[str] = Field(None, alias="_id")
     hotel_id: str
-    number: str
-    room_type: str
-    floor: int
-    max_occupancy: int
-    base_price: float
-    amenities: List[str]
-    status: str
-    created_at: str
+    number: Optional[str] = Field(None, alias="room_number")
+    room_number: Optional[str] = None
+    room_type: Optional[str] = "standard"
+    floor: Optional[int] = 1
+    max_occupancy: Optional[int] = 2
+    base_price: Optional[float] = 100.0
+    amenities: Optional[List[str]] = []
+    status: Optional[str] = "available"
+    created_at: Optional[str] = None
+    
+    @model_validator(mode='before')
+    @classmethod
+    def extract_fields(cls, values):
+        if isinstance(values, dict):
+            # Handle MongoDB _id to id conversion
+            if '_id' in values and 'id' not in values:
+                values['id'] = str(values['_id'])
+            # Handle room_number to number conversion
+            if 'room_number' in values and 'number' not in values:
+                values['number'] = values['room_number']
+        return values
 
 class ClientCreate(BaseModel):
     first_name: str
