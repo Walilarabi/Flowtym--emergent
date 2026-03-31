@@ -117,7 +117,10 @@ const DeskTeamCard = ({ name, details, loadPercent, loadCurrent, loadMax, assign
 }
 
 export default function GouvernanteView({ data, actions }) {
-  const { inspections, tasks, staff, inventory } = data
+  const inspections = data?.inspections || []
+  const tasks = data?.tasks || []
+  const staff = data?.staff || []
+  const inventory = data?.inventory || []
   const [searchText, setSearchText] = useState('')
   const [floorFilter, setFloorFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -127,6 +130,7 @@ export default function GouvernanteView({ data, actions }) {
 
   // Générer les chambres (fusionnées avec les tâches)
   const rooms = useMemo(() => {
+    if (!tasks || !Array.isArray(tasks)) return []
     return tasks.map(task => ({
       id: task.id,
       room_number: task.room_number,
@@ -138,13 +142,14 @@ export default function GouvernanteView({ data, actions }) {
   }, [tasks])
 
   // Étages disponibles
-  const floors = useMemo(() => 
-    [...new Set(rooms.map(r => r.floor))].sort((a, b) => a - b),
-    [rooms]
-  )
+  const floors = useMemo(() => {
+    if (!rooms || !Array.isArray(rooms)) return []
+    return [...new Set(rooms.map(r => r.floor))].sort((a, b) => a - b)
+  }, [rooms])
 
   // Filtrer les inspections
   const filteredInspections = useMemo(() => {
+    if (!inspections || !Array.isArray(inspections)) return []
     let result = inspections
     if (statusFilter !== 'all') result = result.filter(i => i.status === statusFilter)
     if (floorFilter !== 'all') result = result.filter(i => {
@@ -166,38 +171,50 @@ export default function GouvernanteView({ data, actions }) {
   }, [inspections, statusFilter, floorFilter, searchText])
 
   // Femmes de chambre
-  const housekeepers = useMemo(() =>
-    staff.filter(s => s.role === 'femme_de_chambre'),
-    [staff]
-  )
+  const housekeepers = useMemo(() => {
+    if (!staff || !Array.isArray(staff)) return []
+    return staff.filter(s => s.role === 'femme_de_chambre')
+  }, [staff])
 
   // Stats inspections
-  const inspectionStats = useMemo(() => ({
-    pending: inspections.filter(i => i.status === 'en_attente').length,
-    validated: inspections.filter(i => i.status === 'validee').length,
-    refused: inspections.filter(i => i.status === 'refusee').length,
-  }), [inspections])
+  const inspectionStats = useMemo(() => {
+    if (!inspections || !Array.isArray(inspections)) {
+      return { pending: 0, validated: 0, refused: 0 }
+    }
+    return {
+      pending: inspections.filter(i => i.status === 'en_attente').length,
+      validated: inspections.filter(i => i.status === 'validee').length,
+      refused: inspections.filter(i => i.status === 'refusee').length,
+    }
+  }, [inspections])
 
   // Chambres par étage
   const roomsByFloor = useMemo(() => {
+    if (!rooms || !Array.isArray(rooms)) return []
     const grouped = {}
     rooms.forEach(r => {
       if (!grouped[r.floor]) grouped[r.floor] = []
       grouped[r.floor].push(r)
     })
     return Object.entries(grouped)
-      .map(([f, rms]) => ({ floor: parseInt(f), rooms: rms.sort((a, b) => a.room_number.localeCompare(b.room_number)) }))
+      .map(([f, rms]) => ({ 
+        floor: parseInt(f), 
+        rooms: rms.sort((a, b) => (a.room_number || '').localeCompare(b.room_number || '')) 
+      }))
       .sort((a, b) => a.floor - b.floor)
   }, [rooms])
 
   // Chambres à faire
-  const todoRooms = useMemo(() =>
-    rooms.filter(r => r.cleaning_status === 'none' && (r.status === 'depart' || r.status === 'recouche')),
-    [rooms]
-  )
+  const todoRooms = useMemo(() => {
+    if (!rooms || !Array.isArray(rooms)) return []
+    return rooms.filter(r => r.cleaning_status === 'none' && (r.status === 'depart' || r.status === 'recouche'))
+  }, [rooms])
 
-  // Items en stock bas (mock)
-  const lowStockItems = inventory.filter(i => i.currentStock <= i.minimumThreshold)
+  // Items en stock bas
+  const lowStockItems = useMemo(() => {
+    if (!inventory || !Array.isArray(inventory)) return []
+    return inventory.filter(i => i.currentStock <= i.minimumThreshold)
+  }, [inventory])
 
   // Actions
   const handleValidate = useCallback((inspectionId) => {

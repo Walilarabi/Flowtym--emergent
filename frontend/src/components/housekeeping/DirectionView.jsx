@@ -100,7 +100,11 @@ const ProgressBar = ({ percent, color }) => (
 )
 
 export default function DirectionView({ data, actions, onNavigate }) {
-  const { tasks, staff, maintenance, breakfast, inspections } = data
+  const tasks = data?.tasks || []
+  const staff = data?.staff || []
+  const maintenance = data?.maintenance || []
+  const breakfast = data?.breakfast || []
+  const inspections = data?.inspections || []
   
   // Génération des chambres pour la démo
   const rooms = useMemo(() => [
@@ -145,25 +149,38 @@ export default function DirectionView({ data, actions, onNavigate }) {
   }, [rooms])
 
   // Femmes de chambre actives
-  const activeHousekeepers = useMemo(() => 
-    staff.filter(s => s.role === 'femme_de_chambre' && (s.status === 'actif' || s.status === 'en_pause')),
-    [staff]
-  )
+  const activeHousekeepers = useMemo(() => {
+    if (!staff || !Array.isArray(staff)) return []
+    return staff.filter(s => s.role === 'femme_de_chambre' && (s.status === 'actif' || s.status === 'en_pause'))
+  }, [staff])
 
   // Stats maintenance et petit-déj
-  const maintenanceStats = useMemo(() => ({
-    pending: maintenance.filter(t => t.status === 'en_attente').length,
-    inProgress: maintenance.filter(t => t.status === 'en_cours').length,
-    urgent: maintenance.filter(t => t.priority === 'haute' && t.status !== 'resolu').length,
-  }), [maintenance])
+  const maintenanceStats = useMemo(() => {
+    if (!maintenance || !Array.isArray(maintenance)) {
+      return { pending: 0, inProgress: 0, urgent: 0 }
+    }
+    return {
+      pending: maintenance.filter(t => t.status === 'en_attente').length,
+      inProgress: maintenance.filter(t => t.status === 'en_cours').length,
+      urgent: maintenance.filter(t => t.priority === 'haute' && t.status !== 'resolu').length,
+    }
+  }, [maintenance])
 
-  const breakfastStats = useMemo(() => ({
-    toPrepare: breakfast.filter(o => o.status === 'a_preparer').length,
-    served: breakfast.filter(o => o.status === 'servi').length,
-    paid: breakfast.filter(o => !o.included && o.status === 'servi').length,
-  }), [breakfast])
+  const breakfastStats = useMemo(() => {
+    if (!breakfast || !Array.isArray(breakfast)) {
+      return { toPrepare: 0, served: 0, paid: 0 }
+    }
+    return {
+      toPrepare: breakfast.filter(o => o.status === 'a_preparer').length,
+      served: breakfast.filter(o => o.status === 'servi').length,
+      paid: breakfast.filter(o => !o.included && o.status === 'servi').length,
+    }
+  }, [breakfast])
 
-  const pendingInspections = inspections.filter(i => i.status === 'en_attente')
+  const pendingInspections = useMemo(() => {
+    if (!inspections || !Array.isArray(inspections)) return []
+    return inspections.filter(i => i.status === 'en_attente')
+  }, [inspections])
 
   // Date du jour
   const today = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })

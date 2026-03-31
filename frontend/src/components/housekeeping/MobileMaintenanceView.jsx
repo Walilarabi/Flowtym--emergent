@@ -28,13 +28,14 @@ const STATUS_CONFIG = {
 }
 
 export default function MobileMaintenanceView({ data, actions }) {
-  const { maintenance } = data
+  const maintenance = data?.maintenance || []
   const [searchText, setSearchText] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
 
   // Filtrer les tickets
   const filteredTasks = useMemo(() => {
+    if (!maintenance || !Array.isArray(maintenance)) return []
     let result = statusFilter === 'all' ? maintenance : maintenance.filter(t => t.status === statusFilter)
     if (searchText) {
       const s = searchText.toLowerCase()
@@ -53,12 +54,17 @@ export default function MobileMaintenanceView({ data, actions }) {
   }, [maintenance, statusFilter, searchText])
 
   // Stats
-  const stats = useMemo(() => ({
-    total: maintenance.length,
-    pending: maintenance.filter(t => t.status === 'en_attente').length,
-    inProgress: maintenance.filter(t => t.status === 'en_cours').length,
-    resolved: maintenance.filter(t => t.status === 'resolu').length,
-  }), [maintenance])
+  const stats = useMemo(() => {
+    if (!maintenance || !Array.isArray(maintenance)) {
+      return { total: 0, pending: 0, inProgress: 0, resolved: 0 }
+    }
+    return {
+      total: maintenance.length,
+      pending: maintenance.filter(t => t.status === 'en_attente').length,
+      inProgress: maintenance.filter(t => t.status === 'en_cours').length,
+      resolved: maintenance.filter(t => t.status === 'resolu').length,
+    }
+  }, [maintenance])
 
   // Actions
   const handleStartTicket = useCallback((ticket) => {

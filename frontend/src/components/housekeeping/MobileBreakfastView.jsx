@@ -21,32 +21,43 @@ const STATUS_CONFIG = {
 }
 
 export default function MobileBreakfastView({ data, actions }) {
-  const { breakfast } = data
+  const breakfast = data?.breakfast || []
   const [activeTab, setActiveTab] = useState('cuisine')
 
   // Filtrer les commandes par onglet
-  const cuisineOrders = useMemo(() =>
-    breakfast.filter(o => o.status === 'a_preparer').sort((a, b) => a.room_number.localeCompare(b.room_number)),
-    [breakfast]
-  )
+  const cuisineOrders = useMemo(() => {
+    if (!breakfast || !Array.isArray(breakfast)) return []
+    return breakfast
+      .filter(o => o.status === 'a_preparer')
+      .sort((a, b) => (a.room_number || '').localeCompare(b.room_number || ''))
+  }, [breakfast])
 
-  const deliveryOrders = useMemo(() =>
-    breakfast.filter(o => o.status === 'prepare' || o.status === 'en_livraison').sort((a, b) => a.room_number.localeCompare(b.room_number)),
-    [breakfast]
-  )
+  const deliveryOrders = useMemo(() => {
+    if (!breakfast || !Array.isArray(breakfast)) return []
+    return breakfast
+      .filter(o => o.status === 'prepare' || o.status === 'en_livraison')
+      .sort((a, b) => (a.room_number || '').localeCompare(b.room_number || ''))
+  }, [breakfast])
 
-  const historyOrders = useMemo(() =>
-    breakfast.filter(o => o.status === 'servi').sort((a, b) => a.room_number.localeCompare(b.room_number)),
-    [breakfast]
-  )
+  const historyOrders = useMemo(() => {
+    if (!breakfast || !Array.isArray(breakfast)) return []
+    return breakfast
+      .filter(o => o.status === 'servi')
+      .sort((a, b) => (a.room_number || '').localeCompare(b.room_number || ''))
+  }, [breakfast])
 
   // Stats
-  const stats = useMemo(() => ({
-    toPrepare: breakfast.filter(o => o.status === 'a_preparer').length,
-    prepared: breakfast.filter(o => o.status === 'prepare').length,
-    delivering: breakfast.filter(o => o.status === 'en_livraison').length,
-    served: breakfast.filter(o => o.status === 'servi').length,
-  }), [breakfast])
+  const stats = useMemo(() => {
+    if (!breakfast || !Array.isArray(breakfast)) {
+      return { toPrepare: 0, prepared: 0, delivering: 0, served: 0 }
+    }
+    return {
+      toPrepare: breakfast.filter(o => o.status === 'a_preparer').length,
+      prepared: breakfast.filter(o => o.status === 'prepare').length,
+      delivering: breakfast.filter(o => o.status === 'en_livraison').length,
+      served: breakfast.filter(o => o.status === 'servi').length,
+    }
+  }, [breakfast])
 
   // Actions
   const handleStatusUpdate = useCallback((orderId, newStatus) => {

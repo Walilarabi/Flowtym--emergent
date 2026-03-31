@@ -126,7 +126,8 @@ const RoomCard = ({ room, onPress, onStart, onComplete, elapsed }) => {
 }
 
 export default function MobileHousekeepingView({ data, actions }) {
-  const { tasks, staff } = data
+  const tasks = data?.tasks || []
+  const staff = data?.staff || []
   const [searchText, setSearchText] = useState('')
   const [showSearch, setShowSearch] = useState(false)
   const [scanModalVisible, setScanModalVisible] = useState(false)
@@ -138,6 +139,7 @@ export default function MobileHousekeepingView({ data, actions }) {
 
   // Tâches assignées à l'utilisateur courant
   const assignedTasks = useMemo(() => {
+    if (!tasks || !Array.isArray(tasks)) return []
     return tasks
       .filter(t => t.assigned_to || true) // Pour la démo, afficher toutes les tâches
       .sort((a, b) => {
