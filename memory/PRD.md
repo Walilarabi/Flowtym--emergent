@@ -77,14 +77,21 @@ FLOWTYM est un PMS (Property Management System) SaaS hôtelier moderne, structur
 
 ## Changelog
 
-### 2026-03-31
-- ✅ Backend NestJS Housekeeping complet (modules rooms, staff, housekeeping)
+### 2026-03-31 - Restructuration Menu Operations
+- ✅ **Mega Menu Operations** avec 3 blocs fonctionnels :
+  - **PMS** (vert émeraude) : Dashboard, Planning, Réservations, Check-in/out, Groups, Simulation, Rapports
+  - **Opérations Terrain** (orange) : Housekeeping, Maintenance, Staff, Consignes
+  - **Achats & Conformité** (bleu) : Procurement & Stock, Compliance & Contrôles
+- ✅ Design épuré avec colonnes séparées et codes couleurs
+- ✅ Animation fluide au hover
+- ✅ Footer avec légende et lien vue d'ensemble
+
+### 2026-03-31 - Backend NestJS Housekeeping
+- ✅ Backend NestJS opérationnel sur port 8002
 - ✅ WebSocket Gateway temps réel
 - ✅ Proxy FastAPI → NestJS sur /api/v2/*
-- ✅ Support UUID comme hotel_id (compatible FastAPI)
+- ✅ Compatibilité UUID hotel_id
 - ✅ Données démo: 40 chambres, 9 staff, 21 tâches
-- ✅ Vue ReceptionViewV2.jsx avec hook useHousekeepingV2.js
-- ✅ Tests API validés (stats, rooms, staff, tasks)
 
 ### Précédent
 - Module Configuration intégré au PMS

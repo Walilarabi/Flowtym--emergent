@@ -7,13 +7,65 @@ import {
   Brush, UsersRound, Wrench, Receipt, BarChart3, Bell, Moon, ChevronDown,
   LogOut, Settings, User, Check, Database, Cog, Link2, ClipboardList,
   Megaphone, CreditCard, Cpu, ChevronRight, Sparkles, Globe, UserCircle,
-  Heart, Package, ShieldCheck, Calendar, FileText
+  Heart, Package, ShieldCheck, Calendar, FileText, CalendarDays, 
+  CircleUser, UserPlus, Calculator, ScrollText, Truck, ClipboardCheck,
+  AlertTriangle, Clock, QrCode, Target
 } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// NOUVELLE STRUCTURE 8 MENUS MÉTIERS - FLOWTYM V4
+// NOUVELLE STRUCTURE OPERATIONS - 3 BLOCS FONCTIONNELS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const operationsBlocks = {
+  pms: {
+    id: 'pms',
+    title: 'PMS',
+    subtitle: 'Cœur du système',
+    color: '#10B981',
+    colorLight: '#D1FAE5',
+    icon: Building2,
+    items: [
+      { id: 'pms-dashboard', label: 'Dashboard PMS', icon: LayoutDashboard, path: '/pms', description: 'Vue synthétique KPI, alertes' },
+      { id: 'planning', label: 'Planning', icon: CalendarDays, path: '/pms/planning', description: 'Chambres × Dates, drag & drop' },
+      { id: 'reservations', label: 'Réservations', icon: CalendarCheck, path: '/pms/reservations', description: 'Liste, recherche, actions' },
+      { id: 'checkinout', label: 'Check-in / Check-out', icon: CircleUser, path: '/pms/arrivals', description: 'Scan ID, signature, paiement' },
+      { id: 'groups', label: 'Groups & Séminaires', icon: Users, path: '/pms/groups', description: 'Allotements, rooming list' },
+      { id: 'simulation', label: 'Simulation & Offres', icon: Calculator, path: '/pms/simulation', description: 'Devis, proforma, conversion' },
+      { id: 'reports', label: 'Rapports PMS', icon: BarChart3, path: '/pms/reports', description: 'Occupation, CA, RevPAR' },
+    ]
+  },
+  terrain: {
+    id: 'terrain',
+    title: 'Opérations Terrain',
+    subtitle: 'Gestion quotidienne',
+    color: '#F59E0B',
+    colorLight: '#FEF3C7',
+    icon: Wrench,
+    items: [
+      { id: 'housekeeping', label: 'Housekeeping', icon: Brush, path: '/housekeeping', description: 'Statuts, assignation, mobile' },
+      { id: 'maintenance', label: 'Maintenance', icon: Wrench, path: '/maintenance', description: 'Tickets, priorités, interventions' },
+      { id: 'staff', label: 'Staff', icon: UsersRound, path: '/staff', description: 'Employés, planning shifts' },
+      { id: 'consignes', label: 'Cahier de consignes', icon: ClipboardList, path: '/consignes', description: 'Notes, statuts, assignation' },
+    ]
+  },
+  achats: {
+    id: 'achats',
+    title: 'Achats & Conformité',
+    subtitle: 'Fournisseurs & Contrôles',
+    color: '#3B82F6',
+    colorLight: '#DBEAFE',
+    icon: Package,
+    items: [
+      { id: 'procurement', label: 'Procurement & Stock', icon: Truck, path: '/procurement', description: 'Fournisseurs, commandes, stock', badge: 'Bientôt' },
+      { id: 'compliance', label: 'Compliance & Contrôles', icon: ShieldCheck, path: '/compliance', description: 'Registre, alertes, dossier', badge: 'Bientôt' },
+    ]
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STRUCTURE MENU PRINCIPAL - 8 MENUS MÉTIERS
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const mainMenus = [
@@ -30,17 +82,10 @@ const mainMenus = [
     label: 'Operations', 
     icon: Building2, 
     path: '/operations',
-    description: 'Cœur opérationnel',
+    description: 'PMS, Terrain, Achats',
     color: '#10B981',
-    submenu: [
-      { id: 'pms', label: 'PMS & Planning', icon: Calendar, path: '/pms/planning', description: 'Réservations & Planning' },
-      { id: 'checkin', label: 'Check-in/out', icon: UserCircle, path: '/pms/arrivals', description: 'Arrivées & Départs' },
-      { id: 'housekeeping', label: 'Housekeeping', icon: Brush, path: '/housekeeping', description: 'Ménage & Chambres' },
-      { id: 'maintenance', label: 'Maintenance', icon: Wrench, path: '/maintenance', description: 'Tickets & Interventions' },
-      { id: 'staff', label: 'Staff', icon: UsersRound, path: '/staff', description: 'Personnel & Planning' },
-      { id: 'consignes', label: 'Consignes', icon: ClipboardList, path: '/consignes', description: 'Cahier de consignes' },
-      { id: 'groups', label: 'Groups & MICE', icon: Users, path: '/groups', description: 'Groupes & Séminaires', badge: 'Bientôt' },
-    ]
+    isMegaMenu: true,
+    blocks: operationsBlocks
   },
   { 
     id: 'revenue', 
@@ -51,8 +96,7 @@ const mainMenus = [
     color: '#F59E0B',
     submenu: [
       { id: 'rms', label: 'RMS & Pricing', icon: TrendingUp, path: '/rms', description: 'Yield Management' },
-      { id: 'simulation', label: 'Simulation & Devis', icon: FileText, path: '/simulation', description: 'Devis & Conversion', badge: 'Nouveau' },
-      { id: 'reports', label: 'Rapports', icon: BarChart3, path: '/pms/reports', description: 'Analytics & KPIs' },
+      { id: 'forecast', label: 'Prévisions', icon: Target, path: '/forecast', description: 'Budget & Forecast', badge: 'Nouveau' },
     ]
   },
   { 
@@ -121,10 +165,200 @@ const mainMenus = [
 ]
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MEGA MENU DROPDOWN COMPONENT
+// MEGA MENU OPERATIONS - 3 COLONNES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const MegaMenuDropdown = ({ menu, isActive, onClose }) => {
+const OperationsMegaMenu = ({ isOpen, onClose }) => {
+  if (!isOpen) return null
+
+  return (
+    <div 
+      className="absolute top-full left-0 mt-1 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50"
+      style={{ 
+        animation: 'fadeInScale 200ms ease-out',
+        width: '820px',
+        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04)'
+      }}
+    >
+      {/* Header */}
+      <div className="px-6 py-4 bg-gradient-to-r from-emerald-50 via-amber-50 to-blue-50 border-b border-slate-100">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center">
+            <Building2 className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-slate-800">Operations</h3>
+            <p className="text-xs text-slate-500">Gestion complète de votre établissement</p>
+          </div>
+        </div>
+      </div>
+
+      {/* 3 Colonnes */}
+      <div className="flex divide-x divide-slate-100">
+        {Object.values(operationsBlocks).map((block) => {
+          const BlockIcon = block.icon
+          return (
+            <div key={block.id} className="flex-1 p-4">
+              {/* Block Header */}
+              <div className="flex items-center gap-2 mb-3 px-2">
+                <div 
+                  className="w-7 h-7 rounded-lg flex items-center justify-center"
+                  style={{ background: block.colorLight }}
+                >
+                  <BlockIcon className="w-4 h-4" style={{ color: block.color }} />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold" style={{ color: block.color }}>{block.title}</h4>
+                  <p className="text-[10px] text-slate-400">{block.subtitle}</p>
+                </div>
+              </div>
+
+              {/* Block Items */}
+              <div className="space-y-0.5">
+                {block.items.map((item) => {
+                  const ItemIcon = item.icon
+                  return (
+                    <NavLink
+                      key={item.id}
+                      to={item.path}
+                      onClick={onClose}
+                      className="flex items-center gap-2.5 px-2 py-2 rounded-lg transition-all duration-150 hover:bg-slate-50 group"
+                      data-testid={`nav-${item.id}`}
+                    >
+                      <div 
+                        className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors group-hover:scale-105"
+                        style={{ background: '#F8FAFC' }}
+                      >
+                        <ItemIcon className="w-4 h-4 text-slate-500 group-hover:text-slate-700" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[13px] font-medium text-slate-700 group-hover:text-slate-900 truncate">
+                            {item.label}
+                          </span>
+                          {item.badge && (
+                            <span 
+                              className="px-1.5 py-0.5 text-[9px] font-bold rounded-full uppercase tracking-wide"
+                              style={{ 
+                                background: item.badge === 'Nouveau' ? '#DBEAFE' : '#F3E8FF',
+                                color: item.badge === 'Nouveau' ? '#2563EB' : '#7C3AED'
+                              }}
+                            >
+                              {item.badge}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-slate-400 truncate">{item.description}</p>
+                      </div>
+                    </NavLink>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Footer */}
+      <div className="px-6 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1.5 text-xs text-slate-500">
+            <div className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span>PMS</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-slate-500">
+            <div className="w-2 h-2 rounded-full bg-amber-500" />
+            <span>Terrain</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-slate-500">
+            <div className="w-2 h-2 rounded-full bg-blue-500" />
+            <span>Achats</span>
+          </div>
+        </div>
+        <NavLink 
+          to="/operations" 
+          onClick={onClose}
+          className="text-xs font-medium text-emerald-600 hover:text-emerald-700 flex items-center gap-1"
+        >
+          Vue d'ensemble <ChevronRight className="w-3 h-3" />
+        </NavLink>
+      </div>
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STANDARD DROPDOWN COMPONENT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const StandardDropdown = ({ menu, isActive, isOpen, onClose }) => {
+  if (!isOpen || !menu.submenu) return null
+
+  return (
+    <div 
+      className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-xl border border-slate-100 py-2 min-w-[280px] z-50"
+      style={{ 
+        animation: 'fadeIn 150ms ease-out',
+        boxShadow: '0 10px 40px rgba(0,0,0,0.08), 0 2px 10px rgba(0,0,0,0.04)'
+      }}
+    >
+      {/* Header */}
+      <div className="px-4 py-2 border-b border-slate-100 mb-1">
+        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: menu.color }}>
+          {menu.label}
+        </p>
+        <p className="text-xs text-slate-400">{menu.description}</p>
+      </div>
+
+      {/* Items */}
+      {menu.submenu.map((item) => {
+        const ItemIcon = item.icon
+        return (
+          <NavLink
+            key={item.id}
+            to={item.path}
+            onClick={onClose}
+            className="flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg transition-all duration-150 hover:bg-slate-50 group"
+            data-testid={`nav-${item.id}`}
+          >
+            <div 
+              className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+              style={{ background: '#F8F9FC' }}
+            >
+              <ItemIcon className="w-4 h-4" style={{ color: menu.color }} />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900">
+                  {item.label}
+                </span>
+                {item.badge && (
+                  <span 
+                    className="px-1.5 py-0.5 text-[10px] font-semibold rounded-full"
+                    style={{ 
+                      background: item.badge === 'Nouveau' ? '#DBEAFE' : '#F3F4F6',
+                      color: item.badge === 'Nouveau' ? '#3B82F6' : '#6B7280'
+                    }}
+                  >
+                    {item.badge}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-400">{item.description}</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </NavLink>
+        )
+      })}
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MENU DROPDOWN WRAPPER
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const MenuDropdown = ({ menu, isActive }) => {
   const [isOpen, setIsOpen] = useState(false)
   const timeoutRef = useRef(null)
   const menuRef = useRef(null)
@@ -135,8 +369,10 @@ const MegaMenuDropdown = ({ menu, isActive, onClose }) => {
   }
 
   const handleMouseLeave = () => {
-    timeoutRef.current = setTimeout(() => setIsOpen(false), 150)
+    timeoutRef.current = setTimeout(() => setIsOpen(false), 200)
   }
+
+  const handleClose = () => setIsOpen(false)
 
   useEffect(() => {
     return () => {
@@ -145,9 +381,10 @@ const MegaMenuDropdown = ({ menu, isActive, onClose }) => {
   }, [])
 
   const Icon = menu.icon
+  const hasDropdown = menu.submenu || menu.isMegaMenu
 
-  // Si pas de sous-menu, lien direct
-  if (!menu.submenu) {
+  // Si pas de dropdown, lien direct
+  if (!hasDropdown) {
     return (
       <NavLink
         to={menu.path}
@@ -175,8 +412,8 @@ const MegaMenuDropdown = ({ menu, isActive, onClose }) => {
       <button
         className="flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap rounded-lg transition-all duration-200"
         style={{ 
-          color: isActive ? '#7C8CF8' : '#6B7280',
-          background: isActive ? '#F5F4FE' : isOpen ? '#F8F9FC' : 'transparent',
+          color: isActive ? menu.color : '#6B7280',
+          background: isActive ? `${menu.color}10` : isOpen ? '#F8F9FC' : 'transparent',
           fontWeight: isActive ? 600 : 500
         }}
         data-testid={`nav-${menu.id}`}
@@ -186,64 +423,11 @@ const MegaMenuDropdown = ({ menu, isActive, onClose }) => {
         <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} style={{ opacity: 0.5 }} />
       </button>
 
-      {/* Dropdown */}
-      {isOpen && (
-        <div 
-          className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-xl border border-slate-100 py-2 min-w-[280px] z-50"
-          style={{ 
-            animation: 'fadeIn 150ms ease-out',
-            boxShadow: '0 10px 40px rgba(0,0,0,0.08), 0 2px 10px rgba(0,0,0,0.04)'
-          }}
-        >
-          {/* Header */}
-          <div className="px-4 py-2 border-b border-slate-100 mb-1">
-            <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: menu.color }}>
-              {menu.label}
-            </p>
-            <p className="text-xs text-slate-400">{menu.description}</p>
-          </div>
-
-          {/* Items */}
-          {menu.submenu.map((item) => {
-            const ItemIcon = item.icon
-            return (
-              <NavLink
-                key={item.id}
-                to={item.path}
-                onClick={() => setIsOpen(false)}
-                className="flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg transition-all duration-150 hover:bg-slate-50 group"
-                data-testid={`nav-${item.id}`}
-              >
-                <div 
-                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
-                  style={{ background: '#F8F9FC' }}
-                >
-                  <ItemIcon className="w-4 h-4" style={{ color: menu.color }} />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900">
-                      {item.label}
-                    </span>
-                    {item.badge && (
-                      <span 
-                        className="px-1.5 py-0.5 text-[10px] font-semibold rounded-full"
-                        style={{ 
-                          background: item.badge === 'Nouveau' ? '#DBEAFE' : '#F3F4F6',
-                          color: item.badge === 'Nouveau' ? '#3B82F6' : '#6B7280'
-                        }}
-                      >
-                        {item.badge}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-slate-400">{item.description}</p>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </NavLink>
-            )
-          })}
-        </div>
+      {/* Dropdown - Mega Menu for Operations, Standard for others */}
+      {menu.isMegaMenu ? (
+        <OperationsMegaMenu isOpen={isOpen} onClose={handleClose} />
+      ) : (
+        <StandardDropdown menu={menu} isActive={isActive} isOpen={isOpen} onClose={handleClose} />
       )}
     </div>
   )
@@ -259,16 +443,19 @@ export const TopNavigation = () => {
   const { hotels, currentHotel, switchHotel } = useHotel()
 
   const isMenuActive = (menu) => {
-    // Check main path
+    // Direct path match
     if (location.pathname.startsWith(menu.path) && menu.path !== '/') return true
     
     // Check submenu paths
     if (menu.submenu) {
-      return menu.submenu.some(item => {
-        if (item.path === '/pms/planning') return location.pathname.startsWith('/pms')
-        if (item.path === '/pms/arrivals') return location.pathname === '/pms/arrivals' || location.pathname === '/pms/departures'
-        return location.pathname.startsWith(item.path)
-      })
+      return menu.submenu.some(item => location.pathname.startsWith(item.path))
+    }
+    
+    // Check mega menu blocks (Operations)
+    if (menu.blocks) {
+      return Object.values(menu.blocks).some(block => 
+        block.items.some(item => location.pathname.startsWith(item.path))
+      )
     }
     
     return false
@@ -291,7 +478,7 @@ export const TopNavigation = () => {
       {/* Main Navigation - 8 Menus */}
       <nav className="flex-1 flex items-center gap-0.5">
         {mainMenus.map((menu) => (
-          <MegaMenuDropdown 
+          <MenuDropdown 
             key={menu.id} 
             menu={menu} 
             isActive={isMenuActive(menu)}
@@ -379,11 +566,15 @@ export const TopNavigation = () => {
         </DropdownMenu>
       </div>
 
-      {/* CSS Animation */}
+      {/* CSS Animations */}
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(-4px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInScale {
+          from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
         }
       `}</style>
     </header>
