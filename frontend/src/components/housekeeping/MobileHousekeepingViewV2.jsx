@@ -562,6 +562,248 @@ export default function MobileHousekeepingViewV2({ data, actions }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ═══════════════════════════════════════════════════════════════════════════════
+          REPORT MODAL - Signalement de problème
+          ═══════════════════════════════════════════════════════════════════════════════ */}
+      <Dialog open={reportModalOpen} onOpenChange={setReportModalOpen}>
+        <DialogContent className="max-w-sm mx-4 max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle size={20} className="text-amber-500" />
+              Signaler un problème
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="py-4 space-y-4">
+            {/* Room Number */}
+            <div>
+              <Label className="text-sm font-medium text-slate-700">
+                Chambre <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                value={reportRoom}
+                onChange={(e) => setReportRoom(e.target.value)}
+                placeholder="Ex: 101"
+                className="mt-1"
+              />
+            </div>
+
+            {/* Category Selection */}
+            <div>
+              <Label className="text-sm font-medium text-slate-700">
+                Type de problème <span className="text-red-500">*</span>
+              </Label>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {DEFAULT_REPORT_CATEGORIES.map((cat) => {
+                  const IconComp = ICON_MAP[cat.icon] || AlertTriangle
+                  const isSelected = selectedCategory?.name === cat.name
+                  return (
+                    <button
+                      key={cat.name}
+                      onClick={() => setSelectedCategory(cat)}
+                      className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${
+                        isSelected 
+                          ? 'border-violet-500 bg-violet-50' 
+                          : 'border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      <IconComp size={18} style={{ color: cat.color }} />
+                      <span className="text-xs font-medium text-slate-700 truncate">
+                        {cat.name}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Description */}
+            <div>
+              <Label className="text-sm font-medium text-slate-700">
+                Description (optionnel)
+              </Label>
+              <Textarea
+                value={reportDescription}
+                onChange={(e) => setReportDescription(e.target.value)}
+                placeholder="Décrivez le problème en détail..."
+                className="mt-1 h-20"
+              />
+            </div>
+
+            {/* Photo Upload Placeholder */}
+            <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center">
+              <Camera size={24} className="mx-auto mb-1 text-slate-400" />
+              <p className="text-xs text-slate-500">Photo (optionnel)</p>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setReportModalOpen(false)
+                setSelectedCategory(null)
+                setReportDescription('')
+                setReportRoom('')
+              }}
+            >
+              Annuler
+            </Button>
+            <Button 
+              onClick={handleSubmitReport}
+              disabled={submitting || !selectedCategory || !reportRoom}
+              style={{ background: COLORS.warning }}
+            >
+              {submitting ? (
+                <Loader2 size={16} className="animate-spin mr-2" />
+              ) : (
+                <Send size={16} className="mr-2" />
+              )}
+              Envoyer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ═══════════════════════════════════════════════════════════════════════════════
+          FOUND ITEM MODAL - Déclaration d'objet trouvé
+          ═══════════════════════════════════════════════════════════════════════════════ */}
+      <Dialog open={foundItemModalOpen} onOpenChange={setFoundItemModalOpen}>
+        <DialogContent className="max-w-sm mx-4 max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Package size={20} className="text-violet-500" />
+              Objet trouvé
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="py-4 space-y-4">
+            {/* Room Number */}
+            <div>
+              <Label className="text-sm font-medium text-slate-700">
+                Chambre <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                value={foundItemRoom}
+                onChange={(e) => setFoundItemRoom(e.target.value)}
+                placeholder="Ex: 101"
+                className="mt-1"
+              />
+            </div>
+
+            {/* Category Selection */}
+            <div>
+              <Label className="text-sm font-medium text-slate-700">
+                Type d'objet <span className="text-red-500">*</span>
+              </Label>
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                {DEFAULT_FOUND_ITEM_CATEGORIES.map((cat) => {
+                  const IconComp = ICON_MAP[cat.icon] || Package
+                  const isSelected = selectedCategory?.name === cat.name
+                  return (
+                    <button
+                      key={cat.name}
+                      onClick={() => setSelectedCategory(cat)}
+                      className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all ${
+                        isSelected 
+                          ? 'border-violet-500 bg-violet-50' 
+                          : 'border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      <IconComp size={20} style={{ color: cat.color }} />
+                      <span className="text-[10px] font-medium text-slate-600 text-center">
+                        {cat.name}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Object Name (optional) */}
+            <div>
+              <Label className="text-sm font-medium text-slate-700">
+                Nom de l'objet (optionnel)
+              </Label>
+              <Input
+                value={foundItemName}
+                onChange={(e) => setFoundItemName(e.target.value)}
+                placeholder="Ex: iPhone noir"
+                className="mt-1"
+              />
+            </div>
+
+            {/* Description */}
+            <div>
+              <Label className="text-sm font-medium text-slate-700">
+                Description (optionnel)
+              </Label>
+              <Textarea
+                value={foundItemDescription}
+                onChange={(e) => setFoundItemDescription(e.target.value)}
+                placeholder="Décrivez l'objet..."
+                className="mt-1 h-16"
+              />
+            </div>
+
+            {/* Photo Upload Placeholder */}
+            <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center">
+              <Camera size={24} className="mx-auto mb-1 text-slate-400" />
+              <p className="text-xs text-slate-500">Photo (optionnel)</p>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setFoundItemModalOpen(false)
+                setSelectedCategory(null)
+                setFoundItemName('')
+                setFoundItemDescription('')
+                setFoundItemRoom('')
+              }}
+            >
+              Annuler
+            </Button>
+            <Button 
+              onClick={handleSubmitFoundItem}
+              disabled={submitting || !selectedCategory || !foundItemRoom}
+              style={{ background: COLORS.brand }}
+            >
+              {submitting ? (
+                <Loader2 size={16} className="animate-spin mr-2" />
+              ) : (
+                <Send size={16} className="mr-2" />
+              )}
+              Déclarer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ═══════════════════════════════════════════════════════════════════════════════
+          FLOATING ACTION BUTTONS - Signalement & Objet trouvé
+          ═══════════════════════════════════════════════════════════════════════════════ */}
+      <div className="fixed bottom-6 right-4 flex flex-col gap-3 z-50">
+        <button
+          onClick={() => setReportModalOpen(true)}
+          className="w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110"
+          style={{ background: COLORS.warning }}
+          data-testid="fab-report"
+        >
+          <AlertTriangle size={24} className="text-white" />
+        </button>
+        <button
+          onClick={() => setFoundItemModalOpen(true)}
+          className="w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110"
+          style={{ background: COLORS.brand }}
+          data-testid="fab-found-item"
+        >
+          <Package size={24} className="text-white" />
+        </button>
+      </div>
     </div>
   )
 }

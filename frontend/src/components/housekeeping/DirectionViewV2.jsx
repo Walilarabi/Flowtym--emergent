@@ -3,7 +3,7 @@
  * Vue temps réel des KPIs, plan des chambres, équipe active
  */
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, Fragment } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -13,8 +13,9 @@ import {
   BedDouble, Users, ArrowRight, Sparkles, History, MapPin, Zap,
   LayoutGrid, BarChart3, FileText, ChevronRight, Package, 
   RefreshCw, Wifi, WifiOff, Loader2, Calendar, Target, Award,
-  ArrowUpRight, ArrowDownRight, Timer
+  ArrowUpRight, ArrowDownRight, Timer, Settings
 } from 'lucide-react'
+import CategoriesConfig from './CategoriesConfig'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // DESIGN TOKENS
@@ -203,6 +204,7 @@ export default function DirectionViewV2({ data, actions, onNavigate }) {
   
   const [selectedFloor, setSelectedFloor] = useState('all')
   const [selectedRoom, setSelectedRoom] = useState(null)
+  const [activeTab, setActiveTab] = useState('dashboard') // dashboard | config
 
   // Calculate KPIs
   const kpis = useMemo(() => {
@@ -302,272 +304,309 @@ export default function DirectionViewV2({ data, actions, onNavigate }) {
         </div>
       </div>
 
-      {/* KPIs Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6">
-        <KPICard 
-          value={kpis?.totalRooms || 0} 
-          label="Chambres totales" 
-          icon={BedDouble} 
-          color={COLORS.brand} 
-          colorSoft={COLORS.brandSoft}
-        />
-        <KPICard 
-          value={`${kpis?.occupancy || 0}%`} 
-          label="Taux d'occupation" 
-          icon={Target} 
-          color={COLORS.info} 
-          colorSoft={COLORS.infoSoft}
-          trend="up"
-          trendValue="+5%"
-        />
-        <KPICard 
-          value={kpis?.departures || 0} 
-          label="Départs" 
-          icon={ArrowRight} 
-          color={COLORS.danger} 
-          colorSoft={COLORS.dangerSoft}
-          highlight={kpis?.departures > 5}
-        />
-        <KPICard 
-          value={kpis?.recouches || 0} 
-          label="Recouches" 
-          icon={RefreshCw} 
-          color={COLORS.warning} 
-          colorSoft={COLORS.warningSoft}
-        />
-        <KPICard 
-          value={`${kpis?.cleanliness || 0}%`} 
-          label="Propreté validée" 
-          icon={CheckCircle} 
-          color={COLORS.success} 
-          colorSoft={COLORS.successSoft}
-        />
+      {/* Main Navigation Tabs */}
+      <div className="flex gap-2 mb-6 bg-slate-100 p-1 rounded-xl w-fit">
+        <button
+          onClick={() => setActiveTab('dashboard')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+            activeTab === 'dashboard' 
+              ? 'bg-white text-slate-900 shadow-sm' 
+              : 'text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <BarChart3 size={16} />
+          Tableau de bord
+        </button>
+        <button
+          onClick={() => setActiveTab('config')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+            activeTab === 'config' 
+              ? 'bg-white text-slate-900 shadow-sm' 
+              : 'text-slate-500 hover:text-slate-700'
+          }`}
+          data-testid="tab-config"
+        >
+          <Settings size={16} />
+          Configuration
+        </button>
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-white rounded-2xl border border-slate-100 p-4 mb-6">
-        <h3 className="text-sm font-semibold text-slate-700 mb-3">Actions rapides</h3>
-        <div className="flex gap-3 overflow-x-auto">
-          <QuickAction 
-            icon={MapPin} 
-            label="Plan chambres" 
-            color={COLORS.brand} 
-            colorSoft={COLORS.brandSoft}
-            onClick={() => onNavigate?.('plan')}
-          />
-          <QuickAction 
-            icon={Zap} 
-            label="Répartition" 
-            color={COLORS.teal} 
-            colorSoft="#CCFBF1"
-            onClick={() => onNavigate?.('repartition')}
-          />
-          <QuickAction 
-            icon={CheckCircle} 
-            label="Contrôles" 
-            color={COLORS.success} 
-            colorSoft={COLORS.successSoft}
-            badge={kpis?.toValidate > 0 ? kpis.toValidate : null}
-            onClick={() => onNavigate?.('control')}
-          />
-          <QuickAction 
-            icon={Wrench} 
-            label="Maintenance" 
-            color={COLORS.orange} 
-            colorSoft="#FFEDD5"
-            onClick={() => onNavigate?.('maintenance')}
-          />
-          <QuickAction 
-            icon={BarChart3} 
-            label="Statistiques" 
-            color={COLORS.info} 
-            colorSoft={COLORS.infoSoft}
-            onClick={() => onNavigate?.('stats')}
-          />
-          <QuickAction 
-            icon={History} 
-            label="Historique" 
-            color="#6B7280" 
-            colorSoft="#F3F4F6"
-            onClick={() => onNavigate?.('history')}
-          />
-        </div>
-      </div>
+      {/* Configuration Tab */}
+      {activeTab === 'config' && (
+        <CategoriesConfig />
+      )}
 
-      {/* Main Grid: Floor Plan + Staff */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Floor Plan - 2 cols */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-slate-800">Plan des chambres</h3>
-            
-            {/* Floor Selector */}
-            <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
-              <button
-                onClick={() => setSelectedFloor('all')}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                  selectedFloor === 'all' 
-                    ? 'bg-white text-slate-800 shadow-sm' 
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                Tous
-              </button>
-              {floors.map(floor => (
-                <button
-                  key={floor}
-                  onClick={() => setSelectedFloor(String(floor))}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                    selectedFloor === String(floor) 
-                      ? 'bg-white text-slate-800 shadow-sm' 
-                      : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  Ét. {floor}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Legend */}
-          <div className="flex flex-wrap gap-3 mb-4 text-xs">
-            {Object.entries(ROOM_STATUS_CONFIG).map(([key, cfg]) => (
-              <div key={key} className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded" style={{ backgroundColor: cfg.bg, border: `1px solid ${cfg.color}` }} />
-                <span className="text-slate-600">{cfg.label}</span>
-              </div>
-            ))}
-            <div className="flex items-center gap-1.5 ml-2 pl-2 border-l border-slate-200">
-              <div className="w-3 h-3 rounded border-2" style={{ borderColor: COLORS.success }} />
-              <span className="text-slate-600">Validé</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded border-2" style={{ borderColor: COLORS.warning }} />
-              <span className="text-slate-600">En cours</span>
-            </div>
-          </div>
-
-          {/* Rooms Grid by Floor */}
-          {Object.entries(roomsByFloor).sort(([a], [b]) => Number(a) - Number(b)).map(([floor, floorRooms]) => (
-            <div key={floor} className="mb-4">
-              <div className="text-xs font-semibold text-slate-500 uppercase mb-2">
-                Étage {floor}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {floorRooms
-                  .filter(r => r && r.room_number)
-                  .sort((a, b) => (a.room_number || '').localeCompare(b.room_number || ''))
-                  .map(room => (
-                    <RoomChip key={room._id || room.room_number} room={room} onClick={handleRoomClick} />
-                  ))
-                }
-              </div>
-            </div>
-          ))}
-
-          {rooms.length === 0 && (
-            <div className="text-center py-8">
-              <BedDouble size={40} className="mx-auto mb-2 text-slate-300" />
-              <p className="text-slate-500">Aucune chambre</p>
-              <Button variant="outline" size="sm" className="mt-2" onClick={seedData}>
-                Créer données démo
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {/* Staff Panel */}
-        <div className="bg-white rounded-2xl border border-slate-100 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-slate-800">Équipe active</h3>
-            <Badge variant="outline" className="text-xs">
-              {housekeepers.length} personnes
-            </Badge>
-          </div>
-
-          <div className="space-y-2 max-h-[400px] overflow-y-auto">
-            {housekeepers.length > 0 ? (
-              housekeepers.map(member => (
-                <StaffCard key={member._id} member={member} />
-              ))
-            ) : (
-              <div className="text-center py-6">
-                <Users size={32} className="mx-auto mb-2 text-slate-300" />
-                <p className="text-sm text-slate-500">Aucun staff actif</p>
-              </div>
-            )}
-          </div>
-
-          {/* Auto Assign Button */}
-          <Button 
-            className="w-full mt-4"
-            style={{ background: COLORS.brand }}
-            onClick={autoAssign}
-          >
-            <Zap size={16} className="mr-2" />
-            Répartition automatique
-          </Button>
-        </div>
-      </div>
-
-      {/* Progress Summary */}
-      <div className="mt-6 bg-white rounded-2xl border border-slate-100 p-5">
-        <h3 className="text-lg font-semibold text-slate-800 mb-4">Avancement du jour</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Cleaning Progress */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-slate-600">Nettoyage</span>
-              <span className="text-sm font-bold" style={{ color: COLORS.brand }}>
-                {kpis?.completed || 0}/{(kpis?.departures || 0) + (kpis?.recouches || 0)}
-              </span>
-            </div>
-            <Progress 
-              value={((kpis?.completed || 0) / ((kpis?.departures || 1) + (kpis?.recouches || 0))) * 100} 
-              className="h-2"
+      {/* Dashboard Tab */}
+      {activeTab === 'dashboard' && (
+        <Fragment>
+          {/* KPIs Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6">
+            <KPICard 
+              value={kpis?.totalRooms || 0} 
+              label="Chambres totales" 
+              icon={BedDouble} 
+              color={COLORS.brand} 
+              colorSoft={COLORS.brandSoft}
+            />
+            <KPICard 
+              value={`${kpis?.occupancy || 0}%`} 
+              label="Taux d'occupation" 
+              icon={Target} 
+              color={COLORS.info} 
+              colorSoft={COLORS.infoSoft}
+              trend="up"
+              trendValue="+5%"
+            />
+            <KPICard 
+              value={kpis?.departures || 0} 
+              label="Départs" 
+              icon={ArrowRight} 
+              color={COLORS.danger} 
+              colorSoft={COLORS.dangerSoft}
+              highlight={kpis?.departures > 5}
+            />
+            <KPICard 
+              value={kpis?.recouches || 0} 
+              label="Recouches" 
+              icon={RefreshCw} 
+              color={COLORS.warning} 
+              colorSoft={COLORS.warningSoft}
+            />
+            <KPICard 
+              value={`${kpis?.cleanliness || 0}%`} 
+              label="Propreté validée" 
+              icon={CheckCircle} 
+              color={COLORS.success} 
+              colorSoft={COLORS.successSoft}
             />
           </div>
 
-          {/* Validation Progress */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-slate-600">Validation</span>
-              <span className="text-sm font-bold" style={{ color: COLORS.success }}>
-                {kpis?.cleanliness || 0}%
-              </span>
+          {/* Quick Actions */}
+          <div className="bg-white rounded-2xl border border-slate-100 p-4 mb-6">
+            <h3 className="text-sm font-semibold text-slate-700 mb-3">Actions rapides</h3>
+            <div className="flex gap-3 overflow-x-auto">
+              <QuickAction 
+                icon={MapPin} 
+                label="Plan chambres" 
+                color={COLORS.brand} 
+                colorSoft={COLORS.brandSoft}
+                onClick={() => onNavigate?.('plan')}
+              />
+              <QuickAction 
+                icon={Zap} 
+                label="Répartition" 
+                color={COLORS.teal} 
+                colorSoft="#CCFBF1"
+                onClick={() => onNavigate?.('repartition')}
+              />
+              <QuickAction 
+                icon={CheckCircle} 
+                label="Contrôles" 
+                color={COLORS.success} 
+                colorSoft={COLORS.successSoft}
+                badge={kpis?.toValidate > 0 ? kpis.toValidate : null}
+                onClick={() => onNavigate?.('control')}
+              />
+              <QuickAction 
+                icon={Wrench} 
+                label="Maintenance" 
+                color={COLORS.orange} 
+                colorSoft="#FFEDD5"
+                onClick={() => onNavigate?.('maintenance')}
+              />
+              <QuickAction 
+                icon={BarChart3} 
+                label="Statistiques" 
+                color={COLORS.info} 
+                colorSoft={COLORS.infoSoft}
+                onClick={() => onNavigate?.('stats')}
+              />
+              <QuickAction 
+                icon={History} 
+                label="Historique" 
+                color="#6B7280" 
+                colorSoft="#F3F4F6"
+                onClick={() => onNavigate?.('history')}
+              />
             </div>
-            <Progress value={kpis?.cleanliness || 0} className="h-2" />
           </div>
 
-          {/* Alerts */}
-          <div className="flex items-center gap-4">
-            {kpis?.toValidate > 0 && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: COLORS.warningSoft }}>
-                <AlertTriangle size={16} style={{ color: COLORS.warning }} />
-                <span className="text-sm font-medium" style={{ color: COLORS.warning }}>
-                  {kpis.toValidate} à valider
-                </span>
+          {/* Main Grid: Floor Plan + Staff */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Floor Plan - 2 cols */}
+            <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-slate-800">Plan des chambres</h3>
+                
+                {/* Floor Selector */}
+                <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                  <button
+                    onClick={() => setSelectedFloor('all')}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                      selectedFloor === 'all' 
+                        ? 'bg-white text-slate-800 shadow-sm' 
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    Tous
+                  </button>
+                  {floors.map(floor => (
+                    <button
+                      key={floor}
+                      onClick={() => setSelectedFloor(String(floor))}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                        selectedFloor === String(floor) 
+                          ? 'bg-white text-slate-800 shadow-sm' 
+                          : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      Ét. {floor}
+                    </button>
+                  ))}
+                </div>
               </div>
-            )}
-            {kpis?.refused > 0 && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: COLORS.dangerSoft }}>
-                <AlertTriangle size={16} style={{ color: COLORS.danger }} />
-                <span className="text-sm font-medium" style={{ color: COLORS.danger }}>
-                  {kpis.refused} refusé(s)
-                </span>
+
+              {/* Legend */}
+              <div className="flex flex-wrap gap-3 mb-4 text-xs">
+                {Object.entries(ROOM_STATUS_CONFIG).map(([key, cfg]) => (
+                  <div key={key} className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded" style={{ backgroundColor: cfg.bg, border: `1px solid ${cfg.color}` }} />
+                    <span className="text-slate-600">{cfg.label}</span>
+                  </div>
+                ))}
+                <div className="flex items-center gap-1.5 ml-2 pl-2 border-l border-slate-200">
+                  <div className="w-3 h-3 rounded border-2" style={{ borderColor: COLORS.success }} />
+                  <span className="text-slate-600">Validé</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded border-2" style={{ borderColor: COLORS.warning }} />
+                  <span className="text-slate-600">En cours</span>
+                </div>
               </div>
-            )}
-            {!kpis?.toValidate && !kpis?.refused && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: COLORS.successSoft }}>
-                <CheckCircle size={16} style={{ color: COLORS.success }} />
-                <span className="text-sm font-medium" style={{ color: COLORS.success }}>
-                  Tout est en ordre
-                </span>
+
+              {/* Rooms Grid by Floor */}
+              {Object.entries(roomsByFloor).sort(([a], [b]) => Number(a) - Number(b)).map(([floor, floorRooms]) => (
+                <div key={floor} className="mb-4">
+                  <div className="text-xs font-semibold text-slate-500 uppercase mb-2">
+                    Étage {floor}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {floorRooms
+                      .filter(r => r && r.room_number)
+                      .sort((a, b) => (a.room_number || '').localeCompare(b.room_number || ''))
+                      .map(room => (
+                        <RoomChip key={room._id || room.room_number} room={room} onClick={handleRoomClick} />
+                      ))
+                    }
+                  </div>
+                </div>
+              ))}
+
+              {rooms.length === 0 && (
+                <div className="text-center py-8">
+                  <BedDouble size={40} className="mx-auto mb-2 text-slate-300" />
+                  <p className="text-slate-500">Aucune chambre</p>
+                  <Button variant="outline" size="sm" className="mt-2" onClick={seedData}>
+                    Créer données démo
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Staff Panel */}
+            <div className="bg-white rounded-2xl border border-slate-100 p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-slate-800">Équipe active</h3>
+                <Badge variant="outline" className="text-xs">
+                  {housekeepers.length} personnes
+                </Badge>
               </div>
-            )}
+
+              <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                {housekeepers.length > 0 ? (
+                  housekeepers.map(member => (
+                    <StaffCard key={member._id} member={member} />
+                  ))
+                ) : (
+                  <div className="text-center py-6">
+                    <Users size={32} className="mx-auto mb-2 text-slate-300" />
+                    <p className="text-sm text-slate-500">Aucun staff actif</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Auto Assign Button */}
+              <Button 
+                className="w-full mt-4"
+                style={{ background: COLORS.brand }}
+                onClick={autoAssign}
+              >
+                <Zap size={16} className="mr-2" />
+                Répartition automatique
+              </Button>
+            </div>
           </div>
-        </div>
-      </div>
+
+          {/* Progress Summary */}
+          <div className="mt-6 bg-white rounded-2xl border border-slate-100 p-5">
+            <h3 className="text-lg font-semibold text-slate-800 mb-4">Avancement du jour</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Cleaning Progress */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-slate-600">Nettoyage</span>
+                  <span className="text-sm font-bold" style={{ color: COLORS.brand }}>
+                    {kpis?.completed || 0}/{(kpis?.departures || 0) + (kpis?.recouches || 0)}
+                  </span>
+                </div>
+                <Progress 
+                  value={((kpis?.completed || 0) / ((kpis?.departures || 1) + (kpis?.recouches || 0))) * 100} 
+                  className="h-2"
+                />
+              </div>
+
+              {/* Validation Progress */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-slate-600">Validation</span>
+                  <span className="text-sm font-bold" style={{ color: COLORS.success }}>
+                    {kpis?.cleanliness || 0}%
+                  </span>
+                </div>
+                <Progress value={kpis?.cleanliness || 0} className="h-2" />
+              </div>
+
+              {/* Alerts */}
+              <div className="flex items-center gap-4">
+                {kpis?.toValidate > 0 && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: COLORS.warningSoft }}>
+                    <AlertTriangle size={16} style={{ color: COLORS.warning }} />
+                    <span className="text-sm font-medium" style={{ color: COLORS.warning }}>
+                      {kpis.toValidate} à valider
+                    </span>
+                  </div>
+                )}
+                {kpis?.refused > 0 && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: COLORS.dangerSoft }}>
+                    <AlertTriangle size={16} style={{ color: COLORS.danger }} />
+                    <span className="text-sm font-medium" style={{ color: COLORS.danger }}>
+                      {kpis.refused} refusé(s)
+                    </span>
+                  </div>
+                )}
+                {!kpis?.toValidate && !kpis?.refused && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: COLORS.successSoft }}>
+                    <CheckCircle size={16} style={{ color: COLORS.success }} />
+                    <span className="text-sm font-medium" style={{ color: COLORS.success }}>
+                      Tout est en ordre
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </Fragment>
+      )}
     </div>
   )
 }
