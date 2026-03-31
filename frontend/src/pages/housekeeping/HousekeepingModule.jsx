@@ -28,10 +28,12 @@ import axios from 'axios'
 import DirectionView from '@/components/housekeeping/DirectionView'
 import GouvernanteView from '@/components/housekeeping/GouvernanteView'
 import MobileHousekeepingView from '@/components/housekeeping/MobileHousekeepingView'
+import MobileHousekeepingViewV2 from '@/components/housekeeping/MobileHousekeepingViewV2'
 import MobileMaintenanceView from '@/components/housekeeping/MobileMaintenanceView'
 import MobileBreakfastView from '@/components/housekeeping/MobileBreakfastView'
 import InteractiveReceptionView from '@/components/housekeeping/InteractiveReceptionView'
 import ReceptionViewV2 from '@/components/housekeeping/ReceptionViewV2'
+import DirectionViewV2 from '@/components/housekeeping/DirectionViewV2'
 import QRCodeManager from '@/components/housekeeping/QRCodeManager'
 import SatisfactionConfig from '@/components/housekeeping/SatisfactionConfig'
 
@@ -410,15 +412,17 @@ export default function HousekeepingModule() {
             : <InteractiveReceptionView data={data} actions={actions} />
         )}
         {activeView === 'direction' && (
-          <div className="h-full overflow-auto">
-            <DirectionView data={data} actions={actions} onNavigate={handleNavigate} />
-          </div>
+          useV2Api
+            ? <DirectionViewV2 data={data} actions={actions} onNavigate={handleNavigate} />
+            : <DirectionView data={data} actions={actions} onNavigate={handleNavigate} />
         )}
         {activeView === 'gouvernante' && (
           <GouvernanteView data={data} actions={actions} />
         )}
         {activeView === 'femme_chambre' && (
-          <MobileHousekeepingView data={data} actions={actions} />
+          useV2Api
+            ? <MobileHousekeepingViewV2 data={data} actions={actions} />
+            : <MobileHousekeepingView data={data} actions={actions} />
         )}
         {activeView === 'maintenance' && (
           <MobileMaintenanceView data={data} actions={actions} />
