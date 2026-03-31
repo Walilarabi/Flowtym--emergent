@@ -1,6 +1,7 @@
 /**
  * useHousekeepingV2 - Hook pour l'API NestJS Housekeeping V2
  * Utilise l'API /api/v2 avec support WebSocket temps réel
+ * Inclut le système de notifications pour gouvernantes
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
@@ -8,6 +9,7 @@ import { useHotel } from '@/context/HotelContext'
 import { io } from 'socket.io-client'
 import { toast } from 'sonner'
 import axios from 'axios'
+import { showCleaningCompletedToast } from '@/components/housekeeping/HousekeepingNotifications'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL
 
@@ -22,9 +24,11 @@ export function useHousekeepingV2() {
     rooms: [],
     staff: [],
     inspections: [],
+    notifications: [],
     loading: true,
     error: null,
     connected: false,
+    soundEnabled: true,
   })
 
   // Fetch all data
@@ -128,6 +132,29 @@ export function useHousekeepingV2() {
       socket.on('assignment_updated', (update) => {
         console.log('Assignment update received:', update)
         fetchData() // Refresh all data
+      })
+
+      // Handle cleaning completed notifications for gouvernante
+      socket.on('cleaning_completed', (notification) => {
+        console.log('Cleaning completed notification received:', notification)
+        
+        // Add notification to state
+        const newNotification = {
+          id: `notif_${Date.now()}_${notification.roomNumber}`,
+          ...notification,
+          receivedAt: new Date(),
+        }
+        
+        setData(d => ({
+          ...d,
+          notifications: [newNotification, ...d.notifications].slice(0, 20), // Keep last 20
+        }))
+        
+        // Show toast notification
+        showCleaningCompletedToast(notification)
+        
+        // Refresh inspections list
+        fetchData()
       })
     } catch (err) {
       console.log('WebSocket initialization failed, using HTTP polling:', err)
@@ -240,6 +267,22 @@ export function useHousekeepingV2() {
     }
   }, [hotelId, fetchData])
 
+  // Notification management
+  const clearAllNotifications = useCallback(() => {
+    setData(d => ({ ...d, notifications: [] }))
+  }, [])
+
+  const dismissNotification = useCallback((notificationId) => {
+    setData(d => ({
+      ...d,
+      notifications: d.notifications.filter(n => n.id !== notificationId)
+    }))
+  }, [])
+
+  const toggleSound = useCallback(() => {
+    setData(d => ({ ...d, soundEnabled: !d.soundEnabled }))
+  }, [])
+
   return {
     ...data,
     refresh: fetchData,
@@ -249,6 +292,10 @@ export function useHousekeepingV2() {
     assignTasks,
     autoAssign,
     validateInspection,
+    // Notifications
+    clearAllNotifications,
+    dismissNotification,
+    toggleSound,
   }
 }
 

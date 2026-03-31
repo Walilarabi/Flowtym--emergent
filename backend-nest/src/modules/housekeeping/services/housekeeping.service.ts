@@ -136,7 +136,7 @@ export class HousekeepingService {
       }
 
       // Create inspection record
-      await this.createInspection(hotelId, updatedTask);
+      const inspection = await this.createInspection(hotelId, updatedTask);
 
       // Emit updates
       this.gateway.emitTaskUpdate({
@@ -151,6 +151,19 @@ export class HousekeepingService {
         roomId: updatedTask.room_id.toString(),
         roomNumber: updatedTask.room_number,
         cleaningStatus: CleaningStatus.NETTOYEE,
+      });
+
+      // Emit notification for gouvernante - cleaning completed
+      this.gateway.emitCleaningCompletedNotification({
+        hotelId,
+        roomNumber: updatedTask.room_number,
+        roomType: updatedTask.room_type || 'Standard',
+        floor: updatedTask.floor || 1,
+        cleanedBy: updatedTask.assigned_to_name || 'Inconnu',
+        completedAt: new Date(),
+        inspectionId: inspection._id?.toString() || '',
+        taskType: updatedTask.task_type || 'depart',
+        isVip: updatedTask.client_badge === 'vip',
       });
 
       this.gateway.emitStatsRefresh(hotelId);
@@ -190,7 +203,7 @@ export class HousekeepingService {
 
   // ==================== INSPECTIONS ====================
 
-  async createInspection(hotelId: string, task: any): Promise<Inspection> {
+  async createInspection(hotelId: string, task: any): Promise<InspectionDocument> {
     const inspection = new this.inspectionModel({
       hotel_id: hotelId,
       room_id: task.room_id,

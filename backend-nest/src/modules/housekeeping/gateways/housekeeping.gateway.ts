@@ -28,6 +28,18 @@ interface TaskUpdate {
   assignedTo?: string;
 }
 
+interface CleaningCompletedNotification {
+  hotelId: string;
+  roomNumber: string;
+  roomType: string;
+  floor: number;
+  cleanedBy: string;
+  completedAt: Date;
+  inspectionId: string;
+  taskType: string;
+  isVip: boolean;
+}
+
 @WebSocketGateway({
   cors: {
     origin: '*',
@@ -113,6 +125,13 @@ export class HousekeepingGateway
   emitStatsRefresh(hotelId: string) {
     const roomName = `hotel_${hotelId}`;
     this.server.to(roomName).emit('stats_refresh');
+  }
+
+  // Emit cleaning completed notification for gouvernante
+  emitCleaningCompletedNotification(notification: CleaningCompletedNotification) {
+    const roomName = `hotel_${notification.hotelId}`;
+    this.server.to(roomName).emit('cleaning_completed', notification);
+    this.logger.log(`Cleaning completed notification: Room ${notification.roomNumber} by ${notification.cleanedBy}`);
   }
 
   // Get connected clients count for a hotel

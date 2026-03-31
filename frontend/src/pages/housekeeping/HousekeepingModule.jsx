@@ -37,6 +37,7 @@ import ReceptionViewV2 from '@/components/housekeeping/ReceptionViewV2'
 import DirectionViewV2 from '@/components/housekeeping/DirectionViewV2'
 import QRCodeManager from '@/components/housekeeping/QRCodeManager'
 import SatisfactionConfig from '@/components/housekeeping/SatisfactionConfig'
+import HousekeepingNotifications from '@/components/housekeeping/HousekeepingNotifications'
 
 // Hook V2 pour NestJS
 import useHousekeepingV2 from '@/hooks/useHousekeepingV2'
@@ -248,6 +249,10 @@ export default function HousekeepingModule() {
     validateInspection: dataV2.validateInspection,
     autoAssign: dataV2.autoAssign,
     assignTasks: dataV2.assignTasks,
+    // Notification actions
+    clearAllNotifications: dataV2.clearAllNotifications,
+    dismissNotification: dataV2.dismissNotification,
+    toggleSound: dataV2.toggleSound,
   }
 
   const actionsLegacy = {
@@ -382,6 +387,22 @@ export default function HousekeepingModule() {
 
           {/* Actions */}
           <div className="flex items-center gap-3">
+            {/* Notifications - Only for V2 API */}
+            {useV2Api && (
+              <HousekeepingNotifications
+                notifications={data.notifications || []}
+                onClearAll={actions.clearAllNotifications}
+                onDismiss={actions.dismissNotification}
+                onValidate={(notif) => {
+                  // Navigate to gouvernante view and highlight the inspection
+                  setActiveView('gouvernante')
+                  actions.dismissNotification(notif.id)
+                }}
+                soundEnabled={data.soundEnabled}
+                onToggleSound={actions.toggleSound}
+              />
+            )}
+            
             {/* V2 API Toggle */}
             <button 
               onClick={() => setUseV2Api(!useV2Api)}
