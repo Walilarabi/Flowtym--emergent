@@ -77,6 +77,22 @@ FLOWTYM est un PMS (Property Management System) SaaS hôtelier moderne, structur
 
 ## Changelog
 
+### 2026-03-31 - Vue Mobile & Dashboard Direction & Excel Import
+- ✅ **MobileHousekeepingViewV2** : Vue mobile femme de chambre complète
+  - Liste des tâches assignées avec progression
+  - Timer en temps réel pendant le nettoyage
+  - Boutons Démarrer/Terminer
+  - Dialog de confirmation avec photo et notes
+- ✅ **DirectionViewV2** : Dashboard Direction avec KPIs temps réel
+  - 5 KPIs principaux (chambres, occupation, départs, recouches, propreté)
+  - Plan des chambres interactif par étage
+  - Panneau équipe avec progression individuelle
+  - Actions rapides (Plan, Répartition, Contrôles, etc.)
+- ✅ **Parser Excel** : API d'import déjà fonctionnelle
+  - Template téléchargeable
+  - Preview avant import
+  - Validation des données
+
 ### 2026-03-31 - Restructuration Menu Operations
 - ✅ **Mega Menu Operations** avec 3 blocs fonctionnels :
   - **PMS** (vert émeraude) : Dashboard, Planning, Réservations, Check-in/out, Groups, Simulation, Rapports
