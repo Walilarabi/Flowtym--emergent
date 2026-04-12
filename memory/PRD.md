@@ -166,7 +166,11 @@ FLOWTYM est un PMS (Property Management System) SaaS hôtelier moderne, structur
 
 ## Changelog
 
-### 2026-04-12 - Migration Supabase (Étapes 1-4) + Flowboard + Housekeeping ✅
+### 2026-04-12 - Corrections P0 (Stats + PMS Bridge + Notifications) ✅
+- ✅ **Stats Housekeeping corrigées** : Format nested (rooms.total, tasks.departs, etc.) pour matcher ReceptionViewV2
+- ✅ **PMS Supabase Bridge** : Script JS injecté dans `flowtym-pms.html` charge rooms/reservations depuis Supabase REST API
+- ✅ **NotificationBell** : Service Realtime + composant cloche avec badge dans TopNavigation
+- ✅ **Tests** : 10/10 features passées (iteration_48)
 - ✅ **supabase-py** installé dans FastAPI + `@supabase/supabase-js` dans React
 - ✅ **Seed Supabase** : 1 hôtel, 3 étages, 5 utilisateurs (Auth), 11 chambres, 7 réservations, settings, 11 tâches ménage
 - ✅ **Auth migrée** : `AuthContext.jsx` utilise `supabase.auth.signInWithPassword()`
