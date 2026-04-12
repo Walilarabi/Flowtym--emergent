@@ -27,13 +27,7 @@ const operationsBlocks = {
     colorLight: '#D1FAE5',
     icon: Building2,
     items: [
-      { id: 'pms-dashboard', label: 'Dashboard PMS', icon: LayoutDashboard, path: '/pms', description: 'Vue synthétique KPI, alertes' },
-      { id: 'planning', label: 'Planning', icon: CalendarDays, path: '/pms/planning', description: 'Chambres × Dates, drag & drop' },
-      { id: 'reservations', label: 'Réservations', icon: CalendarCheck, path: '/pms/reservations', description: 'Liste, recherche, actions' },
-      { id: 'checkinout', label: 'Check-in / Check-out', icon: CircleUser, path: '/pms/arrivals', description: 'Scan ID, signature, paiement' },
-      { id: 'groups', label: 'Groups & Séminaires', icon: Users, path: '/pms/groups', description: 'Allotements, rooming list' },
-      { id: 'simulation', label: 'Simulation & Offres', icon: Calculator, path: '/pms/simulation', description: 'Devis, proforma, conversion' },
-      { id: 'reports', label: 'Rapports PMS', icon: BarChart3, path: '/pms/reports', description: 'Occupation, CA, RevPAR' },
+      { id: 'pms-dashboard', label: 'PMS', icon: Building2, path: '/pms', description: 'Gestion hôtelière complète' },
     ]
   },
   terrain: {
