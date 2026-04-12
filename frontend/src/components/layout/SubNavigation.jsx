@@ -26,7 +26,7 @@ const staffSubNav = [
 export const SubNavigation = () => {
   const location = useLocation()
   
-  const isPMS = location.pathname.startsWith('/pms')
+  const isPMS = location.pathname.startsWith('/pms') && location.pathname !== '/pms'
   const isStaff = location.pathname.startsWith('/staff')
   
   if (!isPMS && !isStaff) return null

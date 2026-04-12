@@ -1,0 +1,82 @@
+{
+  "summary": "PMS iframe integration testing completed. All 12 test features verified. Backend endpoints /api/pms-app and /api/pms-plan3d working (9/9 pytest tests passed). Frontend PMSModule with iframe wrapper, toolbar, and embedded mode all functioning correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "PMS iframe", "issues": ["Console warning: iframe sandbox allows script escape (security consideration, not blocking)"]}
+    ]
+  },
+  "passed_tests": [
+    "Backend: GET /api/pms-app returns 200 status",
+    "Backend: GET /api/pms-app returns text/html content-type",
+    "Backend: /api/pms-app HTML has iframe detection script (embedded-mode class)",
+    "Backend: /api/pms-app HTML has CSS to hide topbar in embedded mode",
+    "Backend: GET /api/pms-plan3d returns 200 status",
+    "Backend: GET /api/pms-plan3d returns text/html content-type",
+    "Backend: /api/pms-app has navigation elements (Planning, Réservations, Check-in, Clients, Tarifs)",
+    "Backend: POST /api/pms-app returns 405 Method Not Allowed",
+    "Backend: POST /api/pms-plan3d returns 405 Method Not Allowed",
+    "Frontend: /pms route loads PMSModule component (data-testid='pms-module-container')",
+    "Frontend: PMS iframe loads correctly (data-testid='pms-iframe')",
+    "Frontend: Toolbar 'PMS Flowtym v2.3' text visible",
+    "Frontend: Refresh button present (data-testid='pms-refresh-btn')",
+    "Frontend: External link button present (data-testid='pms-external-btn')",
+    "Frontend: Fullscreen button present (data-testid='pms-fullscreen-btn')",
+    "Frontend: Topbar hidden in iframe (embedded mode working)",
+    "Frontend: SubNavigation NOT displayed on /pms (exact match)",
+    "Frontend: Operations mega menu contains Dashboard PMS link",
+    "Frontend: Dashboard PMS link navigates to /pms",
+    "Frontend: PMS internal navigation works (Planning, Reservations, Check-in/out, Clients, etc.)",
+    "Frontend: /housekeeping route still accessible",
+    "Frontend: /flowboard route still accessible"
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_pms_integration.py",
+    "/app/test_reports/pytest/pytest_pms_integration.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Minor: iframe sandbox attribute allows both allow-scripts and allow-same-origin which could be a security consideration (console warning)"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_pms_integration.py"
+  ],
+  "success_rate": {
+    "backend": "100% (9/9 pytest tests passed)",
+    "frontend": "100% (All UI components working)"
+  },
+  "test_credentials": {
+    "admin": "admin@flowtym.com / admin123"
+  },
+  "seed_data_creation": "None required - using existing hotel data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "PMS iframe integration fully tested. PMSModule at /pms renders standalone PMS HTML in iframe with embedded mode (topbar hidden). Toolbar has refresh/external/fullscreen buttons. SubNavigation correctly hidden on /pms but shown on /pms/planning etc. Operations mega menu has Dashboard PMS link. Internal PMS navigation (Planning, Reservations, Check-in/out, Clients, Tarifs, etc.) works within iframe.",
+  "features_verified": {
+    "backend_endpoints": {
+      "/api/pms-app": "Serves flowtym-pms.html with 200 status and text/html content-type",
+      "/api/pms-plan3d": "Serves plan3d.html with 200 status and text/html content-type"
+    },
+    "pms_html_features": {
+      "iframe_detection": "Script adds 'embedded-mode' class to html when in iframe",
+      "topbar_hiding": "CSS rule 'html.embedded-mode .topbar{display:none!important}' hides topbar",
+      "internal_navigation": "Planning, Reservations, Check-in/out, Clients, Groups & Séminaires, Simulation & Offres, Tarifs & Rate Plans, Rapports, Configuration"
+    },
+    "react_integration": {
+      "route": "/pms loads PMSModule component",
+      "iframe": "data-testid='pms-iframe' with src pointing to /api/pms-app",
+      "toolbar": "PMS Flowtym v2.3 label with refresh/external/fullscreen buttons",
+      "layout": "MainLayout removes p-6 padding on /pms route",
+      "subnav": "SubNavigation hidden on /pms exact, shown on /pms/* routes"
+    },
+    "operations_menu": {
+      "mega_menu": "3 columns - PMS, Opérations Terrain, Achats & Conformité",
+      "dashboard_pms_link": "data-testid='nav-pms-dashboard' navigates to /pms"
+    }
+  }
+}

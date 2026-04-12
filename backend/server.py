@@ -1,5 +1,5 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, Request
-from fastapi.responses import Response
+from fastapi.responses import Response, FileResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -5158,6 +5158,25 @@ api_router.include_router(consignes_router)
 
 # Include the router in the main app
 app.include_router(api_router)
+
+# ===================== PMS STANDALONE HTML SERVING =====================
+PMS_STATIC_DIR = ROOT_DIR / "static" / "pms"
+
+@app.get("/api/pms-app")
+async def serve_pms_app():
+    """Serve the standalone PMS HTML application"""
+    pms_file = PMS_STATIC_DIR / "flowtym-pms.html"
+    if not pms_file.exists():
+        raise HTTPException(status_code=404, detail="PMS application file not found")
+    return FileResponse(pms_file, media_type="text/html")
+
+@app.get("/api/pms-plan3d")
+async def serve_pms_plan3d():
+    """Serve the standalone Plan 3D HTML application"""
+    plan_file = PMS_STATIC_DIR / "plan3d.html"
+    if not plan_file.exists():
+        raise HTTPException(status_code=404, detail="Plan 3D application file not found")
+    return FileResponse(plan_file, media_type="text/html")
 
 app.add_middleware(
     CORSMiddleware,

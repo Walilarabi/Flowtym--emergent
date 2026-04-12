@@ -49,6 +49,7 @@ import ConsignesModule from '@/pages/consignes/ConsignesModule'
 import MaintenanceModule from '@/pages/maintenance/MaintenanceModule'
 import SimulationModule from '@/pages/simulation/SimulationModule'
 import FinanceModule from '@/pages/finance/FinanceModule'
+import PMSModule from '@/pages/pms/PMSModule'
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth()
@@ -111,6 +112,7 @@ const AppRoutes = () => {
                   <Route path="/flowboard" element={<Flowboard />} />
                   <Route path="/flowboard/*" element={<Flowboard />} />
                   {/* Operations - PMS Routes */}
+                  <Route path="/pms" element={<PMSModule />} />
                   <Route path="/pms/planning" element={<PlanningPage />} />
                   <Route path="/pms/reservations" element={<ReservationsPage />} />
                   <Route path="/pms/clients" element={<ClientsPage />} />

@@ -4,9 +4,12 @@ import { useHotel } from '@/context/HotelContext'
 import { SetupWizard } from '@/components/setup/SetupWizard'
 import { CommandPalette } from '@/components/CommandPalette'
 import { SupportFloatingButton } from '@/components/support/SupportFloatingButton'
+import { useLocation } from 'react-router-dom'
 
 export const MainLayout = ({ children }) => {
   const { currentHotel, loading } = useHotel()
+  const location = useLocation()
+  const isPMSFullModule = location.pathname === '/pms'
 
   if (loading) {
     return (
@@ -27,7 +30,7 @@ export const MainLayout = ({ children }) => {
     <div className="h-screen w-screen flex flex-col overflow-hidden" style={{ background: 'var(--bg-app, #F8F9FC)' }}>
       <TopNavigation />
       <SubNavigation />
-      <main className="flex-1 overflow-auto p-6">
+      <main className={`flex-1 overflow-auto ${isPMSFullModule ? 'p-0' : 'p-6'}`}>
         {children}
       </main>
       {/* Command Palette - CTRL+K */}
