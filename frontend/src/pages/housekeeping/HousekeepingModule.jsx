@@ -232,17 +232,15 @@ const useHousekeepingData = () => {
 
 export default function HousekeepingModule() {
   const [activeView, setActiveView] = useState('reception')
-  const [useV2Api, setUseV2Api] = useState(true) // Toggle for V2 API
+  const useV2Api = true // Always use Supabase V2
   
-  // Use V2 hook for NestJS API
+  // Use V2 hook (Supabase Realtime)
   const dataV2 = useHousekeepingV2()
-  // Fallback to legacy hook
-  const dataLegacy = useHousekeepingData()
   
-  // Select data source based on toggle
-  const data = useV2Api ? dataV2 : dataLegacy
+  // Select data source
+  const data = dataV2
 
-  const actionsV2 = {
+  const actions = {
     refresh: dataV2.refresh,
     seedData: dataV2.seedData,
     startTask: dataV2.startTask,
@@ -250,24 +248,10 @@ export default function HousekeepingModule() {
     validateInspection: dataV2.validateInspection,
     autoAssign: dataV2.autoAssign,
     assignTasks: dataV2.assignTasks,
-    // Notification actions
     clearAllNotifications: dataV2.clearAllNotifications,
     dismissNotification: dataV2.dismissNotification,
     toggleSound: dataV2.toggleSound,
   }
-
-  const actionsLegacy = {
-    refresh: dataLegacy.refresh,
-    seedData: dataLegacy.seedData,
-    startTask: dataLegacy.startTask,
-    completeTask: dataLegacy.completeTask,
-    validateInspection: dataLegacy.validateInspection,
-    autoAssign: dataLegacy.autoAssign,
-    updateBreakfast: dataLegacy.updateBreakfast,
-    updateMaintenance: dataLegacy.updateMaintenance
-  }
-
-  const actions = useV2Api ? actionsV2 : actionsLegacy
 
   // Navigation handler for Direction view
   const handleNavigate = (view) => {
