@@ -86,7 +86,7 @@ const TimelineEvent = ({ event }) => {
     low: 'bg-slate-50 text-slate-500 border-slate-100',
   };
   
-  const time = new Date(event.time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const time = event.time && event.time.includes(':') ? event.time : new Date(event.time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   
   return (
     <div 

@@ -166,12 +166,15 @@ FLOWTYM est un PMS (Property Management System) SaaS hôtelier moderne, structur
 
 ## Changelog
 
-### 2026-04-12 - Migration Supabase (Étapes 1-4) ✅
+### 2026-04-12 - Migration Supabase (Étapes 1-4) + Flowboard ✅
 - ✅ **supabase-py** installé dans FastAPI + `@supabase/supabase-js` dans React
 - ✅ **Seed Supabase** : 1 hôtel (Flowtym Paris), 3 étages, 5 utilisateurs (Auth), 11 chambres, 7 réservations, settings
 - ✅ **Auth migrée** : `AuthContext.jsx` utilise `supabase.auth.signInWithPassword()` au lieu de JWT MongoDB
 - ✅ **HotelContext migrée** : Charge hôtels et chambres depuis Supabase avec fallback API legacy
 - ✅ **Login testé** : admin@flowtym.com → Connexion réussie, profil chargé, hôtel "Flowtym Paris" affiché
+- ✅ **Flowboard migrée** : KPIs (TO%, Arrivées, Départs, En séjour, Chambres libres, Ménage) calculés depuis Supabase
+- ✅ **Supabase Realtime** : Flowboard écoute les changements sur `reservations`, `rooms`, `room_cleaning_tasks`
+- ✅ **Tests** : 11/11 features validées (iteration_47), bug "Invalid Date" corrigé
 
 ### 2026-04-12 - Intégration PMS Standalone dans Operations ✅
 - ✅ **Backend**: Endpoints `/api/pms-app` et `/api/pms-plan3d` servent les fichiers HTML standalone
