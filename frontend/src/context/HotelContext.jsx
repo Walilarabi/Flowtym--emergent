@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { useAuth } from './AuthContext'
+import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 
 const HotelContext = createContext(null)
@@ -21,13 +22,28 @@ export const HotelProvider = ({ children }) => {
 
   const fetchHotels = useCallback(async () => {
     try {
-      const response = await api.get('/hotels')
-      setHotels(response.data)
-      if (response.data.length > 0) {
-        const userHotel = user?.hotel_id 
-          ? response.data.find(h => h.id === user.hotel_id)
-          : response.data[0]
-        setCurrentHotel(userHotel || response.data[0])
+      // Try Supabase first
+      const { data, error } = await supabase
+        .from('hotels')
+        .select('*')
+        .eq('is_active', true)
+      
+      if (!error && data && data.length > 0) {
+        setHotels(data)
+        const userHotel = user?.hotel_id
+          ? data.find(h => h.id === user.hotel_id)
+          : data[0]
+        setCurrentHotel(userHotel || data[0])
+      } else {
+        // Fallback to legacy API
+        const response = await api.get('/hotels')
+        setHotels(response.data)
+        if (response.data.length > 0) {
+          const userHotel = user?.hotel_id
+            ? response.data.find(h => h.id === user.hotel_id)
+            : response.data[0]
+          setCurrentHotel(userHotel || response.data[0])
+        }
       }
     } catch (error) {
       console.error('Failed to fetch hotels:', error)
@@ -39,8 +55,21 @@ export const HotelProvider = ({ children }) => {
   const fetchRooms = useCallback(async () => {
     if (!currentHotel) return
     try {
-      const response = await api.get(`/hotels/${currentHotel.id}/rooms`)
-      setRooms(response.data)
+      // Try Supabase first
+      const { data, error } = await supabase
+        .from('rooms')
+        .select('*')
+        .eq('hotel_id', currentHotel.id)
+        .eq('is_active', true)
+        .order('room_number')
+
+      if (!error && data) {
+        setRooms(data)
+      } else {
+        // Fallback to legacy API
+        const response = await api.get(`/hotels/${currentHotel.id}/rooms`)
+        setRooms(response.data)
+      }
     } catch (error) {
       console.error('Failed to fetch rooms:', error)
     }
@@ -58,14 +87,19 @@ export const HotelProvider = ({ children }) => {
 
   const createHotel = async (hotelData) => {
     try {
-      const response = await api.post('/hotels', hotelData)
-      setHotels((prev) => [...prev, response.data])
-      setCurrentHotel(response.data)
-      updateUser({ hotel_id: response.data.id })
-      toast.success('Hotel cree avec succes')
-      return response.data
+      const { data, error } = await supabase
+        .from('hotels')
+        .insert(hotelData)
+        .select()
+        .single()
+      if (error) throw error
+      setHotels((prev) => [...prev, data])
+      setCurrentHotel(data)
+      updateUser({ hotel_id: data.id })
+      toast.success('Hôtel créé avec succès')
+      return data
     } catch (error) {
-      toast.error('Erreur lors de la creation de l\'hotel')
+      toast.error('Erreur lors de la création de l\'hôtel')
       throw error
     }
   }
@@ -78,12 +112,17 @@ export const HotelProvider = ({ children }) => {
   const createRoom = async (roomData) => {
     if (!currentHotel) return
     try {
-      const response = await api.post(`/hotels/${currentHotel.id}/rooms`, roomData)
-      setRooms((prev) => [...prev, response.data])
-      toast.success('Chambre creee avec succes')
-      return response.data
+      const { data, error } = await supabase
+        .from('rooms')
+        .insert({ ...roomData, hotel_id: currentHotel.id })
+        .select()
+        .single()
+      if (error) throw error
+      setRooms((prev) => [...prev, data])
+      toast.success('Chambre créée avec succès')
+      return data
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Erreur lors de la creation de la chambre')
+      toast.error('Erreur lors de la création de la chambre')
       throw error
     }
   }

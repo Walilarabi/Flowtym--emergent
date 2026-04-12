@@ -5,17 +5,24 @@ FLOWTYM est un PMS (Property Management System) SaaS hôtelier moderne, structur
 
 ## Architecture Technique
 
-### Stack Actuelle (Hybride/Transition)
-- **Backend Legacy (FastAPI)**: Port 8001 - API existante pour PMS, Auth, Booking
-- **Backend Cible (NestJS)**: Port 8002 - API V2 pour Housekeeping avec WebSocket temps réel
+### Stack Actuelle (Migration Supabase en cours)
+- **Backend Legacy (FastAPI)**: Port 8001 - API existante (en coexistence)
+- **Backend Cible (NestJS)**: Port 8002 - API V2 Housekeeping (en coexistence)
 - **Frontend (React/Vite)**: Port 3000 - Interface unifiée
-- **Base de données**: MongoDB
-- **Proxy**: FastAPI route `/api/v2/*` vers NestJS
+- **Base de données**: Supabase PostgreSQL (migration depuis MongoDB)
+- **Auth**: Supabase Auth (JWT natif, sessions gérées côté client)
+- **Realtime**: Supabase Realtime (remplacement WebSocket NestJS)
+- **Proxy**: FastAPI route `/api/v2/*` vers NestJS (legacy)
+
+### Supabase
+- URL: `https://mqdftrilwqdsnvryejsb.supabase.co`
+- 37 tables PostgreSQL avec FK, enums, et RLS
+- Enums: `user_role`, `room_status`, `reservation_status`, `cleaning_status`, etc.
 
 ### Décisions d'Architecture
-1. **Coexistence temporaire**: FastAPI (legacy) + NestJS (cible)
-2. **Migration progressive**: Nouvelles features sur NestJS uniquement
-3. **UUID comme identifiant hotel**: Compatible avec FastAPI et NestJS
+1. **Migration Supabase**: Auth + Hotels + Rooms + Reservations migrés
+2. **Coexistence temporaire**: FastAPI/NestJS gardés en parallèle pendant la migration
+3. **Frontend Supabase-first**: AuthContext et HotelContext utilisent Supabase avec fallback API legacy
 
 ## Module Housekeeping - MVP Réception ✅
 
@@ -150,11 +157,21 @@ FLOWTYM est un PMS (Property Management System) SaaS hôtelier moderne, structur
 - [ ] Phase 3: Conciergerie IA, automatisations avancées
 
 ## Credentials Test
-- Admin: `admin@flowtym.com` / `admin123`
-- Super Admin: `superadmin@flowtym.com` / `super123`
-- Hotel ID (UUID): `4f02769a-5f63-4121-bb97-a7061563d934`
+- Admin: `admin@flowtym.com` / `admin123` (Supabase Auth)
+- Réception: `reception@hotel.com` / `reception123` (Supabase Auth)
+- Gouvernante: `gouvernante@hotel.com` / `gouv123` (Supabase Auth)
+- Femme de chambre: `femme1@hotel.com` / `femme123` (Supabase Auth)
+- Maintenance: `maintenance@hotel.com` / `maint123` (Supabase Auth)
+- Hotel ID: `fae266ac-2f4c-4297-af9f-b3b988d86c5b`
 
 ## Changelog
+
+### 2026-04-12 - Migration Supabase (Étapes 1-4) ✅
+- ✅ **supabase-py** installé dans FastAPI + `@supabase/supabase-js` dans React
+- ✅ **Seed Supabase** : 1 hôtel (Flowtym Paris), 3 étages, 5 utilisateurs (Auth), 11 chambres, 7 réservations, settings
+- ✅ **Auth migrée** : `AuthContext.jsx` utilise `supabase.auth.signInWithPassword()` au lieu de JWT MongoDB
+- ✅ **HotelContext migrée** : Charge hôtels et chambres depuis Supabase avec fallback API legacy
+- ✅ **Login testé** : admin@flowtym.com → Connexion réussie, profil chargé, hôtel "Flowtym Paris" affiché
 
 ### 2026-04-12 - Intégration PMS Standalone dans Operations ✅
 - ✅ **Backend**: Endpoints `/api/pms-app` et `/api/pms-plan3d` servent les fichiers HTML standalone

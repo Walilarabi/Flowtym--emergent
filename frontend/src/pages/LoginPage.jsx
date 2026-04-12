@@ -33,7 +33,7 @@ export const LoginPage = () => {
         navigate('/flowboard')
       }
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Email ou mot de passe incorrect')
+      toast.error(error.message || 'Email ou mot de passe incorrect')
     } finally {
       setLoading(false)
     }
