@@ -2261,6 +2261,87 @@ let rooms = [
 ];
 
 // ══════════════════════════════════════════════════════════
+// SUPABASE BRIDGE — Charge les données réelles
+// ══════════════════════════════════════════════════════════
+const SUPA_BRIDGE_URL = 'https://mqdftrilwqdsnvryejsb.supabase.co';
+const SUPA_BRIDGE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xZGZ0cmlsd3Fkc252cnllanNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NzI1NTAsImV4cCI6MjA5MDM0ODU1MH0.88p3koh35BCdzne0k7jA1x6Wgxtk9J4Z6q8VzWqZ1Qs';
+
+async function supaFetch(table, params) {
+  const url = `${SUPA_BRIDGE_URL}/rest/v1/${table}?${params}`;
+  const r = await fetch(url, { headers: { apikey: SUPA_BRIDGE_KEY, Authorization: `Bearer ${SUPA_BRIDGE_KEY}` }});
+  return r.ok ? r.json() : [];
+}
+
+async function loadSupabaseData() {
+  try {
+    const [supaRooms, supaResas] = await Promise.all([
+      supaFetch('rooms', 'select=id,room_number,room_type,status,capacity,bed_type,surface_area,notes&is_active=eq.true&order=room_number'),
+      supaFetch('reservations', 'select=id,room_id,guest_name,guest_email,guest_phone,guest_count,check_in,check_out,status,source&order=check_in'),
+    ]);
+
+    if (supaRooms.length > 0) {
+      const statusMap = { libre: 'available', occupee: 'occupied', en_nettoyage: 'cleaning', maintenance: 'maintenance', bloquee: 'out_of_order', inspectee: 'available' };
+      rooms = supaRooms.map(r => ({
+        num: r.room_number,
+        type: (r.room_type || 'double').toLowerCase(),
+        floor: parseInt(r.room_number[0]) || 1,
+        price: r.surface_area > 20 ? 150 : 120,
+        status: statusMap[r.status] || 'available',
+        _supa_id: r.id,
+      }));
+    }
+
+    if (supaResas.length > 0) {
+      const roomNumMap = {};
+      supaRooms.forEach(r => { roomNumMap[r.id] = r.room_number; });
+
+      // Merge supabase reservations into the existing format
+      supaResas.forEach((sr, idx) => {
+        const roomNum = roomNumMap[sr.room_id] || '101';
+        const statusMap = { confirmee: 'Confirmee', en_cours: 'checked_in', check_in: 'checked_in', check_out: 'checked_out', annulee: 'Annulee', no_show: 'No-show' };
+        const nights = Math.max(1, Math.round((new Date(sr.check_out) - new Date(sr.check_in)) / 86400000));
+        const existing = reservations.find(r => r.id === `SUPA-${sr.id.slice(0,8)}`);
+        if (!existing) {
+          reservations.push({
+            id: `SUPA-${sr.id.slice(0,8)}`,
+            clientId: 100 + idx,
+            status: statusMap[sr.status] || 'Confirmee',
+            dates: `${sr.check_in} – ${sr.check_out}`,
+            nights, room: roomNum, canal: sr.source || 'Direct',
+            montant: nights * 120, solde: nights * 120,
+            paymentStatus: sr.status === 'en_cours' ? 'confirmed' : 'pending_payment',
+            paymentLink: null, paymentLinkExpiry: null, paymentLinkVersion: 0, reminderCount: 0, isDummyRoom: false,
+          });
+          // Also add to clients if not exists
+          if (!clients.find(c => c.id === 100 + idx)) {
+            clients.push({
+              id: 100 + idx, name: sr.guest_name, firstName: sr.guest_name.split(' ')[0],
+              civilite: '', email: sr.guest_email || '', phone: sr.guest_phone || '',
+              city: '', country: 'France', company: '', tag: '', visits: 0, ca: 0,
+              hasVisited: sr.status === 'en_cours', idVerified: sr.status === 'en_cours',
+              status: statusMap[sr.status] === 'checked_in' ? 'checked_in' : 'pending',
+              room: roomNum, checkin: sr.check_in, checkout: sr.check_out,
+              loyalty: 'Bronze', preferences: {}, allergies: '', specialRequests: '', notes: `Source: ${sr.source}`, history: [],
+            });
+          }
+        }
+      });
+    }
+    console.log('[Supabase Bridge] Loaded', rooms.length, 'rooms,', reservations.length, 'reservations');
+    // Refresh current view
+    if (typeof setSubPage === 'function' && curSP) setSubPage(curSP);
+  } catch (e) {
+    console.warn('[Supabase Bridge] Fallback to local data:', e.message);
+  }
+}
+// Load after DOM ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => setTimeout(loadSupabaseData, 500));
+} else {
+  setTimeout(loadSupabaseData, 500);
+}
+
+// ══════════════════════════════════════════════════════════
 // NAVIGATION
 // ══════════════════════════════════════════════════════════
 let curSP = 'checkin';

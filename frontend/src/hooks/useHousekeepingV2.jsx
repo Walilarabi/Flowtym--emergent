@@ -75,25 +75,49 @@ export function useHousekeepingV2() {
         room_number: i.rooms?.room_number || 'N/A',
       }))
 
-      // Compute stats
+      // Compute stats - format matching ReceptionViewV2 expectations
+      const departsCount = tasks.filter(t => t.cleaning_type === 'depart').length
+      const recouchesCount = tasks.filter(t => t.cleaning_type === 'recouche').length
       const pending = tasks.filter(t => t.status === 'a_faire').length
       const inProgress = tasks.filter(t => t.status === 'en_cours').length
       const completed = tasks.filter(t => t.status === 'termine').length
       const refused = tasks.filter(t => t.status === 'refuse').length
+      const cleanRooms = rooms.filter(r => r.status === 'libre' || r.status === 'inspectee').length
 
       const stats = {
+        rooms: {
+          total: rooms.length,
+          libre: rooms.filter(r => r.status === 'libre').length,
+          occupee: rooms.filter(r => r.status === 'occupee').length,
+          en_nettoyage: rooms.filter(r => r.status === 'en_nettoyage').length,
+          inspectee: rooms.filter(r => r.status === 'inspectee').length,
+          maintenance: rooms.filter(r => r.status === 'maintenance' || r.status === 'bloquee').length,
+        },
+        tasks: {
+          total: tasks.length,
+          a_faire: pending,
+          en_cours: inProgress,
+          termine: completed,
+          refuse: refused,
+          departs: departsCount,
+          recouches: recouchesCount,
+        },
+        inspections: {
+          total: inspections.length,
+          en_attente: inspections.filter(i => i.is_approved === null).length,
+          validees: inspections.filter(i => i.is_approved === true).length,
+          refusees: inspections.filter(i => i.is_approved === false).length,
+        },
+        occupancy_rate: rooms.length > 0 ? Math.round((rooms.filter(r => r.status === 'occupee').length / rooms.length) * 100) : 0,
+        cleanliness_rate: rooms.length > 0 ? Math.round((cleanRooms / rooms.length) * 100) : 0,
+        completion_rate: tasks.length > 0 ? Math.round((completed / tasks.length) * 100) : 0,
+        staff_count: staff.filter(s => s.role === 'femme_de_chambre').length,
+        // Flat aliases for backward compatibility
         total_rooms: rooms.length,
-        rooms_clean: rooms.filter(r => r.status === 'libre' || r.status === 'inspectee').length,
-        rooms_dirty: rooms.filter(r => r.status === 'en_nettoyage').length,
-        rooms_occupied: rooms.filter(r => r.status === 'occupee').length,
-        rooms_maintenance: rooms.filter(r => r.status === 'maintenance' || r.status === 'bloquee').length,
         tasks_pending: pending,
         tasks_in_progress: inProgress,
         tasks_completed: completed,
-        tasks_refused: refused,
         tasks_total: tasks.length,
-        completion_rate: tasks.length > 0 ? Math.round((completed / tasks.length) * 100) : 0,
-        staff_count: staff.filter(s => s.role === 'femme_de_chambre').length,
       }
 
       setData(d => ({

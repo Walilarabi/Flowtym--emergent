@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { NotificationBell } from './NotificationBell'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // NOUVELLE STRUCTURE OPERATIONS - 3 BLOCS FONCTIONNELS
@@ -490,14 +491,8 @@ export const TopNavigation = () => {
           <Moon className="w-4 h-4" />
         </button>
         
-        {/* Notifications */}
-        <button 
-          className="p-2 rounded-lg relative transition-all duration-150 hover:bg-slate-100"
-          style={{ color: '#6B7280' }}
-        >
-          <Bell className="w-4 h-4" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full ring-2 ring-white" style={{ background: '#EF4444' }} />
-        </button>
+        {/* Notifications - Supabase Realtime */}
+        <NotificationBell />
 
         {/* Hotel Selector */}
         <DropdownMenu>
