@@ -140,8 +140,12 @@ FLOWTYM est un PMS (Property Management System) SaaS hôtelier moderne, structur
 - [ ] WebSockets temps réel (actuellement HTTP polling 30s)
 - [ ] Scanner QR code physique
 - [ ] Upload photos vers Object Storage
+- [ ] Phase 4 Housekeeping — Historique & Statistiques (indice de confiance, performance employés)
+- [ ] Phase 5 Housekeeping — Maintenance (préventive/corrective)
 
 ### P2 - Phases futures
+- [ ] Rapports et Exports PDF (Housekeeping)
+- [ ] Résolution WebSockets WSS (fonctionnel en HTTP Polling)
 - [ ] Phase 2: Marketing, Guest Experience, Channel Manager
 - [ ] Phase 3: Conciergerie IA, automatisations avancées
 
@@ -151,6 +155,14 @@ FLOWTYM est un PMS (Property Management System) SaaS hôtelier moderne, structur
 - Hotel ID (UUID): `4f02769a-5f63-4121-bb97-a7061563d934`
 
 ## Changelog
+
+### 2026-04-12 - Intégration PMS Standalone dans Operations ✅
+- ✅ **Backend**: Endpoints `/api/pms-app` et `/api/pms-plan3d` servent les fichiers HTML standalone
+- ✅ **Frontend PMSModule**: Composant iframe wrapper (`/pms`) avec toolbar (refresh/external/fullscreen)
+- ✅ **Isolation CSS/JS**: Le PMS s'exécute dans un iframe avec mode embedded (topbar masquée)
+- ✅ **Layout adapté**: MainLayout retire le padding sur `/pms`, SubNavigation masquée sur `/pms` exact
+- ✅ **Navigation PMS interne**: Planning, Réservations, Check-in/out, Clients, Tarifs, Rapports, Configuration
+- ✅ **Tests**: 100% backend (9/9 pytest) + 100% frontend (iteration_46)
 
 ### 2026-03-31 - Notifications Push Gouvernante ✅
 - ✅ **HousekeepingNotifications** : Composant complet avec icône de cloche
