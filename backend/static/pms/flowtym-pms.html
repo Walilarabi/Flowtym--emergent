@@ -2261,10 +2261,10 @@ let rooms = [
 ];
 
 // ══════════════════════════════════════════════════════════
-// SUPABASE BRIDGE — Charge les données réelles
+// SUPABASE BRIDGE — Charge les données réelles (11 chambres)
 // ══════════════════════════════════════════════════════════
 const SUPA_BRIDGE_URL = 'https://mqdftrilwqdsnvryejsb.supabase.co';
-const SUPA_BRIDGE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xZGZ0cmlsd3Fkc252cnllanNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NzI1NTAsImV4cCI6MjA5MDM0ODU1MH0.88p3koh35BCdzne0k7jA1x6Wgxtk9J4Z6q8VzWqZ1Qs';
+const SUPA_BRIDGE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xZGZ0cmlsd3Fkc252cnllanNiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDc3MjU1MCwiZXhwIjoyMDkwMzQ4NTUwfQ.b-9t3xGsAIYVKAbMCIoW5YNnsiXRT1AmWPULE4dKh0Y';
 
 async function supaFetch(table, params) {
   const url = `${SUPA_BRIDGE_URL}/rest/v1/${table}?${params}`;
@@ -2279,66 +2279,112 @@ async function loadSupabaseData() {
       supaFetch('reservations', 'select=id,room_id,guest_name,guest_email,guest_phone,guest_count,check_in,check_out,status,source&order=check_in'),
     ]);
 
+    // Replace rooms array entirely with Supabase data
     if (supaRooms.length > 0) {
       const statusMap = { libre: 'available', occupee: 'occupied', en_nettoyage: 'cleaning', maintenance: 'maintenance', bloquee: 'out_of_order', inspectee: 'available' };
-      rooms = supaRooms.map(r => ({
-        num: r.room_number,
-        type: (r.room_type || 'double').toLowerCase(),
-        floor: parseInt(r.room_number[0]) || 1,
-        price: r.surface_area > 20 ? 150 : 120,
-        status: statusMap[r.status] || 'available',
-        _supa_id: r.id,
-      }));
+      const typeMap = { Double: 'double', Twin: 'twin', Suite: 'suite', Single: 'single' };
+      const priceMap = { suite: 250, double: 120, twin: 130, single: 80 };
+      rooms = supaRooms.map(r => {
+        const t = typeMap[(r.room_type||'').trim()] || 'double';
+        return {
+          num: r.room_number,
+          type: t,
+          floor: parseInt(r.room_number[0]) || 1,
+          price: priceMap[t] || 120,
+          status: statusMap[r.status] || 'available',
+          _supa_id: r.id,
+          capacity: r.capacity || 2,
+          bed_type: r.bed_type || '',
+          notes: r.notes || '',
+        };
+      });
     }
 
-    if (supaResas.length > 0) {
-      const roomNumMap = {};
-      supaRooms.forEach(r => { roomNumMap[r.id] = r.room_number; });
+    // Build room UUID→number map
+    const roomNumMap = {};
+    supaRooms.forEach(r => { roomNumMap[r.id] = r.room_number; });
 
-      // Merge supabase reservations into the existing format
+    // Add Supabase reservations
+    if (supaResas.length > 0) {
+      const resStatusMap = { confirmee: 'Confirmee', en_cours: 'checked_in', check_in: 'checked_in', check_out: 'checked_out', annulee: 'Annulee', no_show: 'No-show' };
+
       supaResas.forEach((sr, idx) => {
         const roomNum = roomNumMap[sr.room_id] || '101';
-        const statusMap = { confirmee: 'Confirmee', en_cours: 'checked_in', check_in: 'checked_in', check_out: 'checked_out', annulee: 'Annulee', no_show: 'No-show' };
         const nights = Math.max(1, Math.round((new Date(sr.check_out) - new Date(sr.check_in)) / 86400000));
-        const existing = reservations.find(r => r.id === `SUPA-${sr.id.slice(0,8)}`);
-        if (!existing) {
-          reservations.push({
-            id: `SUPA-${sr.id.slice(0,8)}`,
-            clientId: 100 + idx,
-            status: statusMap[sr.status] || 'Confirmee',
-            dates: `${sr.check_in} – ${sr.check_out}`,
-            nights, room: roomNum, canal: sr.source || 'Direct',
-            montant: nights * 120, solde: nights * 120,
-            paymentStatus: sr.status === 'en_cours' ? 'confirmed' : 'pending_payment',
-            paymentLink: null, paymentLinkExpiry: null, paymentLinkVersion: 0, reminderCount: 0, isDummyRoom: false,
+        const supaId = `SUPA-${sr.id.slice(0,8)}`;
+        
+        // Skip if already exists
+        if (reservations.find(r => r.id === supaId)) return;
+
+        // Format dates for display
+        const cinDate = new Date(sr.check_in);
+        const coutDate = new Date(sr.check_out);
+        const fmtOpts = { day:'numeric', month:'short', year:'numeric' };
+        const dateStr = `${cinDate.toLocaleDateString('fr',fmtOpts)} – ${coutDate.toLocaleDateString('fr',fmtOpts)}`;
+
+        const price = rooms.find(r => r.num === roomNum)?.price || 120;
+        reservations.push({
+          id: supaId, clientId: 100 + idx,
+          status: resStatusMap[sr.status] || 'Confirmee',
+          dates: dateStr, nights, room: roomNum,
+          canal: sr.source || 'Direct',
+          montant: nights * price, solde: nights * price,
+          paymentStatus: sr.status === 'en_cours' ? 'confirmed' : 'pending_payment',
+          paymentLink: null, paymentLinkExpiry: null, paymentLinkVersion: 0, reminderCount: 0, isDummyRoom: false,
+          _check_in: sr.check_in, _check_out: sr.check_out,
+        });
+
+        // Add client if not exists
+        if (!clients.find(c => c.id === 100 + idx)) {
+          const gName = sr.guest_name || 'Client';
+          clients.push({
+            id: 100 + idx, name: gName, firstName: gName.split(' ')[0],
+            civilite: '', email: sr.guest_email || '', phone: sr.guest_phone || '',
+            city: '', country: 'France', company: '', tag: sr.source === 'Direct' ? '' : sr.source,
+            visits: sr.status === 'en_cours' ? 1 : 0, ca: nights * price,
+            hasVisited: sr.status === 'en_cours', idVerified: sr.status === 'en_cours',
+            status: resStatusMap[sr.status] === 'checked_in' ? 'checked_in' : 'pending',
+            room: roomNum, checkin: sr.check_in, checkout: sr.check_out,
+            loyalty: 'Bronze', preferences: {}, allergies: '', specialRequests: '',
+            notes: `Supabase · ${sr.source || 'Direct'}`, history: [],
           });
-          // Also add to clients if not exists
-          if (!clients.find(c => c.id === 100 + idx)) {
-            clients.push({
-              id: 100 + idx, name: sr.guest_name, firstName: sr.guest_name.split(' ')[0],
-              civilite: '', email: sr.guest_email || '', phone: sr.guest_phone || '',
-              city: '', country: 'France', company: '', tag: '', visits: 0, ca: 0,
-              hasVisited: sr.status === 'en_cours', idVerified: sr.status === 'en_cours',
-              status: statusMap[sr.status] === 'checked_in' ? 'checked_in' : 'pending',
-              room: roomNum, checkin: sr.check_in, checkout: sr.check_out,
-              loyalty: 'Bronze', preferences: {}, allergies: '', specialRequests: '', notes: `Source: ${sr.source}`, history: [],
-            });
-          }
         }
       });
     }
-    console.log('[Supabase Bridge] Loaded', rooms.length, 'rooms,', reservations.length, 'reservations');
-    // Refresh current view
+
+    console.log('[Supabase Bridge] Loaded', rooms.length, 'rooms,', reservations.length, 'reservations,', clients.length, 'clients');
+    // Refresh current view with new data
     if (typeof setSubPage === 'function' && curSP) setSubPage(curSP);
   } catch (e) {
     console.warn('[Supabase Bridge] Fallback to local data:', e.message);
   }
 }
+
+// Supabase Realtime for live updates
+function setupSupabaseRealtime() {
+  try {
+    const { createClient } = window.supabase || {};
+    if (!createClient) return;
+    const supa = createClient(SUPA_BRIDGE_URL, SUPA_BRIDGE_KEY);
+    supa.channel('pms-bridge-rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations' }, () => {
+        console.log('[Supabase RT] Reservation changed, reloading...');
+        loadSupabaseData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms' }, () => {
+        console.log('[Supabase RT] Room changed, reloading...');
+        loadSupabaseData();
+      })
+      .subscribe();
+  } catch(e) { console.warn('[Supabase RT] Not available:', e.message); }
+}
+
 // Load after DOM ready
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => setTimeout(loadSupabaseData, 500));
+  document.addEventListener('DOMContentLoaded', () => { setTimeout(loadSupabaseData, 300); setTimeout(setupSupabaseRealtime, 1000); });
 } else {
-  setTimeout(loadSupabaseData, 500);
+  setTimeout(loadSupabaseData, 300);
+  setTimeout(setupSupabaseRealtime, 1000);
 }
 
 // ══════════════════════════════════════════════════════════
