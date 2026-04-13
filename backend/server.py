@@ -5175,6 +5175,10 @@ app.include_router(payments_router)
 from routes.stripe_connect import router as stripe_connect_router
 app.include_router(stripe_connect_router)
 
+# Payment Automation routes
+from routes.payment_automation import router as payment_automation_router
+app.include_router(payment_automation_router)
+
 # ===================== PMS STANDALONE HTML SERVING =====================
 PMS_STATIC_DIR = ROOT_DIR / "static" / "pms"
 

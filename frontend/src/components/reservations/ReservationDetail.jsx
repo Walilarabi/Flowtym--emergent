@@ -26,6 +26,7 @@ import {
   Plus,
   Send,
 } from 'lucide-react';
+import PaymentBlock from './PaymentBlock';
 
 const STATUS_LABELS = {
   pending: { label: 'En attente', className: 'bg-amber-100 text-amber-700' },
@@ -127,6 +128,7 @@ export const ReservationDetail = ({ reservation, onClose, onUpdate }) => {
       <Tabs defaultValue="info" className="mt-6">
         <TabsList className="w-full">
           <TabsTrigger value="info" className="flex-1">Infos</TabsTrigger>
+          <TabsTrigger value="payment" className="flex-1">Paiement</TabsTrigger>
           <TabsTrigger value="client" className="flex-1">Client</TabsTrigger>
           <TabsTrigger value="billing" className="flex-1">Facturation</TabsTrigger>
           <TabsTrigger value="history" className="flex-1">Historique</TabsTrigger>
@@ -239,6 +241,15 @@ export const ReservationDetail = ({ reservation, onClose, onUpdate }) => {
               )}
             </div>
           </div>
+        </TabsContent>
+
+        {/* Payment Tab — Stripe Automation */}
+        <TabsContent value="payment" className="mt-4">
+          <PaymentBlock
+            reservation={reservation}
+            hotelId={currentHotel?.id}
+            onUpdate={onUpdate}
+          />
         </TabsContent>
 
         {/* Client Tab */}
