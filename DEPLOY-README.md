@@ -1,263 +1,195 @@
-# FLOWTYM PMS — Guide de Deploiement Production Final
+# FLOWTYM PMS — Guide de Deploiement Production
 
-## Architecture
-
-```
-flowtym.com
-├── app.flowtym.com  → Vercel (Frontend React/Vite)
-├── api.flowtym.com  → Railway (Backend FastAPI)
-├── Supabase Cloud   → PostgreSQL + Auth + Realtime
-└── Stripe Connect   → Paiements hotel
-```
-
----
-
-## 1. Base de donnees Supabase
-
-### Scripts SQL (dans l'ordre)
-
-| # | Fichier | Description | Status |
-|---|---------|-------------|--------|
-| 1 | `flowtym-final.sql` | Tables core (hotels, rooms, reservations, guests) + RLS + seed | EXECUTE |
-| 2 | `flowtym-automation.sql` | Moteur de regles yield management | EXECUTE |
-| 3 | `flowtym-payments.sql` | Tables paiements (transactions, links, webhooks, refunds) | EXECUTE |
-| 4 | `flowtym-stripe-connect.sql` | Stripe Connect (stripe_accounts, stripe_products) | EXECUTE |
-| 5 | `flowtym-cancellation-policies.sql` | Politiques d'annulation | EXECUTE |
-| 6 | `flowtym-maintenance.sql` | Tickets de maintenance | A EXECUTER |
-| 7 | `flowtym-sql-crm-staff.sql` | CRM + Staff tables | EXECUTE |
-| 8 | `flowtym-sql-rls-policies.sql` | Politiques RLS multi-tenant | EXECUTE |
-
-### Variables Supabase
+## Architecture Finale
 
 ```
-SUPABASE_URL=https://votre-projet.supabase.co
-SUPABASE_ANON_KEY=eyJ...
-SUPABASE_SERVICE_ROLE_KEY=eyJ...
+┌─────────────────────────────────────────────────────────────┐
+│                     flowtym.com (IONOS)                     │
+├──────────────────┬──────────────────┬───────────────────────┤
+│  www.flowtym.com │  app.flowtym.com │   api.flowtym.com     │
+│  Site vitrine    │  SaaS Frontend   │   API Backend         │
+│  (WordPress/     │  (Vercel)        │   (Railway)           │
+│   Framer/autre)  │  React/Vite      │   FastAPI             │
+└──────────────────┴──────────────────┴───────────────────────┘
+                                            │
+                                    ┌───────┴───────┐
+                                    │   Supabase    │
+                                    │  PostgreSQL   │
+                                    │  Auth+Realtime│
+                                    └───────────────┘
 ```
 
 ---
 
-## 2. Backend (Railway)
+## 1. Pre-requis
 
-### Variables d'environnement
+- [x] Projet Supabase cree (50+ tables, RLS, Realtime)
+- [ ] Compte Vercel (https://vercel.com)
+- [ ] Compte Railway (https://railway.app)
+- [ ] Acces DNS IONOS
+- [ ] Cles Stripe (https://dashboard.stripe.com/apikeys)
 
-```env
-# MongoDB (legacy)
-MONGO_URL=mongodb+srv://...
-DB_NAME=flowtym
+---
 
-# Supabase
-SUPABASE_URL=https://votre-projet.supabase.co
-SUPABASE_ANON_KEY=eyJ...
-SUPABASE_SERVICE_ROLE_KEY=eyJ...
+## 2. Deployer le Frontend (Vercel → app.flowtym.com)
 
-# Stripe
-STRIPE_API_KEY=sk_live_xxx
-STRIPE_WEBHOOK_SECRET=whsec_xxx
+### 2.1 Variables d'environnement Vercel
 
-# Auth
-JWT_SECRET=votre-secret-jwt-securise
-
-# CORS
-CORS_ORIGINS=https://app.flowtym.com
+```
+VITE_BACKEND_URL = https://api.flowtym.com
+VITE_SUPABASE_URL = https://mqdftrilwqdsnvryejsb.supabase.co
+VITE_SUPABASE_ANON_KEY = eyJ... (votre cle anon)
+VITE_STRIPE_PUBLISHABLE_KEY = pk_live_xxx
 ```
 
-### Deploiement Railway
+### 2.2 Commandes
 
 ```bash
-# Dans /app/backend/
-railway init
-railway link
-railway up
-```
-
-### Fichier Procfile (deja present)
-```
-web: uvicorn server:app --host 0.0.0.0 --port ${PORT:-8001}
-```
-
-### Endpoints principaux
-
-| Module | Prefix | Endpoints |
-|--------|--------|-----------|
-| Auth | `/api/auth/` | login, register, me |
-| Hotels | `/api/hotels/` | CRUD hotels |
-| Rooms | `/api/hotels/{id}/rooms/` | CRUD rooms |
-| Reservations | `/api/hotels/{id}/reservations/` | CRUD reservations |
-| Payments (base) | `/api/payments/` | init, create-link, webhook, refund, history |
-| Stripe Connect | `/api/stripe/` | connect-account, onboarding, products, checkout |
-| Payment Automation | `/api/payments/auto/` | send-link, preauthorize, capture, cancel, reminder, cron, status |
-| Maintenance | `/api/maintenance/{id}/` | tickets CRUD, stats |
-| CRM | `/api/crm/{id}/` | clients, segments, campaigns, workflows, analytics |
-| Automation | `/api/automation/` | rules, settings, execute |
-| PMS Supabase | `/api/pms/` | dashboard, rooms, reservations, check-in/out |
-| Housekeeping | `/api/housekeeping/` | tasks, inspections, assignments |
-| Staff | `/api/staff/` | employees, shifts, payroll |
-| Config | `/api/config/` | room-types, rate-plans, pricing-matrix |
-
----
-
-## 3. Frontend (Vercel)
-
-### Variables d'environnement
-
-```env
-VITE_BACKEND_URL=https://api.flowtym.com
-VITE_SUPABASE_URL=https://votre-projet.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJ...
-VITE_STRIPE_PUBLISHABLE_KEY=pk_live_xxx
-```
-
-### Deploiement Vercel
-
-```bash
-# Dans /app/frontend/
+cd frontend
+cp .env.production .env
+yarn build
 vercel --prod
+vercel domains add app.flowtym.com
 ```
 
-### Configuration Vercel (vercel.json deja present)
-```json
-{
-  "rewrites": [{ "source": "/(.*)", "destination": "/" }]
-}
-```
+### 2.3 Config Vercel (vercel.json)
+- Build: `yarn build`
+- Output: `dist`
+- Framework: Vite
+- Rewrites: `/api/*` → `https://api.flowtym.com/api/*`
+- SPA fallback: `/(*)` → `/index.html`
 
 ---
 
-## 4. Stripe Configuration
+## 3. Deployer le Backend (Railway → api.flowtym.com)
 
-### Dashboard Stripe
-1. Creer un compte sur https://dashboard.stripe.com
-2. Activer Stripe Connect (Settings > Connect)
-3. Copier les cles API (Developers > API Keys)
-4. Configurer le webhook:
-   - URL: `https://api.flowtym.com/api/stripe/webhook`
-   - Events: `checkout.session.completed`, `payment_intent.succeeded`, `payment_intent.payment_failed`
-5. Copier le Webhook Secret
+### 3.1 Variables d'environnement Railway
 
-### Cles a configurer
 ```
-STRIPE_API_KEY=sk_live_xxx        # Backend .env
-STRIPE_WEBHOOK_SECRET=whsec_xxx   # Backend .env
-VITE_STRIPE_PUBLISHABLE_KEY=pk_live_xxx  # Frontend .env
+MONGO_URL = mongodb+srv://... (votre MongoDB Atlas)
+DB_NAME = flowtym
+SUPABASE_URL = https://mqdftrilwqdsnvryejsb.supabase.co
+SUPABASE_ANON_KEY = eyJ...
+SUPABASE_SERVICE_ROLE_KEY = eyJ...
+STRIPE_API_KEY = sk_live_xxx
+STRIPE_WEBHOOK_SECRET = whsec_xxx
+JWT_SECRET = (generer: openssl rand -hex 32)
+FRONTEND_URL = https://app.flowtym.com
+CORS_ORIGINS = https://app.flowtym.com,https://www.flowtym.com
 ```
 
----
+### 3.2 Commandes
 
-## 5. Cron Job (Paiements automatiques)
-
-Le cron job demarre automatiquement avec le backend (toutes les 15 minutes).
-
-### Actions automatiques
-- **Non-remboursable** : Envoi lien immediat + annulation auto apres 24h
-- **Flexible (48h)** : Lien envoye 48h avant arrivee
-- **Modere (7j)** : Lien envoye 7 jours avant
-- **Semi-flexible (14j)** : Lien envoye 14 jours avant
-- **Strict (30j)** : Lien envoye 30 jours avant
-- **Pre-auth** : Capture automatique a l'echeance
-- **Auto-annulation** : Si non paye 24h apres envoi du lien
-
-### Declenchement manuel
 ```bash
-curl -X POST https://api.flowtym.com/api/payments/auto/process-cron
+cd backend
+railway login
+railway up
+railway domain add api.flowtym.com
+```
+
+### 3.3 Config Railway (railway.toml)
+- Builder: nixpacks
+- Start: `uvicorn server:app --host 0.0.0.0 --port $PORT`
+- Healthcheck: `/api/health`
+
+---
+
+## 4. DNS IONOS
+
+| Type  | Nom  | Cible                          |
+|-------|------|--------------------------------|
+| CNAME | app  | cname.vercel-dns.com           |
+| CNAME | api  | [projet].up.railway.app        |
+| A     | www  | [IP hebergeur site vitrine]    |
+
+---
+
+## 5. Stripe Webhook
+
+Dashboard Stripe → Developers → Webhooks → Add endpoint
+
+```
+URL: https://api.flowtym.com/api/stripe/webhook
+
+Events a ecouter:
+  ✓ checkout.session.completed
+  ✓ payment_intent.succeeded
+  ✓ payment_intent.payment_failed
+```
+
+Copier le **Signing Secret** (`whsec_...`) dans `STRIPE_WEBHOOK_SECRET`.
+
+---
+
+## 6. SQL Supabase (execute dans l'ordre)
+
+| # | Fichier | Status |
+|---|---------|--------|
+| 1 | `flowtym-final.sql` | EXECUTE |
+| 2 | `flowtym-automation.sql` | EXECUTE |
+| 3 | `flowtym-payments.sql` | EXECUTE |
+| 4 | `flowtym-stripe-connect.sql` | EXECUTE |
+| 5 | `flowtym-cancellation-policies.sql` | EXECUTE |
+| 6 | `flowtym-sql-crm-staff.sql` | EXECUTE |
+| 7 | `flowtym-sql-rls-policies.sql` | EXECUTE |
+| 8 | `flowtym-maintenance.sql` | A EXECUTER |
+
+---
+
+## 7. Cron Job Automatique
+
+Le cron demarre automatiquement avec le backend (toutes les 15 min).
+Aucune configuration requise.
+
+Actions:
+- Auto-envoi liens de paiement selon politique d'annulation
+- Auto-annulation si non paye sous 24h
+- Auto-capture preautorisation a l'echeance
+
+---
+
+## 8. Endpoints API (api.flowtym.com)
+
+| Module | Prefix | Description |
+|--------|--------|-------------|
+| Auth | `/api/auth/` | Login, Register, Me |
+| Hotels | `/api/hotels/` | CRUD Hotels |
+| PMS | `/api/pms/` | Dashboard, Rooms, Reservations Supabase |
+| Stripe Connect | `/api/stripe/` | Connect accounts, Products, Checkout |
+| Payment Auto | `/api/payments/auto/` | Send-link, Preauth, Capture, Cron |
+| Payments | `/api/payments/` | Init, Link, Webhook, Refund |
+| Maintenance | `/api/maintenance/{id}/` | Tickets CRUD, Stats |
+| CRM | `/api/crm/{id}/` | Clients, Segments, Campaigns |
+| Housekeeping | `/api/housekeeping/` | Tasks, Inspections |
+| Config | `/api/config/` | Room types, Rate plans |
+| Staff | `/api/staff/` | Employees, Shifts, Payroll |
+| Automation | `/api/automation/` | Yield management rules |
+
+---
+
+## 9. Checklist Finale
+
+```
+[ ] Executer flowtym-maintenance.sql dans Supabase
+[ ] Deployer backend sur Railway
+[ ] Configurer variables Railway (Stripe, Supabase, JWT, CORS)
+[ ] Deployer frontend sur Vercel
+[ ] Configurer variables Vercel (VITE_BACKEND_URL, etc.)
+[ ] Configurer DNS IONOS (app → Vercel, api → Railway)
+[ ] Attendre propagation DNS (1-24h)
+[ ] Configurer webhook Stripe → https://api.flowtym.com/api/stripe/webhook
+[ ] Tester login sur https://app.flowtym.com
+[ ] Tester paiement Stripe (carte test 4242...)
+[ ] Tester cron: POST https://api.flowtym.com/api/payments/auto/process-cron
 ```
 
 ---
 
-## 6. DNS (IONOS)
+## 10. Cartes de Test Stripe
 
-```
-app.flowtym.com  → CNAME → cname.vercel-dns.com
-api.flowtym.com  → CNAME → [railway domain]
-```
-
----
-
-## 7. Tests
-
-### Lancer les tests
-```bash
-cd /app/backend
-python -m pytest tests/test_full_suite.py -v --tb=short
-```
-
-### Cartes de test Stripe
-- Succes : `4242 4242 4242 4242`
-- Refusee : `4000 0000 0000 0002`
-- Auth 3DS : `4000 0025 0000 3155`
-
----
-
-## 8. Structure des fichiers
-
-```
-/app/
-├── backend/
-│   ├── server.py                    # Point d'entree FastAPI
-│   ├── cron_scheduler.py            # Cron automatique paiements
-│   ├── routes/
-│   │   ├── payments.py              # Paiements base (init, link, webhook, refund)
-│   │   ├── stripe_connect.py        # Stripe Connect (comptes, produits, checkout)
-│   │   ├── payment_automation.py    # Automatisation (envoi liens, preauth, cron)
-│   │   ├── maintenance.py           # Tickets maintenance
-│   │   ├── automation.py            # Yield management
-│   │   └── pms_supabase.py          # PMS endpoints Supabase
-│   ├── crm/routes.py                # CRM endpoints
-│   ├── config/routes.py             # Configuration hotel
-│   ├── staff/                       # Gestion personnel
-│   ├── housekeeping/                # Module housekeeping
-│   └── tests/
-│       ├── test_full_suite.py       # Tests complets
-│       ├── test_stripe_connect.py   # Tests Stripe
-│       └── test_payment_automation.py # Tests automatisation
-├── frontend/
-│   ├── src/
-│   │   ├── pages/
-│   │   │   ├── finance/
-│   │   │   │   ├── FinanceModule.jsx          # Finance (Factures + Stripe)
-│   │   │   │   └── StripeConnectPage.jsx      # Page Stripe Connect
-│   │   │   ├── maintenance/
-│   │   │   │   └── MaintenanceModule.jsx      # Maintenance Supabase
-│   │   │   ├── crm/                           # Module CRM complet
-│   │   │   ├── housekeeping/                  # Module Housekeeping
-│   │   │   └── flowboard/Flowboard.jsx        # Dashboard central
-│   │   ├── components/
-│   │   │   ├── stripe/                        # Composants Stripe Connect
-│   │   │   └── reservations/
-│   │   │       ├── ReservationDetail.jsx      # Detail reservation (5 onglets)
-│   │   │       └── PaymentBlock.jsx           # Bloc paiement automatise
-│   │   └── services/crmService.js             # Service CRM Supabase
-├── flowtym-final.sql                          # SQL tables core
-├── flowtym-payments.sql                       # SQL paiements
-├── flowtym-stripe-connect.sql                 # SQL Stripe Connect
-├── flowtym-maintenance.sql                    # SQL maintenance
-└── flowtym-automation.sql                     # SQL automatisation
-```
-
----
-
-## 9. Credentials de test
-
-| Role | Email | Mot de passe |
-|------|-------|--------------|
-| Admin | admin@flowtym.com | admin123 |
-| Reception | reception@hotel.com | reception123 |
-| Gouvernante | gouvernante@hotel.com | gouv123 |
-| Femme de chambre | femme1@hotel.com | femme123 |
-| Maintenance | maintenance@hotel.com | maint123 |
-
-Hotel ID: `fae266ac-2f4c-4297-af9f-b3b988d86c5b`
-
----
-
-## 10. Checklist Pre-Production
-
-- [ ] Executer `/app/flowtym-maintenance.sql` dans Supabase
-- [ ] Configurer les vraies cles Stripe (sk_live, pk_live, whsec)
-- [ ] Configurer le webhook Stripe dans le Dashboard
-- [ ] Deployer backend sur Railway
-- [ ] Deployer frontend sur Vercel
-- [ ] Configurer les DNS IONOS
-- [ ] Tester le flux de paiement de bout en bout
-- [ ] Tester le cron job de paiement automatique
-- [ ] Configurer CORS pour le domaine production
+| Type | Numero |
+|------|--------|
+| Succes | 4242 4242 4242 4242 |
+| Refusee | 4000 0000 0000 0002 |
+| 3D Secure | 4000 0025 0000 3155 |
+| Fonds insuffisants | 4000 0000 0000 9995 |

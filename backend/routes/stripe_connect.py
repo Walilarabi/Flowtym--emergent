@@ -133,8 +133,8 @@ async def create_account_link(req: CreateAccountLinkRequest):
     try:
         account_link = stripe.AccountLink.create(
             account=req.account_id,
-            refresh_url=f"{os.environ.get('REACT_APP_BACKEND_URL', '')}/finance/stripe?refresh=true",
-            return_url=f"{os.environ.get('REACT_APP_BACKEND_URL', '')}/finance/stripe?accountId={req.account_id}",
+            refresh_url=f"{os.environ.get('FRONTEND_URL', os.environ.get('REACT_APP_BACKEND_URL', ''))}/finance/stripe?refresh=true",
+            return_url=f"{os.environ.get('FRONTEND_URL', os.environ.get('REACT_APP_BACKEND_URL', ''))}/finance/stripe?accountId={req.account_id}",
             type="account_onboarding",
         )
         return {"url": account_link.url}

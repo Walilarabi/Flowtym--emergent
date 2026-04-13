@@ -157,8 +157,8 @@ async def create_payment_link(payload: PaymentLinkCreate):
                 "line_items[0][price_data][product_data][name]": payload.description or "Réservation hôtel",
                 "line_items[0][quantity]": "1",
                 "customer_email": payload.guest_email,
-                "success_url": f"{os.environ.get('VITE_BACKEND_URL', '')}/api/payments/success?token={token}",
-                "cancel_url": f"{os.environ.get('VITE_BACKEND_URL', '')}/api/payments/cancel?token={token}",
+                "success_url": f"{os.environ.get('FRONTEND_URL', os.environ.get('VITE_BACKEND_URL', ''))}/api/payments/success?token={token}",
+                "cancel_url": f"{os.environ.get('FRONTEND_URL', os.environ.get('VITE_BACKEND_URL', ''))}/api/payments/cancel?token={token}",
                 "metadata[hotel_id]": payload.hotel_id,
                 "metadata[reservation_id]": payload.reservation_id or "",
                 "metadata[token]": token,
@@ -169,7 +169,7 @@ async def create_payment_link(payload: PaymentLinkCreate):
             provider_ref = result.get("id", "")
         else:
             # Fallback: generate a local link page
-            base = os.environ.get("REACT_APP_BACKEND_URL", os.environ.get("VITE_BACKEND_URL", ""))
+            base = os.environ.get("FRONTEND_URL", os.environ.get("REACT_APP_BACKEND_URL", os.environ.get("VITE_BACKEND_URL", "")))
             link_url = f"{base}/api/payments/pay/{token}"
             provider_ref = f"local_{token[:8]}"
 
