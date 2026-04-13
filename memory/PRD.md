@@ -166,6 +166,15 @@ FLOWTYM est un PMS (Property Management System) SaaS hôtelier moderne, structur
 
 ## Changelog
 
+### 2026-04-13 - Finalisation PMS Production-Ready ✅
+- ✅ **Script SQL final** `/app/flowtym-final.sql` : Enums, 15 tables, indexes, Realtime, RLS, seed complet
+- ✅ **API PMS Backend** `/app/backend/routes/pms_supabase.py` : 12 endpoints (dashboard, rooms, reservations CRUD, check-in/out, guests, housekeeping, assign)
+- ✅ **Check-in/out automatisé** : Check-in → room status occupee ; Check-out → room en_nettoyage + tâche ménage auto
+- ✅ **README déploiement** `/app/README-DEPLOY.md` : Guide complet (Supabase setup, env vars, API endpoints, raccourcis)
+- ✅ **Bug fix** : QuickActionsWidget navigation corrigé (action.path || action.url)
+- ✅ **Tests** : Backend 7/8 (guests table manquante dans Supabase — à créer via SQL), Frontend 11/11 (iteration_51)
+- ⚠️ **Action requise** : Exécuter `/app/flowtym-final.sql` dans Supabase SQL Editor pour créer la table `guests` et appliquer les politiques RLS
+
 ### 2026-04-13 - CRM Service + HousekeepingStats + Scripts SQL ✅
 - ✅ **crmService.js** : CRUD complet (getGuests, createGuest, updateGuest, deleteGuest, history, preferences, stats)
 - ✅ **HousekeepingStats** : Chart.js (Bar, Line, Doughnut) avec KPIs, sélecteur de période (7/30/90j), récapitulatif
