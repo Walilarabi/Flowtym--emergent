@@ -7,6 +7,9 @@ export default defineConfig({
   define: {
     'process.env': process.env,
   },
+  optimizeDeps: {
+    force: true,
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
