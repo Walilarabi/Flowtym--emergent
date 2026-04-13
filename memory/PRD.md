@@ -166,6 +166,13 @@ FLOWTYM est un PMS (Property Management System) SaaS hôtelier moderne, structur
 
 ## Changelog
 
+### 2026-04-13 - Bridge PMS 11 chambres + Scripts SQL CRM/Staff/RLS ✅
+- ✅ **PMS Bridge corrigé** : Utilise service_role key, charge 11 chambres + 15 réservations depuis Supabase
+- ✅ **Planning PMS** : TO% 36%, ADR 120€, CH. LIBRES 7/11, grille avec réservations réelles (Sophie, Marc, Elena, Ahmed)
+- ✅ **Scripts SQL générés** : `flowtym-sql-crm-staff.sql` (tables CRM/Staff), `flowtym-sql-rls-policies.sql` (RLS multi-tenant)
+- ✅ **Supabase Realtime** dans le bridge PMS pour mises à jour live
+- ✅ **Tests** : 10/10 features passées (iteration_49)
+
 ### 2026-04-12 - Corrections P0 (Stats + PMS Bridge + Notifications) ✅
 - ✅ **Stats Housekeeping corrigées** : Format nested (rooms.total, tasks.departs, etc.) pour matcher ReceptionViewV2
 - ✅ **PMS Supabase Bridge** : Script JS injecté dans `flowtym-pms.html` charge rooms/reservations depuis Supabase REST API
