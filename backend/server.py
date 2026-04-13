@@ -5167,6 +5167,10 @@ app.include_router(pms_supabase_router)
 from routes.automation import router as automation_router
 app.include_router(automation_router)
 
+# Include Payment routes
+from routes.payments import router as payments_router
+app.include_router(payments_router)
+
 # ===================== PMS STANDALONE HTML SERVING =====================
 PMS_STATIC_DIR = ROOT_DIR / "static" / "pms"
 

@@ -166,6 +166,14 @@ FLOWTYM est un PMS (Property Management System) SaaS hôtelier moderne, structur
 
 ## Changelog
 
+### 2026-04-13 - Module Paiements (Stripe, Adyen, PayPal) ✅
+- ✅ **SQL** `/app/flowtym-payments.sql` : 5 tables UUID (payment_providers, transactions, links, webhooks, refunds) + RLS + Realtime
+- ✅ **API Routes** `/app/backend/routes/payments.py` : 10 endpoints (init, create-link, link status, send-link, webhook, refund, history, pay page, success, cancel)
+- ✅ **Webhook processing** : Stripe (payment_intent.succeeded/failed, checkout.session.completed), Adyen, PayPal
+- ✅ **Fallback local** : Si Stripe pas configuré, génère un lien de paiement local
+- ✅ **README** `/app/PAYMENT-README.md` : Configuration clés API, webhooks, tests, cartes de test
+- ⚠️ **Action requise** : Exécuter `/app/flowtym-payments.sql` dans Supabase + configurer les clés Stripe/Adyen/PayPal
+
 ### 2026-04-13 - Moteur de Règles d'Automatisation (Yield Management) ✅
 - ✅ **SQL** `/app/flowtym-automation.sql` : 5 tables (automation_rules, logs, settings, dynamic_rates_history, booking_restrictions) + RLS + 7 règles par défaut
 - ✅ **API Backend** `/app/backend/routes/automation.py` : 10 endpoints (CRUD règles, settings, logs, exécution manuelle, restrictions)
