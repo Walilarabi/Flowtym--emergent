@@ -1,18 +1,22 @@
 import { useState } from 'react'
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { 
   Receipt, CreditCard, Download, Send, Clock, CheckCircle, XCircle, Euro,
-  Plus, Search, Filter, FileText, MoreHorizontal, Calendar, User
+  Plus, Search, Filter, FileText, MoreHorizontal, Calendar, User, Zap
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import StripeConnectPage from './StripeConnectPage'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // FINANCE MODULE - FLOWTYM V4
-// Facturation & Paiements
+// Facturation & Paiements & Stripe Connect
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const FinanceModule = () => {
+  const location = useLocation()
+  const isStripePage = location.pathname.includes('/finance/stripe')
   const [activeTab, setActiveTab] = useState('invoices')
 
   // Données de démonstration
@@ -71,14 +75,27 @@ const FinanceModule = () => {
     }
   }
 
+  const navigate = useNavigate()
+
   const tabs = [
     { id: 'invoices', label: 'Factures', icon: Receipt },
     { id: 'payments', label: 'Paiements', icon: CreditCard },
+    { id: 'stripe', label: 'Stripe Connect', icon: Zap, route: '/finance/stripe' },
     { id: 'accounting', label: 'Comptabilité', icon: FileText, badge: 'Bientôt' },
   ]
 
   return (
     <div className="h-full flex flex-col bg-slate-50">
+      {/* Stripe Connect sub-routes */}
+      {isStripePage ? (
+        <div className="flex-1 p-6">
+          <Routes>
+            <Route path="stripe/*" element={<StripeConnectPage />} />
+            <Route path="stripe" element={<StripeConnectPage />} />
+          </Routes>
+        </div>
+      ) : (
+      <>
       {/* Header */}
       <div className="bg-white border-b border-slate-200 px-6 py-4">
         <div className="flex items-center justify-between">
@@ -131,7 +148,13 @@ const FinanceModule = () => {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => {
+                  if (tab.route) {
+                    navigate(tab.route)
+                  } else {
+                    setActiveTab(tab.id)
+                  }
+                }}
                 className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-[2px] ${
                   activeTab === tab.id
                     ? 'text-violet-600 border-violet-600'
@@ -243,6 +266,8 @@ const FinanceModule = () => {
           </table>
         </div>
       </div>
+      </>
+      )}
     </div>
   )
 }
