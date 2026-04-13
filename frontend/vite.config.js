@@ -7,9 +7,6 @@ export default defineConfig({
   define: {
     'process.env': process.env,
   },
-  optimizeDeps: {
-    force: true,
-  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -20,6 +17,7 @@ export default defineConfig({
     port: 3000,
     strictPort: true,
     allowedHosts: [
+      'reception-suite-1.preview.emergentagent.com',
       'ota-integration-lab.preview.emergentagent.com',
       'ota-integration-lab.cluster-0.preview.emergentcf.cloud',
       '.emergentagent.com',
