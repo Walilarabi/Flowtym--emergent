@@ -33,4 +33,12 @@
 
 ## Supabase
 - URL: https://mqdftrilwqdsnvryejsb.supabase.co
-- 37 tables, 12 rooms, 7 reservations seeded
+- 50+ tables, 12 rooms, 7 reservations seeded
+
+## Stripe
+- API Key: sk_test_emergent (Emergent test key in backend/.env)
+- Works with emergentintegrations for quick-checkout
+- Real Stripe key needed for Connect operations
+
+## Demo Access
+- Button "Accès démo" on login page
