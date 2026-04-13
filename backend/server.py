@@ -5179,6 +5179,10 @@ app.include_router(stripe_connect_router)
 from routes.payment_automation import router as payment_automation_router
 app.include_router(payment_automation_router)
 
+# Maintenance routes
+from routes.maintenance import router as maintenance_router
+app.include_router(maintenance_router)
+
 # ===================== PMS STANDALONE HTML SERVING =====================
 PMS_STATIC_DIR = ROOT_DIR / "static" / "pms"
 
@@ -5215,9 +5219,21 @@ async def startup_event():
         logger.info("Object Storage initialized")
     except Exception as e:
         logger.warning(f"Object Storage init skipped: {e}")
+    # Start background cron scheduler
+    try:
+        from cron_scheduler import start_cron
+        start_cron()
+        logger.info("Background cron scheduler started")
+    except Exception as e:
+        logger.warning(f"Cron scheduler start skipped: {e}")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
+    try:
+        from cron_scheduler import stop_cron
+        stop_cron()
+    except Exception:
+        pass
     client.close()
 
 # ===================== NESTJS PROXY =====================

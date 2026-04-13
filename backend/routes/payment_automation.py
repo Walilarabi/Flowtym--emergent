@@ -447,10 +447,12 @@ async def process_cron():
     try:
         # 1. Non-refundable: send link immediately if not sent
         nr_reservations = await supa("GET", "reservations",
-            params="rate_type=eq.non_refundable&payment_status=eq.pending&payment_link_sent=is.false&status=in.(confirmed,pending)&select=*")
+            params="payment_status=eq.pending&payment_link_sent=is.false&select=*")
 
-        if isinstance(nr_reservations, list):
-            for res in nr_reservations:
+        nr_list = [r for r in (nr_reservations if isinstance(nr_reservations, list) else [])
+                   if r.get("rate_type") == "non_refundable"]
+
+        for res in nr_list:
                 try:
                     from routes.payments import create_payment_link, PaymentLinkCreate
                     link = PaymentLinkCreate(
@@ -477,10 +479,12 @@ async def process_cron():
 
         # 2. Flexible: check if deadline is approaching and send link
         flex_reservations = await supa("GET", "reservations",
-            params="payment_status=eq.pending&payment_link_sent=is.false&status=in.(confirmed,pending)&rate_type=neq.non_refundable&select=*")
+            params="payment_status=eq.pending&payment_link_sent=is.false&select=*")
 
-        if isinstance(flex_reservations, list):
-            for res in flex_reservations:
+        flex_list = [r for r in (flex_reservations if isinstance(flex_reservations, list) else [])
+                     if r.get("rate_type") != "non_refundable" and r.get("status") in ("confirmed", "pending", "confirmee")]
+
+        for res in flex_list:
                 try:
                     check_in_str = res.get("check_in", "")
                     if not check_in_str:
@@ -521,10 +525,12 @@ async def process_cron():
 
         # 3. Auto-cancel if link sent > 24h ago and not paid
         link_sent_reservations = await supa("GET", "reservations",
-            params="payment_status=eq.link_sent&status=in.(confirmed,pending)&select=*")
+            params="payment_status=eq.link_sent&select=*")
 
-        if isinstance(link_sent_reservations, list):
-            for res in link_sent_reservations:
+        ls_list = [r for r in (link_sent_reservations if isinstance(link_sent_reservations, list) else [])
+                   if r.get("status") not in ("cancelled", "checked_out", "annulee")]
+
+        for res in ls_list:
                 try:
                     deadline_str = res.get("payment_deadline")
                     if not deadline_str:
