@@ -39,6 +39,7 @@ import { DirectionModule } from '@/components/housekeeping/direction'
 import QRCodeManager from '@/components/housekeeping/QRCodeManager'
 import SatisfactionConfig from '@/components/housekeeping/SatisfactionConfig'
 import HousekeepingNotifications from '@/components/housekeeping/HousekeepingNotifications'
+import HousekeepingStats from '@/components/housekeeping/direction/HousekeepingStats'
 
 // Hook V2 pour NestJS
 import useHousekeepingV2 from '@/hooks/useHousekeepingV2'
@@ -450,7 +451,8 @@ export default function HousekeepingModule() {
           </div>
         )}
         {activeView === 'satisfaction' && (
-          <div className="h-full overflow-auto p-6">
+          <div className="h-full overflow-auto p-6 space-y-8">
+            <HousekeepingStats />
             <SatisfactionConfig />
           </div>
         )}
