@@ -166,6 +166,13 @@ FLOWTYM est un PMS (Property Management System) SaaS hôtelier moderne, structur
 
 ## Changelog
 
+### 2026-04-13 - Moteur de Règles d'Automatisation (Yield Management) ✅
+- ✅ **SQL** `/app/flowtym-automation.sql` : 5 tables (automation_rules, logs, settings, dynamic_rates_history, booking_restrictions) + RLS + 7 règles par défaut
+- ✅ **API Backend** `/app/backend/routes/automation.py` : 10 endpoints (CRUD règles, settings, logs, exécution manuelle, restrictions)
+- ✅ **Moteur d'évaluation** : Contexte (TO%, pickup, tarifs), évaluation conditions AND/OR, exécution actions (MLOS, pricing, CTA/CTD)
+- ✅ **README** `/app/AUTOMATION-README.md` : Guide d'intégration pas à pas
+- ⚠️ **Action requise** : Exécuter `/app/flowtym-automation.sql` dans Supabase SQL Editor
+
 ### 2026-04-13 - Finalisation PMS Production-Ready ✅
 - ✅ **Script SQL final** `/app/flowtym-final.sql` : Enums, 15 tables, indexes, Realtime, RLS, seed complet
 - ✅ **API PMS Backend** `/app/backend/routes/pms_supabase.py` : 12 endpoints (dashboard, rooms, reservations CRUD, check-in/out, guests, housekeeping, assign)

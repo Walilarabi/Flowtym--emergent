@@ -5163,6 +5163,10 @@ app.include_router(api_router)
 from routes.pms_supabase import router as pms_supabase_router
 app.include_router(pms_supabase_router)
 
+# Include Automation routes
+from routes.automation import router as automation_router
+app.include_router(automation_router)
+
 # ===================== PMS STANDALONE HTML SERVING =====================
 PMS_STATIC_DIR = ROOT_DIR / "static" / "pms"
 
