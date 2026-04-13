@@ -193,7 +193,7 @@ const QuickActionsWidget = ({ actions }) => {
           key={action.id}
           variant="outline"
           className="h-auto py-3 flex flex-col items-center gap-1 hover:bg-violet-50 hover:border-violet-200"
-          onClick={() => window.location.href = action.url}
+          onClick={() => window.location.href = action.path || action.url}
           data-testid={`quick-action-${action.id}`}
         >
           {action.icon === 'plus' && <Plus className="w-5 h-5 text-violet-500" />}

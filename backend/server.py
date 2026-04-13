@@ -5159,6 +5159,10 @@ api_router.include_router(consignes_router)
 # Include the router in the main app
 app.include_router(api_router)
 
+# Include PMS Supabase routes
+from routes.pms_supabase import router as pms_supabase_router
+app.include_router(pms_supabase_router)
+
 # ===================== PMS STANDALONE HTML SERVING =====================
 PMS_STATIC_DIR = ROOT_DIR / "static" / "pms"
 
