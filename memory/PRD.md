@@ -1,100 +1,71 @@
 # FLOWTYM PMS - Product Requirements Document
 
 ## Vision
-FLOWTYM est un PMS (Property Management System) SaaS hôtelier moderne, structuré en 8 piliers modulaires, avec une priorité sur le module Housekeeping.
+FLOWTYM est un PMS (Property Management System) SaaS hôtelier moderne, structuré en 8 piliers modulaires.
 
 ## Architecture Technique
-
-### Stack Actuelle
-- **Backend (FastAPI)**: Port 8001 - API principale
-- **Frontend (React/Vite)**: Port 3000 - Interface unifiée
-- **Base de données**: Supabase PostgreSQL (migration depuis MongoDB complète)
-- **Auth**: Supabase Auth (JWT natif, sessions gérées côté client)
-- **Realtime**: Supabase Realtime
-- **Paiements**: Stripe Connect + emergentintegrations
-
-### Supabase
-- URL: `https://mqdftrilwqdsnvryejsb.supabase.co`
-- 50+ tables PostgreSQL avec FK, enums, et RLS
-- Enums: `user_role`, `room_status`, `reservation_status`, `cleaning_status`, etc.
+- **Backend (FastAPI)**: Port 8001
+- **Frontend (React/Vite)**: Port 3000
+- **Base de données**: Supabase PostgreSQL (50+ tables, RLS, Realtime)
+- **Auth**: Supabase Auth
+- **Paiements**: Stripe Connect + emergentintegrations + Automation
 
 ## Modules Implémentés
 
-### Stripe Connect (NEW - 2026-04-13)
-- **Backend**: `/app/backend/routes/stripe_connect.py` - 10 endpoints
-- **Frontend**: `/app/frontend/src/components/stripe/` - 5 composants
-- **Page**: `/app/frontend/src/pages/finance/StripeConnectPage.jsx`
-- **SQL**: `/app/flowtym-stripe-connect.sql` (à exécuter dans Supabase)
+### Stripe Connect (2026-04-13)
+- 10 endpoints dans `/app/backend/routes/stripe_connect.py`
+- UI dans `/finance/stripe` (3 onglets: Compte, Produits, Paiement rapide)
+- SQL: `/app/flowtym-stripe-connect.sql` (EXECUTÉ)
+
+### Payment Automation (2026-04-13)
+- 7 endpoints dans `/app/backend/routes/payment_automation.py`
+- PaymentBlock component dans ReservationDetail (onglet "Paiement")
+- Cron job pour envoi automatique liens + annulation auto
+- 7 statuts: pending, link_sent, preauthorized, partial_paid, paid, failed, cancelled
 - Endpoints:
-  - `POST /api/stripe/create-connect-account` - Créer compte connecté
-  - `POST /api/stripe/create-account-link` - Lien d'onboarding
-  - `GET /api/stripe/account-status/{id}` - Statut du compte
-  - `POST /api/stripe/create-product` - Créer produit
-  - `GET /api/stripe/products/{id}` - Liste produits
-  - `POST /api/stripe/create-checkout-session` - Session checkout
-  - `POST /api/stripe/quick-checkout` - Paiement rapide (emergentintegrations)
-  - `GET /api/stripe/checkout-status/{id}` - Statut checkout
-  - `GET /api/stripe/hotel/{id}` - Info Stripe de l'hôtel
-  - `POST /api/stripe/webhook` - Webhooks
+  - GET /api/payments/auto/status/{id} — Statut paiement complet
+  - POST /api/payments/auto/send-link — Envoi lien manuel (total/acompte/1ère nuit/custom)
+  - POST /api/payments/auto/preauthorize — Préautorisation carte
+  - POST /api/payments/auto/capture-preauth — Capturer préauth
+  - POST /api/payments/auto/cancel-preauth — Annuler préauth
+  - POST /api/payments/auto/send-reminder — Relance
+  - POST /api/payments/auto/process-cron — Cron automatique
 
-### Module Finance
-- Facturation (factures, statuts, filtres)
-- Paiements (Stripe, PayPal, Adyen — PaymentIntent, Checkout, Webhooks, Remboursements)
-- **Stripe Connect** (NEW) — onglet dédié dans Finance
-- Comptabilité (à venir)
+### Finance Module
+- Factures, Paiements, Stripe Connect, Comptabilité (à venir)
 
-### Module Housekeeping V2 (COMPLET)
-- ReceptionViewV2, DirectionViewV2, GouvernanteViewV2, MobileHousekeepingViewV2
-- 40 chambres, 9 staff, 21 tâches quotidiennes
-- Signalements, Objets Trouvés, Configuration catégories
+### Housekeeping V2 (COMPLET)
+- Réception, Direction, Gouvernante, Mobile
 
-### Autres Modules
-- Flowboard (Dashboard central avec KPIs Supabase)
-- PMS Standalone (iframe avec Bridge Supabase)
-- CRM (service créé, UI à connecter)
-- Channel Manager, Booking Engine, RMS, Staff, Configuration
+### Autres
+- Flowboard, PMS Standalone, CRM, Channel Manager, Booking Engine, RMS, Staff
 
-## Données de Démo
-- **40 chambres** sur 4 étages
-- **9 membres staff**
-- **21 tâches** quotidiennes
-- **11 chambres Supabase** avec réservations
-
-## Credentials Test
-- Admin: `admin@flowtym.com` / `admin123` (Supabase Auth)
-- Réception: `reception@hotel.com` / `reception123`
-- Gouvernante: `gouvernante@hotel.com` / `gouv123`
-- Femme de chambre: `femme1@hotel.com` / `femme123`
-- Maintenance: `maintenance@hotel.com` / `maint123`
-- Hotel ID: `fae266ac-2f4c-4297-af9f-b3b988d86c5b`
-- Bouton "Accès démo" sur la page de login
+## Credentials
+- Admin: admin@flowtym.com / admin123
+- Hotel ID: fae266ac-2f4c-4297-af9f-b3b988d86c5b
+- Bouton "Accès démo" sur login
 
 ## Priorités Restantes
-
-### P1 - En attente
-- [ ] CRM UI : Connecter l'interface CRM React au service Supabase
+### P1
+- [ ] Configurer vraies clés Stripe dans backend/.env
+- [ ] CRM UI vers Supabase
 - [ ] Housekeeping Phase 5 — Maintenance
-- [ ] Configuration Email (SendGrid/Resend)
-- [ ] Exécuter `/app/flowtym-stripe-connect.sql` dans Supabase SQL Editor
+- [ ] Configuration Email (SendGrid/Resend) pour liens de paiement
 
-### P2 - Phases futures
+### P2
 - [ ] Nettoyage MongoDB/NestJS
 - [ ] Rapports et Exports PDF
-- [ ] WebSockets temps réel (actuellement HTTP polling)
 
 ## Changelog
 
-### 2026-04-13 - Intégration Stripe Connect (COMPLETE)
-- **Backend**: 10 endpoints Stripe Connect dans `/app/backend/routes/stripe_connect.py`
-  - Comptes connectés (création, onboarding, statut)
-  - Produits (création, liste sur comptes connectés)
-  - Checkout sessions (Connect + Quick via emergentintegrations)
-  - Webhooks, status polling, info hôtel
-- **Frontend**: 5 composants React dans `/app/frontend/src/components/stripe/`
-  - ConnectOnboarding, AccountStatus, StripeProducts, QuickPayment, CheckoutReturn
-  - Page dédiée StripeConnectPage avec 3 onglets (Compte, Produits, Paiement rapide)
-  - Intégré au FinanceModule comme onglet "Stripe Connect"
-- **SQL**: Script `/app/flowtym-stripe-connect.sql` (stripe_accounts, stripe_products, RLS)
-- **Design**: Style pastel/glassmorphism, boutons arrondis (40px), conforme à la charte Flowtym
-- **Tests**: 100% backend (17/17), 100% frontend — iteration_52
-- **Notes**: Connect operations nécessitent une vraie clé Stripe. Quick-checkout fonctionne avec sk_test_emergent via emergentintegrations.
+### 2026-04-13 — Payment Automation (COMPLETE)
+- Backend: 7 endpoints (send-link, preauthorize, capture, cancel, reminder, cron, status)
+- Frontend: PaymentBlock avec statut, montants, 6 boutons d'action
+- Cron: auto-envoi liens, auto-annulation 24h, auto-capture pré-auth
+- Tests: 100% (18/18 backend, frontend vérifié) — iteration_53
+
+### 2026-04-13 — Stripe Connect (COMPLETE)
+- Backend: 10 endpoints (connect account, onboarding, products, checkout, webhook)
+- Frontend: 5 composants + page dédiée /finance/stripe
+- SQL: stripe_accounts, stripe_products tables
+- Tests: 100% (17/17 backend, 100% frontend) — iteration_52
