@@ -20,28 +20,18 @@ import { NotificationBell } from './NotificationBell'
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const operationsBlocks = {
-  pms: {
-    id: 'pms',
-    title: 'PMS',
-    subtitle: 'Cœur du système',
+  terrain: {
+    id: 'terrain',
+    title: 'Opérations Terrain',
+    subtitle: 'PMS & gestion quotidienne',
     color: '#10B981',
     colorLight: '#D1FAE5',
     icon: Building2,
     items: [
       { id: 'pms-dashboard', label: 'PMS', icon: Building2, path: '/pms', description: 'Gestion hôtelière complète' },
-    ]
-  },
-  terrain: {
-    id: 'terrain',
-    title: 'Opérations Terrain',
-    subtitle: 'Gestion quotidienne',
-    color: '#F59E0B',
-    colorLight: '#FEF3C7',
-    icon: Wrench,
-    items: [
       { id: 'housekeeping', label: 'Housekeeping', icon: Brush, path: '/housekeeping', description: 'Statuts, assignation, mobile' },
-      { id: 'maintenance', label: 'Maintenance', icon: Wrench, path: '/maintenance', description: 'Tickets, priorités, interventions' },
       { id: 'staff', label: 'Staff', icon: UsersRound, path: '/staff', description: 'Employés, planning shifts' },
+      { id: 'maintenance', label: 'Maintenance', icon: Wrench, path: '/maintenance', description: 'Tickets, priorités, interventions' },
       { id: 'consignes', label: 'Cahier de consignes', icon: ClipboardList, path: '/consignes', description: 'Notes, statuts, assignation' },
     ]
   },
@@ -77,7 +67,7 @@ const mainMenus = [
     label: 'Operations', 
     icon: Building2, 
     path: '/operations',
-    description: 'PMS, Terrain, Achats',
+    description: 'Terrain & Achats',
     color: '#10B981',
     isMegaMenu: true,
     blocks: operationsBlocks

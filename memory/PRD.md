@@ -166,6 +166,12 @@ FLOWTYM est un PMS (Property Management System) SaaS hôtelier moderne, structur
 
 ## Changelog
 
+### 2026-04-13 - 3 Modifications (Menu + Politiques + Filtres) ✅
+- ✅ **Mod 1** : PMS déplacé dans "Opérations Terrain" (2 sous-ensembles : Terrain + Achats)
+- ✅ **Mod 2** : Politiques d'annulation enrichies — 7 types (Individuelle, Groupe, Flexible, Semi-Flexible, Stricte, Modérée, Non Remboursable) + champs spécifiques (jours gratuits, frais %, montant fixe, nuits facturées, min chambres groupe)
+- ✅ **Mod 3** : Filtres avancés Chambres (Type, Étage, Vue, Statut) + sélecteur inline du type par carte
+- ✅ **SQL** `/app/flowtym-cancellation-policies.sql` : Table + RLS + 6 politiques par défaut
+
 ### 2026-04-13 - Module Paiements (Stripe, Adyen, PayPal) ✅
 - ✅ **SQL** `/app/flowtym-payments.sql` : 5 tables UUID (payment_providers, transactions, links, webhooks, refunds) + RLS + Realtime
 - ✅ **API Routes** `/app/backend/routes/payments.py` : 10 endpoints (init, create-link, link status, send-link, webhook, refund, history, pay page, success, cancel)

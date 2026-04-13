@@ -60,6 +60,8 @@ export default function RoomsSection({ hotelId, onUpdate }) {
   // Filters
   const [filterType, setFilterType] = useState('all');
   const [filterFloor, setFilterFloor] = useState('all');
+  const [filterView, setFilterView] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
   
   // Import state
   const [importFile, setImportFile] = useState(null);
@@ -159,6 +161,17 @@ export default function RoomsSection({ hotelId, onUpdate }) {
     }
   };
 
+  const handleInlineTypeChange = async (roomId, roomNumber, newTypeId) => {
+    try {
+      await updateRoom(hotelId, roomId, { room_type_id: newTypeId });
+      toast.success(`Type de chambre ${roomNumber} mis à jour`);
+      loadData();
+      onUpdate?.();
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
   // Excel Import Functions
   const handleDownloadTemplate = async () => {
     try {
@@ -219,6 +232,8 @@ export default function RoomsSection({ hotelId, onUpdate }) {
   const filteredRooms = rooms.filter(r => {
     if (filterType !== 'all' && r.room_type_id !== filterType) return false;
     if (filterFloor !== 'all' && r.floor !== parseInt(filterFloor)) return false;
+    if (filterView !== 'all' && (r.view || 'none') !== filterView) return false;
+    if (filterStatus !== 'all' && r.status !== filterStatus) return false;
     return true;
   });
 
@@ -288,6 +303,34 @@ export default function RoomsSection({ hotelId, onUpdate }) {
                 </SelectContent>
               </Select>
             </div>
+            <div className="flex items-center gap-2">
+              <Label className="text-sm">Vue:</Label>
+              <Select value={filterView} onValueChange={setFilterView}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toutes</SelectItem>
+                  {Object.entries(VIEW_LABELS).filter(([k]) => k !== 'none').map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label className="text-sm">Statut:</Label>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-36">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous</SelectItem>
+                  {Object.entries(STATUS_LABELS).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <span className="text-sm text-slate-500 ml-auto">
               {filteredRooms.length} chambre{filteredRooms.length > 1 ? 's' : ''}
             </span>
@@ -343,7 +386,18 @@ export default function RoomsSection({ hotelId, onUpdate }) {
                           {STATUS_LABELS[room.status] || 'Disponible'}
                         </Badge>
                       </div>
-                      <div className="text-sm text-slate-500">{room.room_type_name || room.room_type_code}</div>
+                      <div className="text-sm text-slate-500" onClick={(e) => e.stopPropagation()}>
+                        <select
+                          value={room.room_type_id || ''}
+                          onChange={(e) => handleInlineTypeChange(room.id, room.room_number, e.target.value)}
+                          className="w-full text-sm bg-transparent border border-transparent hover:border-slate-200 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-violet-400 focus:border-violet-400 cursor-pointer transition-colors"
+                          data-testid={`room-type-select-${room.room_number}`}
+                        >
+                          {roomTypes.map(t => (
+                            <option key={t.id} value={t.id}>{t.name}</option>
+                          ))}
+                        </select>
+                      </div>
                       {room.view && room.view !== 'none' && (
                         <div className="text-xs text-slate-400 mt-1">Vue {VIEW_LABELS[room.view]}</div>
                       )}

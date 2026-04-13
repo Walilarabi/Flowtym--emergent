@@ -19,12 +19,13 @@ import {
 } from '../configApi';
 
 const CANCEL_POLICY_TYPES = [
-  { value: 'free', label: 'Gratuite' },
+  { value: 'individuelle', label: 'Individuelle' },
+  { value: 'groupe', label: 'Groupe' },
   { value: 'flexible', label: 'Flexible' },
-  { value: 'moderate', label: 'Modérée' },
+  { value: 'semi_flexible', label: 'Semi-Flexible' },
   { value: 'strict', label: 'Stricte' },
+  { value: 'moderate', label: 'Modérée' },
   { value: 'non_refundable', label: 'Non Remboursable' },
-  { value: 'super_strict', label: 'Super Stricte' },
 ];
 
 const PENALTY_TYPES = [
@@ -51,12 +52,13 @@ const PAYMENT_METHODS = [
 ];
 
 const POLICY_TYPE_COLORS = {
-  free: 'bg-emerald-100 text-emerald-700',
+  individuelle: 'bg-violet-100 text-violet-700',
+  groupe: 'bg-indigo-100 text-indigo-700',
   flexible: 'bg-blue-100 text-blue-700',
+  semi_flexible: 'bg-cyan-100 text-cyan-700',
   moderate: 'bg-amber-100 text-amber-700',
   strict: 'bg-orange-100 text-orange-700',
   non_refundable: 'bg-red-100 text-red-700',
-  super_strict: 'bg-red-200 text-red-800',
 };
 
 export default function PoliciesSection({ hotelId, onUpdate }) {
@@ -112,6 +114,12 @@ export default function PoliciesSection({ hotelId, onUpdate }) {
       code: '',
       name: '',
       policy_type: 'flexible',
+      free_cancellation_days: 1,
+      cancellation_fee_percent: 0,
+      fixed_fee_amount: 0,
+      applies_to_nights: 1,
+      min_rooms_for_group: 5,
+      group_cancellation_days: 30,
       rules: [{ days_before_arrival: 1, penalty_type: 'first_night', penalty_value: 0 }],
       allow_modifications: true,
       terms_short: ''
@@ -412,6 +420,75 @@ export default function PoliciesSection({ hotelId, onUpdate }) {
                 placeholder="Annulation gratuite jusqu'à 24h avant l'arrivée"
               />
             </div>
+
+            {/* Champs communs */}
+            <div className="space-y-2">
+              <Label>Jours annulation gratuite</Label>
+              <Input
+                type="number"
+                value={cancelForm.free_cancellation_days}
+                onChange={(e) => setCancelForm(f => ({ ...f, free_cancellation_days: parseInt(e.target.value) || 0 }))}
+                min="0"
+                placeholder="1"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Frais annulation (%)</Label>
+              <Input
+                type="number"
+                value={cancelForm.cancellation_fee_percent}
+                onChange={(e) => setCancelForm(f => ({ ...f, cancellation_fee_percent: parseFloat(e.target.value) || 0 }))}
+                min="0" max="100"
+                placeholder="0"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Montant fixe (EUR)</Label>
+              <Input
+                type="number"
+                value={cancelForm.fixed_fee_amount}
+                onChange={(e) => setCancelForm(f => ({ ...f, fixed_fee_amount: parseFloat(e.target.value) || 0 }))}
+                min="0"
+                placeholder="0"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Nuits facturées</Label>
+              <Input
+                type="number"
+                value={cancelForm.applies_to_nights}
+                onChange={(e) => setCancelForm(f => ({ ...f, applies_to_nights: parseInt(e.target.value) || 1 }))}
+                min="1"
+                placeholder="1"
+              />
+            </div>
+
+            {/* Champs spécifiques Groupe */}
+            {cancelForm.policy_type === 'groupe' && (
+              <>
+                <div className="space-y-2">
+                  <Label>Min. chambres pour groupe</Label>
+                  <Input
+                    type="number"
+                    value={cancelForm.min_rooms_for_group}
+                    onChange={(e) => setCancelForm(f => ({ ...f, min_rooms_for_group: parseInt(e.target.value) || 5 }))}
+                    min="2"
+                    placeholder="5"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Jours annulation groupe</Label>
+                  <Input
+                    type="number"
+                    value={cancelForm.group_cancellation_days}
+                    onChange={(e) => setCancelForm(f => ({ ...f, group_cancellation_days: parseInt(e.target.value) || 30 }))}
+                    min="1"
+                    placeholder="30"
+                  />
+                </div>
+              </>
+            )}
+
             <div className="col-span-2 flex items-center gap-2">
               <Switch
                 checked={cancelForm.allow_modifications}
