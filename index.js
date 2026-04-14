@@ -1,26 +1,36 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Servir les fichiers statiques du dossier flowtym-pms/flowtym-repo
-app.use(express.static(path.join(__dirname, 'flowtym-pms', 'flowtym-repo')));
+// Cherche plan3d.html dans tout le projet
+function findPlan3d() {
+  const searchPaths = [
+    path.join(__dirname, 'flowtym-pms', 'flowtym-repo', 'plan3d.html'),
+    path.join(__dirname, 'flowtysm-pms', 'flowtysm-repo', 'plan3d.html'),
+    path.join(__dirname, 'plan3d.html'),
+    path.join(__dirname, 'public', 'plan3d.html')
+  ];
+  for (const p of searchPaths) {
+    if (fs.existsSync(p)) return p;
+  }
+  return null;
+}
 
-// Route pour afficher le plan 3D (page principale du PMS)
+const plan3dPath = findPlan3d();
+console.log('📄 plan3d.html trouvé ?', plan3dPath);
+
 app.get('/api/pms-app', (req, res) => {
-  res.sendFile(path.join(__dirname, 'flowtym-pms', 'flowtym-repo', 'plan3d.html'));
+  if (plan3dPath && fs.existsSync(plan3dPath)) {
+    res.sendFile(plan3dPath);
+  } else {
+    res.status(404).send('plan3d.html non trouvé. Vérifie les logs.');
+  }
 });
 
-// Route racine (API status)
 app.get('/', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    message: 'FLOWTYM API is running 🚀',
-    endpoints: ['/api/pms-app', '/']
-  });
+  res.json({ status: 'ok', message: 'FLOWTYM API running' });
 });
 
-// Démarrer le serveur
-app.listen(port, () => {
-  console.log(`✅ FLOWTYM server running on port ${port}`);
-});
+app.listen(port, () => console.log(`✅ Serveur sur port ${port}`));
