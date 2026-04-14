@@ -1,7 +1,9 @@
-from fastapi import FastAPI
-
-app = FastAPI()
-
-@app.get("/")
-def read_root():
-    return {"message": "FLOWTYM API is running 🚀"}
+{
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "npm install"
+  },
+  "deploy": {
+    "startCommand": "node index.js"
+  }
+}
