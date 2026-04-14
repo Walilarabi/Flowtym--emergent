@@ -1,17 +1,22 @@
 const express = require('express');
-const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Remonter d'un niveau pour accéder à flowtym-pms
-const rootDir = path.join(__dirname, '..');
-
-// Servir les fichiers statiques
-app.use(express.static(path.join(rootDir, 'flowtym-pms', 'flowtym-repo')));
-
-// Route pour le PMS
+// Route simple pour tester
 app.get('/api/pms-app', (req, res) => {
-  res.sendFile(path.join(rootDir, 'flowtym-pms', 'flowtym-repo', 'plan3d.html'));
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head><title>FLOWTYM Test</title></head>
+    <body style="background:#0f0f1a; color:#c6a43f; font-family:sans-serif; text-align:center; padding:50px;">
+      <h1>🏨 FLOWTYM PMS</h1>
+      <p>Le serveur fonctionne correctement !</p>
+      <p>Route /api/pms-app active ✓</p>
+      <hr>
+      <small>Si vous voyez ce message, le problème vient du chemin vers plan3d.html</small>
+    </body>
+    </html>
+  `);
 });
 
 app.get('/', (req, res) => {
@@ -19,6 +24,5 @@ app.get('/', (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`✅ Server on port ${port}`);
-  console.log(`📁 Path: ${path.join(rootDir, 'flowtym-pms', 'flowtym-repo', 'plan3d.html')}`);
+  console.log(`✅ Serveur démarré sur le port ${port}`);
 });
